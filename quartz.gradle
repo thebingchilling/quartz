@@ -17,6 +17,17 @@ android {
         applicationId = quartzId
     }
 
+    // Committed debug key, so every debug build (local or CI) has the same
+    // signature and installs over the last one. Debug only: never release.
+    signingConfigs {
+        quartzDebug {
+            storeFile = rootProject.file("signing/quartz-debug.jks")
+            storePassword = "android"
+            keyAlias = "quartzdebug"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         // resValue at build-type level overrides app_name from main's strings.xml,
         // as upstream's debug/nightly already rely on.
@@ -26,6 +37,7 @@ android {
             buildConfigField("String", "FILE_PROVIDER_AUTHORITY", "\"${quartzAuthority}\"")
         }
         debug {
+            signingConfig = signingConfigs.quartzDebug
             resValue("string", "app_name", "${quartzName} Debug")
             manifestPlaceholders["providerAuthority"] = "${quartzAuthority}.debug"
             buildConfigField("String", "FILE_PROVIDER_AUTHORITY", "\"${quartzAuthority}.debug\"")
