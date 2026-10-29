@@ -49,3 +49,17 @@ android {
         }
     }
 }
+
+// Branding overlay (fork/branding/res): Quartz's icon, TV banner and notification glyph
+// replace WG Tunnel's by resource name. Added to every flavor+build-type source set, the
+// highest-priority ones, so they win over main and over upstream's nightly and debug icons
+// without touching upstream's files.
+android {
+    sourceSets {
+        ["fdroid", "google", "standalone"].each { flavor ->
+            ["debug", "release", "nightly"].each { type ->
+                maybeCreate(flavor + type.capitalize()).res.directories.add("$rootDir/fork/branding/res")
+            }
+        }
+    }
+}

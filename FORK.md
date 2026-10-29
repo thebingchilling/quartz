@@ -43,7 +43,7 @@ All work is committed directly to `main`. Upstream Android's branch is
     clash-ui/                   ← Clash screens
     connection-info/            ← geo-IP lookup and connected-row info
     warp/                       ← WARP generator (logic + screen)
-    branding/                   ← resource overlay: name, icon, colours
+    branding/                   ← resource overlay: icon, TV banner, notification glyph (res/), sources and PNGs (icon/)
   quartz.gradle                 ← Quartz overrides (app ID, name, provider authority); applied by one line in app/build.gradle.kts
   FORK.md                       ← this file
   .github/workflows/
@@ -592,8 +592,7 @@ additions in separate composables called from a single line.
 
 ## 13. Build order
 
-1. Repo setup: upstream remote, `quartz.gradle`, branding (name/ID done; icon
-   to do), `quartz-release.yml`. Confirm a clean merge from upstream.
+1. Repo setup: upstream remote, `quartz.gradle`, branding (name, ID and icon done), `quartz-release.yml`. Confirm a clean merge from upstream.
 2. WARP generator, slots and expiry (pure app code; proves the Settings hook).
 3. Engine submodules + mihomo engine, detecting importer, Clash UI on the
    REST API.
