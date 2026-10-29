@@ -1,0 +1,38 @@
+name: quartz-workflows
+
+# Keeps upstream's workflows off. Quartz runs only its own workflows
+# (quartz-*.yml) and upstream's PR format check (pr.yml); everything else
+# from WG Tunnel (nightly, crowdin-contributors, notifications, publish, ...)
+# is disabled through the API rather than edited or deleted, so upstream
+# merges never conflict on them. Runs whenever a push to main changes
+# .github/workflows (an upstream merge that adds a workflow is disabled
+# right away), and weekly as a safety net.
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/**"]
+  schedule:
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC, before quartz-release
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  disable-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disable everything but Quartz's workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$GH_REPO/actions/workflows" --paginate \
+            --jq '.workflows[] | select(.state == "active") | "\(.id) \(.path)"' |
+          while read -r id path; do
+            case "$path" in .github/workflows/*) ;; *) continue ;; esac # dependabot, pages, ...
+            case "${path##*/}" in quartz-*.yml | pr.yml) continue ;; esac
+            echo "Disabling $path"
+            gh api -X PUT "repos/$GH_REPO/actions/workflows/$id/disable"
+          done

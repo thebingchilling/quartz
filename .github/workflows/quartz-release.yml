@@ -97,7 +97,21 @@ jobs:
 
           git fetch --no-tags upstream "refs/tags/$tag:refs/tags/upstream-$tag"
           if ! git merge-base --is-ancestor "upstream-$tag" HEAD; then
+            merged=false
             if git merge --no-edit -m "Merge WG Tunnel $tag" "upstream-$tag"; then
+              merged=true
+            else
+              # Files Quartz deleted (e.g. .github/dependabot.yml) that upstream
+              # changed: keep them deleted. Any other conflict needs a person.
+              git diff --name-only --diff-filter=U -z | while IFS= read -r -d '' f; do
+                if [ "$(git status --porcelain -- "$f" | cut -c1-2)" = "DU" ]; then git rm -q -- "$f"; fi
+              done
+              if [ -z "$(git diff --name-only --diff-filter=U)" ]; then
+                git commit --no-edit -q
+                merged=true
+              fi
+            fi
+            if $merged; then
               git push origin HEAD:main
             else
               git merge --abort

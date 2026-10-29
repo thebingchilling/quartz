@@ -16,7 +16,9 @@ that also carries [wgtunnel/desktop](https://github.com/wgtunnel/desktop) under
 The goal is to change upstream files as little as possible, so that WG Tunnel
 (Android and Desktop), openvpn3 and mihomo can each be updated independently.
 
-All work is committed directly to `main`. Upstream Android's branch is
+All work is committed directly to `main`, the only branch: no feature
+branches. The only PRs are the ones `quartz-release` opens itself (an
+upstream merge that conflicts, an engine bump). Upstream Android's branch is
 `master`; desktop is merged from its release tags.
 
 ---
@@ -48,7 +50,7 @@ All work is committed directly to `main`. Upstream Android's branch is
   FORK.md                       ← this file
   .github/workflows/
     quartz-release.yml          ← weekly: new WG Tunnel Android/Desktop release → merge, build, release; engine bump PRs
-    engine-bump.yml             ← new openvpn3/mihomo release tag → PR (or Renovate)
+    quartz-workflows.yml        ← keeps every upstream workflow except pr.yml disabled
 ```
 
 Submodules are used for the engines so a version bump is a one-line pointer
@@ -91,8 +93,15 @@ change and upstream engine history stays out of this repo. Clone with
   an extra build on the same base (`-2`, `-3`, …). Tags start with `quartz-`
   so they never trigger upstream's `publish.yml`. Android releases are
   created with `--latest=false`, so "latest" is always a desktop release
-  (the desktop updater reads it). Disable upstream's `nightly` and
-  `crowdin-contributors` workflows in the Actions UI (not by editing them).
+  (the desktop updater reads it).
+- **Upstream automation never runs here.** `quartz-workflows.yml` disables
+  every upstream workflow (`nightly`, `crowdin-contributors`, `notifications`,
+  `publish*`, `build*`, …) through the Actions API, on each push to `main`
+  that touches `.github/workflows` and weekly, so workflows a future upstream
+  merge adds are switched off too. Only `quartz-*.yml` and upstream's
+  `pr.yml` (format check) stay on. The files themselves are left alone so
+  merges don't conflict. Dependabot is off (`.github/dependabot.yml`
+  deleted): dependency bumps come from upstream merges.
 - For now it ships the **fdroid** flavor: the standalone flavor's updater
   checks `wgtunnel/android` releases (`di/NetworkModule.kt`). To do: point it
   at this repo via a Koin override, then ship standalone.
@@ -569,6 +578,7 @@ conflicts.
 | `ui/screens/tunnels/components/TunnelList.kt` | Engine/expiry/delay badges, group toggle + dropdown, connection info on connected row | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
+| `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |
 | `.gitmodules` | Entry for `desktop/daemon/winsw` (copied from `desktop/.gitmodules`; git only reads the root file). Update it if desktop changes that submodule's URL. | Desktop build |
 | `app/.../MainActivity.kt` | `Route.Support` shows `quartz/ui/QuartzInfoScreen` instead of `SupportScreen` (import + one line) | Info tab: only About and Updates; Updates opens this repo's releases |
 | `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |
