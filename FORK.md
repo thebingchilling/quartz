@@ -534,7 +534,7 @@ conflicts.
 
 | File | Change | Why |
 |---|---|---|
-| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `quartz.app`, name "Quartz", provider authority `quartz.provider` |
+| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `app.quartz`, name "Quartz", provider authority `app.quartz.provider` |
 | Koin startup | Load fork module after upstream's | Override `TunnelProvider` |
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
 | Auto-tunnel candidate selection | Skip expired tunnels; allow group targets | WARP expiry, groups |

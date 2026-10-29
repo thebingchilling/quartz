@@ -8,9 +8,9 @@
 // namespace stays upstream's (com.zaneschepke.wireguardautotunnel): it is the
 // package of R and BuildConfig, not the installed app ID.
 
-def quartzId = "quartz.app"
+def quartzId = "app.quartz"
 def quartzName = "Quartz"
-def quartzAuthority = "quartz.provider"
+def quartzAuthority = "app.quartz.provider"
 
 android {
     defaultConfig {
