@@ -1,0 +1,276 @@
+package com.zaneschepke.wireguardautotunnel.desktop.util
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.CallSplit
+import androidx.compose.material.icons.automirrored.outlined.Forward
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.Computer
+import androidx.compose.material.icons.outlined.EnhancedEncryption
+import androidx.compose.material.icons.outlined.Https
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.NoEncryption
+import androidx.compose.material.icons.outlined.VpnKey
+import androidx.compose.material.icons.outlined.Wifi
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.wgtunnel.backend.model.dns.DnsValidationError
+import com.zaneschepke.wireguardautotunnel.client.data.model.AccentStyle
+import com.zaneschepke.wireguardautotunnel.client.data.model.Theme
+import com.zaneschepke.wireguardautotunnel.client.data.model.TrayIconAppearance
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.BootstrapDnsProtocol
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.SeamlessRecoveryBounceDelay
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.SplitDnsSuffixTarget
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.TransitDnsPolicy
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.TunnelDnsMode
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.TunnelDnsProtocol
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.TunnelMode
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.Res
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources._default
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_content
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_expressive
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_fidelity
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_fruit_salad
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_monochrome
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_neutral
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_rainbow
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_tonal_spot
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.accent_style_vibrant
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.amoled
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.automatic
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.bootstrap_system_dns_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dark
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.default_dns_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dns_error_empty
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dns_error_invalid_host
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dns_error_invalid_ip_or_host
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dns_error_invalid_port
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dns_error_invalid_scheme
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dns_error_invalid_url
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.doh
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.doh_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dot
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.dot_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.encrypted_dns
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.encrypted_dns_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.light
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.local_proxy
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.local_proxy_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.minutes_template
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.plain_dns
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.plain_dns_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.proxy
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.seconds_template
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.split_dns
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.split_dns_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.split_suffix_target_desc_system
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.split_suffix_target_desc_tunnel
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.split_suffix_target_system
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.split_suffix_target_tunnel
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.system
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.system_dns_only
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.system_dns_only_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.transit_dns_allow
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.transit_dns_allow_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.transit_dns_block
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.transit_dns_block_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.transit_dns_redirect
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.transit_dns_redirect_desc
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.vpn
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.vpn_desc
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
+
+@Composable
+fun TunnelMode.asTitleString(): String =
+    when (this) {
+        TunnelMode.VPN -> stringResource(Res.string.vpn)
+        TunnelMode.PROXY -> stringResource(Res.string.local_proxy)
+    }
+
+@Composable
+fun TunnelMode.asDescription(): String =
+    when (this) {
+        TunnelMode.VPN -> stringResource(Res.string.vpn_desc)
+        TunnelMode.PROXY -> stringResource(Res.string.local_proxy_desc)
+    }
+
+@Composable
+fun TunnelMode.asIcon(): ImageVector =
+    when (this) {
+        TunnelMode.VPN -> Icons.Outlined.VpnKey
+        TunnelMode.PROXY -> vectorResource(Res.drawable.proxy)
+    }
+
+fun desktopTunnelModes(): List<TunnelMode> = listOf(TunnelMode.VPN, TunnelMode.PROXY)
+
+@Composable
+fun TunnelDnsMode.asLabel(): String =
+    when (this) {
+        TunnelDnsMode.Off -> stringResource(Res.string._default)
+        TunnelDnsMode.Encrypted -> stringResource(Res.string.encrypted_dns)
+        TunnelDnsMode.Split -> stringResource(Res.string.split_dns)
+        TunnelDnsMode.AllLocal -> stringResource(Res.string.system_dns_only)
+    }
+
+@Composable
+fun TunnelDnsMode.asDescription(): String =
+    when (this) {
+        TunnelDnsMode.Off -> stringResource(Res.string.default_dns_desc)
+        TunnelDnsMode.Encrypted -> stringResource(Res.string.encrypted_dns_desc)
+        TunnelDnsMode.Split -> stringResource(Res.string.split_dns_desc)
+        TunnelDnsMode.AllLocal -> stringResource(Res.string.system_dns_only_desc)
+    }
+
+@Composable
+fun TunnelDnsMode.asIcon(): ImageVector =
+    when (this) {
+        TunnelDnsMode.Off -> Icons.Outlined.NoEncryption
+        TunnelDnsMode.Encrypted -> Icons.Outlined.EnhancedEncryption
+        TunnelDnsMode.Split -> Icons.AutoMirrored.Outlined.CallSplit
+        TunnelDnsMode.AllLocal -> Icons.Outlined.Wifi
+    }
+
+@Composable
+fun TunnelDnsProtocol.asLabel(): String =
+    when (this) {
+        TunnelDnsProtocol.Doh -> stringResource(Res.string.doh)
+        TunnelDnsProtocol.Dot -> stringResource(Res.string.dot)
+        TunnelDnsProtocol.Plain -> stringResource(Res.string.plain_dns)
+    }
+
+@Composable
+fun TunnelDnsProtocol.asDescription(): String =
+    when (this) {
+        TunnelDnsProtocol.Doh -> stringResource(Res.string.doh_desc)
+        TunnelDnsProtocol.Dot -> stringResource(Res.string.dot_desc)
+        TunnelDnsProtocol.Plain -> stringResource(Res.string.plain_dns_desc)
+    }
+
+@Composable
+fun TunnelDnsProtocol.asIcon(): ImageVector =
+    when (this) {
+        TunnelDnsProtocol.Doh -> Icons.Outlined.Https
+        TunnelDnsProtocol.Dot -> Icons.Outlined.EnhancedEncryption
+        TunnelDnsProtocol.Plain -> Icons.Outlined.NoEncryption
+    }
+
+@Composable
+fun BootstrapDnsProtocol.asLabel(): String =
+    when (this) {
+        BootstrapDnsProtocol.SYSTEM -> stringResource(Res.string.system)
+        BootstrapDnsProtocol.DOH -> stringResource(Res.string.doh)
+        BootstrapDnsProtocol.DOT -> stringResource(Res.string.dot)
+        BootstrapDnsProtocol.UDP -> stringResource(Res.string.plain_dns)
+    }
+
+@Composable
+fun BootstrapDnsProtocol.asDescription(): String =
+    when (this) {
+        BootstrapDnsProtocol.SYSTEM -> stringResource(Res.string.bootstrap_system_dns_desc)
+        BootstrapDnsProtocol.DOH -> stringResource(Res.string.doh_desc)
+        BootstrapDnsProtocol.DOT -> stringResource(Res.string.dot_desc)
+        BootstrapDnsProtocol.UDP -> stringResource(Res.string.plain_dns_desc)
+    }
+
+@Composable
+fun BootstrapDnsProtocol.asIcon(): ImageVector =
+    when (this) {
+        BootstrapDnsProtocol.SYSTEM -> Icons.Outlined.Computer
+        BootstrapDnsProtocol.DOH -> Icons.Outlined.Https
+        BootstrapDnsProtocol.DOT -> Icons.Outlined.EnhancedEncryption
+        BootstrapDnsProtocol.UDP -> Icons.Outlined.NoEncryption
+    }
+
+@Composable
+fun SplitDnsSuffixTarget.asLabel(): String =
+    when (this) {
+        SplitDnsSuffixTarget.System -> stringResource(Res.string.split_suffix_target_system)
+        SplitDnsSuffixTarget.Tunnel -> stringResource(Res.string.split_suffix_target_tunnel)
+    }
+
+@Composable
+fun SplitDnsSuffixTarget.asDescription(): String =
+    when (this) {
+        SplitDnsSuffixTarget.System -> stringResource(Res.string.split_suffix_target_desc_system)
+        SplitDnsSuffixTarget.Tunnel -> stringResource(Res.string.split_suffix_target_desc_tunnel)
+    }
+
+@Composable
+fun SplitDnsSuffixTarget.asIcon(): ImageVector =
+    when (this) {
+        SplitDnsSuffixTarget.System -> Icons.Outlined.Computer
+        SplitDnsSuffixTarget.Tunnel -> Icons.Outlined.VpnKey
+    }
+
+@Composable
+fun TransitDnsPolicy.asLabel(): String =
+    when (this) {
+        TransitDnsPolicy.Redirect -> stringResource(Res.string.transit_dns_redirect)
+        TransitDnsPolicy.Block -> stringResource(Res.string.transit_dns_block)
+        TransitDnsPolicy.Allow -> stringResource(Res.string.transit_dns_allow)
+    }
+
+@Composable
+fun TransitDnsPolicy.asDescription(): String =
+    when (this) {
+        TransitDnsPolicy.Redirect -> stringResource(Res.string.transit_dns_redirect_desc)
+        TransitDnsPolicy.Block -> stringResource(Res.string.transit_dns_block_desc)
+        TransitDnsPolicy.Allow -> stringResource(Res.string.transit_dns_allow_desc)
+    }
+
+@Composable
+fun TransitDnsPolicy.asIcon(): ImageVector =
+    when (this) {
+        TransitDnsPolicy.Redirect -> Icons.AutoMirrored.Outlined.Forward
+        TransitDnsPolicy.Block -> Icons.Outlined.Block
+        TransitDnsPolicy.Allow -> Icons.Outlined.LockOpen
+    }
+
+@Composable
+fun DnsValidationError.asLabel(): String =
+    when (this) {
+        DnsValidationError.Empty -> stringResource(Res.string.dns_error_empty)
+        DnsValidationError.InvalidUrl -> stringResource(Res.string.dns_error_invalid_url)
+        DnsValidationError.InvalidScheme -> stringResource(Res.string.dns_error_invalid_scheme)
+        DnsValidationError.InvalidHost -> stringResource(Res.string.dns_error_invalid_host)
+        DnsValidationError.InvalidPort -> stringResource(Res.string.dns_error_invalid_port)
+        DnsValidationError.InvalidIpOrHost ->
+            stringResource(Res.string.dns_error_invalid_ip_or_host)
+    }
+
+@Composable
+fun SeamlessRecoveryBounceDelay.asLabel(): String =
+    if (seconds >= 60) stringResource(Res.string.minutes_template, seconds / 60)
+    else stringResource(Res.string.seconds_template, seconds)
+
+@Composable
+fun AccentStyle.asLabel(): String =
+    when (this) {
+        AccentStyle.TONAL_SPOT -> stringResource(Res.string.accent_style_tonal_spot)
+        AccentStyle.NEUTRAL -> stringResource(Res.string.accent_style_neutral)
+        AccentStyle.VIBRANT -> stringResource(Res.string.accent_style_vibrant)
+        AccentStyle.EXPRESSIVE -> stringResource(Res.string.accent_style_expressive)
+        AccentStyle.RAINBOW -> stringResource(Res.string.accent_style_rainbow)
+        AccentStyle.FRUIT_SALAD -> stringResource(Res.string.accent_style_fruit_salad)
+        AccentStyle.MONOCHROME -> stringResource(Res.string.accent_style_monochrome)
+        AccentStyle.FIDELITY -> stringResource(Res.string.accent_style_fidelity)
+        AccentStyle.CONTENT -> stringResource(Res.string.accent_style_content)
+    }
+
+@Composable
+fun Theme.asLabel(): String =
+    when (this) {
+        Theme.DEFAULT -> stringResource(Res.string._default)
+        Theme.DARK -> stringResource(Res.string.dark)
+        Theme.LIGHT -> stringResource(Res.string.light)
+        Theme.AMOLED -> stringResource(Res.string.amoled)
+        Theme.SYSTEM -> stringResource(Res.string.system)
+    }
+
+@Composable
+fun TrayIconAppearance.asLabel(): String =
+    when (this) {
+        TrayIconAppearance.AUTOMATIC -> stringResource(Res.string.automatic)
+        TrayIconAppearance.LIGHT -> stringResource(Res.string.light)
+        TrayIconAppearance.DARK -> stringResource(Res.string.dark)
+    }

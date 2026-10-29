@@ -1,0 +1,14 @@
+[
+  {
+    "name": "com.zaneschepke.wireguardautotunnel.core.wifi.WifiSsidNative",
+    "methods": [
+      { "name": "authorization", "parameterTypes": [] },
+      { "name": "requestAuthorization", "parameterTypes": [] },
+      { "name": "associated", "parameterTypes": [] },
+      { "name": "currentSsid", "parameterTypes": [] },
+      { "name": "waitForEvents", "parameterTypes": ["double"] },
+      { "name": "wakeWait", "parameterTypes": [] },
+      { "name": "setObserved", "parameterTypes": ["java.lang.String"] }
+    ]
+  }
+]

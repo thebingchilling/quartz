@@ -1,0 +1,6 @@
+What's new:
+- Improve Windows tunnel slow starts
+- Location permission and Wi-Fi SSID agent for auto-tunnel on macOS
+- Fixes for macOS app docking behavior
+- Fixes for proxy mode with custom tunnel DNS
+- Support for tunneled VMs on macOS

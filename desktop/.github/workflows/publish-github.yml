@@ -1,0 +1,123 @@
+name: publish-github
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Git tag to publish (e.g. v1.0.2 or v1.0.3-beta)"
+        type: string
+        required: true
+      version:
+        description: "Version written into update YAML"
+        type: string
+        required: true
+      channel:
+        description: "Nucleus update channel: latest, beta, or alpha"
+        type: string
+        required: true
+      release_type:
+        description: "GitHub release type: release, prerelease, or draft"
+        type: string
+        required: true
+      replace_existing:
+        description: "Delete the existing GitHub release/tag before publishing"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: publish-github
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set latest tag
+        uses: rickstaa/action-create-tag@v1
+        id: tag_creation
+        with:
+          tag: "latest"
+          message: "Automated tag for HEAD commit"
+          force_push_tag: true
+          github_token: ${{ env.GH_TOKEN }}
+          tag_exists_error: false
+
+      - name: Get latest release
+        id: latest_release
+        uses: kaliber5/action-get-release@v1
+        with:
+          token: ${{ env.GH_TOKEN }}
+          latest: true
+
+      - name: Generate Changelog
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ env.GH_TOKEN }}
+          toTag: ${{ steps.latest_release.outputs.tag_name }}
+          fromTag: "latest"
+          writeToFile: false
+
+      - name: Read curated release notes
+        id: release_notes
+        run: |
+          set -euo pipefail
+          FILE="changelogs/${{ inputs.version }}.txt"
+          if [ -f "$FILE" ]; then
+            NOTES="$(cat "$FILE")"
+          else
+            echo "No curated changelog found at $FILE, skipping."
+            NOTES=""
+          fi
+          {
+            echo "notes<<EOF_RELEASE_NOTES"
+            echo "$NOTES"
+            echo "EOF_RELEASE_NOTES"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          pattern: release-assets-*
+
+      - name: Replace existing release
+        if: inputs.replace_existing
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.tag }}"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+
+      - name: Generate update YML
+        uses: NucleusFramework/Nucleus/.github/actions/generate-update-yml@main
+        with:
+          artifacts-path: artifacts
+          version: ${{ inputs.version }}
+          channel: ${{ inputs.channel }}
+
+      - name: Publish GitHub Release
+        uses: NucleusFramework/Nucleus/.github/actions/publish-release@main
+        with:
+          artifacts-path: artifacts
+          tag: ${{ inputs.tag }}
+          release-type: ${{ inputs.release_type }}
+
+      - name: Set release notes
+        env:
+          RELEASE_NOTES: ${{ steps.release_notes.outputs.notes }}
+          CHANGELOG: ${{ steps.changelog.outputs.changes }}
+        run: |
+          set -euo pipefail
+          BODY_FILE="$(mktemp)"
+          {
+            printf '%s\n' "$RELEASE_NOTES"
+            echo
+            echo "### Changelog"
+            printf '%s\n' "$CHANGELOG"
+          } > "$BODY_FILE"
+          gh release edit "${{ inputs.tag }}" --notes-file "$BODY_FILE"
