@@ -265,11 +265,8 @@ fun WarpScreen(viewModel: WarpViewModel = koinViewModel()) {
                 onSave = viewModel::save,
                 onDiscard = viewModel::discard,
                 onExport = viewModel::export,
-                onQr = { variant ->
-                    qrConfig =
-                        WarpConfigBuilder.tunnelName(generated.options.slot, variant) to
-                            generated.configs.getValue(variant)
-                },
+                onExportClash = { variant -> viewModel.export(variant, clash = true) },
+                onQr = { variant -> viewModel.qrConfig(variant)?.let { qrConfig = it } },
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
@@ -392,6 +389,7 @@ private fun GeneratedCard(
     onSave: () -> Unit,
     onDiscard: () -> Unit,
     onExport: (WarpVariant) -> Unit,
+    onExportClash: (WarpVariant) -> Unit,
     onQr: (WarpVariant) -> Unit,
 ) {
     Card(modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()) {
@@ -428,6 +426,9 @@ private fun GeneratedCard(
                     }
                     TextButton(onClick = { onQr(variant) }) {
                         Text(stringResource(R.string.quartz_warp_qr))
+                    }
+                    TextButton(onClick = { onExportClash(variant) }) {
+                        Text(stringResource(R.string.quartz_warp_clash))
                     }
                 }
             }

@@ -20,7 +20,12 @@ internal data class BackupManifest(
 }
 
 internal sealed interface DecodedBackup {
-    data class Ok(val database: ByteArray, val manifest: BackupManifest?) : DecodedBackup
+    data class Ok(
+        val database: ByteArray,
+        val manifest: BackupManifest?,
+        // [fork] Quartz: extra entries, by name without the "quartz/" prefix
+        val extras: Map<String, ByteArray> = emptyMap(),
+    ) : DecodedBackup
 
     data object Invalid : DecodedBackup
 
@@ -42,12 +47,16 @@ internal object BackupArchive {
     private const val DATABASE_AES = "database.sqlite3.aes"
     private const val MAX_ENTRY_BYTES = 64 * 1024 * 1024
     private val SQLITE_MAGIC = "SQLite format 3\u0000".encodeToByteArray()
+    // [fork] Quartz keeps its own data in extra entries, encrypted like the database
+    private const val EXTRA_PREFIX = "quartz/"
+    private const val EXTRA_AES = ".aes"
 
     fun write(
         out: OutputStream,
         database: ByteArray,
         manifest: BackupManifest,
         password: String?,
+        extras: Map<String, ByteArray> = emptyMap(),
     ) {
         val secret = password?.takeIf { it.isNotBlank() }
         ZipOutputStream(out).use { zip ->
@@ -59,6 +68,13 @@ internal object BackupArchive {
             zip.putNextEntry(ZipEntry(entry))
             zip.write(payload)
             zip.closeEntry()
+            extras.forEach { (name, data) ->
+                zip.putNextEntry(
+                    ZipEntry(EXTRA_PREFIX + name + if (secret != null) EXTRA_AES else "")
+                )
+                zip.write(if (secret == null) data else BackupCipher.encrypt(data, secret))
+                zip.closeEntry()
+            }
         }
     }
 
@@ -95,7 +111,7 @@ internal object BackupArchive {
         if (userVersion > appSchemaVersion || (manifest?.schemaVersion ?: 0) > appSchemaVersion) {
             return DecodedBackup.NewerVersion
         }
-        return DecodedBackup.Ok(database, manifest)
+        return DecodedBackup.Ok(database, manifest, unpacked.extras)
     }
 
     fun sqliteUserVersion(bytes: ByteArray): Int? {
@@ -111,10 +127,16 @@ internal object BackupArchive {
         var manifest: BackupManifest? = null
         var database: ByteArray? = null
         var databaseName: String? = null
+        val extras = mutableMapOf<String, ByteArray>()
         ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
                 val name = entry.name
+                if (name.startsWith(EXTRA_PREFIX)) {
+                    extras[name.removePrefix(EXTRA_PREFIX)] =
+                        readEntry(zip) ?: return Unpacked(failure = DecodedBackup.Invalid)
+                    continue
+                }
                 if (name != MANIFEST && name != DATABASE && name != DATABASE_AES) {
                     return Unpacked(failure = DecodedBackup.Invalid)
                 }
@@ -137,12 +159,24 @@ internal object BackupArchive {
             return Unpacked(failure = DecodedBackup.Invalid)
         if (!encryptedEntry) {
             if (password != null) return Unpacked(failure = DecodedBackup.Invalid)
-            return Unpacked(payload, manifestValue)
+            return Unpacked(
+                payload,
+                manifestValue,
+                extras = extras.filterKeys { !it.endsWith(EXTRA_AES) },
+            )
         }
         if (password == null) return Unpacked(failure = DecodedBackup.Invalid)
         val clear =
             decrypt(payload, password) ?: return Unpacked(failure = DecodedBackup.WrongPassword)
-        return Unpacked(clear, manifestValue)
+        val clearExtras =
+            extras
+                .filterKeys { it.endsWith(EXTRA_AES) }
+                .mapKeys { it.key.removeSuffix(EXTRA_AES) }
+                .mapValues {
+                    decrypt(it.value, password)
+                        ?: return Unpacked(failure = DecodedBackup.WrongPassword)
+                }
+        return Unpacked(clear, manifestValue, extras = clearExtras)
     }
 
     private fun decrypt(data: ByteArray, password: String): ByteArray? =
@@ -179,6 +213,7 @@ internal object BackupArchive {
         val database: ByteArray? = null,
         val manifest: BackupManifest? = null,
         val failure: DecodedBackup? = null,
+        val extras: Map<String, ByteArray> = emptyMap(),
     )
 }
 

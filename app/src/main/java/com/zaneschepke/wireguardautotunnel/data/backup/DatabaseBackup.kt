@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.provider.OpenableColumns
+import app.quartz.core.QuartzBackup
 import com.zaneschepke.wireguardautotunnel.BuildConfig
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.core.orchestration.AutoTunnelCoordinator
@@ -75,16 +76,19 @@ class DatabaseBackup(
                         appVersionName = BuildConfig.VERSION_NAME,
                         encrypted = !password.isNullOrBlank(),
                     )
+                val extras = QuartzBackup.export() // [fork] Quartz data
                 if (uri != null) {
                     val stream =
                         context.contentResolver.openOutputStream(uri)
                             ?: return@withContext BackupWriteResult.Failed
-                    stream.use { BackupArchive.write(it, bytes, manifest, password) }
+                    stream.use { BackupArchive.write(it, bytes, manifest, password, extras) }
                     BackupWriteResult.Success
                 } else {
                     val name = newBackupFileName()
                     val file = File(context.cacheDir, name)
-                    file.outputStream().use { BackupArchive.write(it, bytes, manifest, password) }
+                    file.outputStream().use {
+                        BackupArchive.write(it, bytes, manifest, password, extras)
+                    }
                     val exported =
                         fileUtils.exportFile(file, uri = null, FileUtils.ZIP_FILE_MIME_TYPE)
                     file.delete()
@@ -107,7 +111,10 @@ class DatabaseBackup(
             val appSchema = database.openHelper.readableDatabase.version
             when (val decoded = BackupArchive.read(bytes, displayName(uri), password, appSchema)) {
                 is DecodedBackup.Ok ->
-                    runCatching { stopVpnAndReplace(decoded.database) }
+                    runCatching {
+                            stopVpnAndReplace(decoded.database)
+                            QuartzBackup.restore(decoded.extras) // [fork] Quartz data
+                        }
                         .fold(
                             onSuccess = { RestoreResult.Success },
                             onFailure = {

@@ -75,6 +75,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import app.quartz.core.ui.QuartzDialogs
 import app.quartz.warp.ui.WarpScreen
 import com.dokar.sonner.TextToastAction
 import com.dokar.sonner.Toast
@@ -476,6 +477,7 @@ class MainActivity : AppCompatActivity() {
                 LocalNavController provides navController,
             ) {
                 WireguardAutoTunnelTheme(theme = uiState.theme) {
+                    if (!showLock) QuartzDialogs() // [fork-ui] Quartz
                     VpnDeniedDialog(
                         showVpnPermissionDialog,
                         onDismiss = {

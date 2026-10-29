@@ -17,6 +17,10 @@ data class WarpRegistration(
     val accountType: String?,
     /** Cloudflare's account TTL as epoch millis, when it sets one. */
     val ttlAt: Long?,
+    /**
+     * `config.client_id`: three bytes WARP expects as WireGuard's reserved field (used by Clash).
+     */
+    val clientId: String? = null,
 )
 
 /**
@@ -104,9 +108,10 @@ object WarpConfigBuilder {
         appendLine("MTU = ${options.mtu}")
         if (variant == WarpVariant.AWG) {
             requireNotNull(awg) { "AmneziaWG needs I1..I5" }
-            appendLine("Jc = ${options.junk.jc}")
-            appendLine("Jmin = ${options.junk.jMin}")
-            appendLine("Jmax = ${options.junk.jMax}")
+            val junk = options.junk.ordered()
+            appendLine("Jc = ${junk.jc}")
+            appendLine("Jmin = ${junk.jMin}")
+            appendLine("Jmax = ${junk.jMax}")
             // Locked: Cloudflare's end is stock WireGuard.
             appendLine("S1 = 0")
             appendLine("S2 = 0")

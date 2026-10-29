@@ -173,8 +173,8 @@ would clash with upstream's migration numbers. Instead:
     last_ok_at, last_error, userinfo…)`
 - the ~9 places that read `quickConfig` are guarded so non-WireGuard tunnels
   skip WireGuard parsing (one small, separate commit);
-- backups add a separate file for our data rather than changing upstream's
-  format.
+- backups carry our data as extra `quartz/…` entries in upstream's backup zip
+  (upstream's own entries are unchanged; see §9 "Implementation status").
 
 ## 4. Groups — `fork/groups`
 
@@ -399,34 +399,46 @@ unofficial, so the client sits behind a small interface.
 
 Built in step 2 (`fork/warp`, `fork/core`):
 
-- `CloudflareWarpApi`: registration with the version fallback, WARP+ licence,
-  delete. Keys come from wgtunnel/core's `Key` (MIT). Cloudflare's unset
-  `account.ttl` (`0001-01-01…`) is ignored.
-- `WarpConfigBuilder` / `WarpMarkers`: config text and markers; unit tests
-  check upstream's parser reads both variants and keeps the markers through
-  `parseQuickString` → `asQuickString`.
-- I1: taken from `fork/warp/src/main/assets/warp/awg-payloads.txt` when it has
-  entries. **To do:** copy the captured payloads from the site's
-  `vendor/awg-payloads.js` into it (the session that built this couldn't
-  reach the site repo). Until then the app builds a real QUIC v1 Initial
-  carrying a TLS ClientHello for a popular host (`QuicInitial`, checked against
-  RFC 9001's test vectors), so I1 still decrypts to a normal HTTP/3 handshake.
-  The endpoint lists in `WarpEndpoints` should also be checked against the
-  site's.
+- **Parity with the site** (`thebingchilling/site` `tools/warp`): same API
+  versions and registration body (`type: Linux`, `warp_enabled`), same
+  `{result: …}` handling and `success: false` errors, same anycast IP and port
+  lists for **Random**, same defaults (DNS `1.1.1.1, 1.0.0.1`, MTU 1280,
+  keepalive off), Jmin/Jmax swapped when entered the wrong way round, I2–I5
+  as 1–3 blocks of 16–63 random bytes, and the same three captured I1 packets
+  (`fork/warp/src/main/assets/warp/awg-payloads.txt`, copied from the site's
+  `vendor/awg-payloads.js`). If that file is ever empty the app builds a real
+  QUIC v1 Initial instead (`QuicInitial`, checked against RFC 9001's vectors).
+  Like the site, an AmneziaWG config too long for a QR code says so.
+- **Site to do:** the site doesn't write the `# WGT-…` markers yet, so its
+  configs import as plain tunnels. Adding the four comment lines inside
+  `[Interface]` (see above) makes them slot-aware here.
+- `CloudflareWarpApi`: also WARP+ licence and delete; `client_id` is kept for
+  Clash's `reserved`. Keys come from wgtunnel/core's `Key` (MIT). Cloudflare's
+  unset `account.ttl` (`0001-01-01…`) is ignored.
+- `WarpConfigBuilder` / `WarpMarkers`: unit tests check upstream's parser
+  reads both variants and keeps the markers through `parseQuickString` →
+  `asQuickString`.
 - `WarpRepository`: slot + variant replace-in-place, new tunnels by upstream's
   naming scheme, old registration deleted after replace, reconnect when a
   replaced tunnel is running, detach. Imported files with markers are adopted
-  by `QuartzSync`: a free slot is kept, a taken one moves to `warp-2`, … (the
-  **Replace existing / Import as separate** prompt comes with the importer,
-  step 3).
+  by `QuartzSync` into their slot when it's free; when it's taken,
+  `QuartzDialogs` asks **Replace existing** (the import's config goes into the
+  existing tunnel, the import is removed) or **Import as separate** (next free
+  slot, e.g. `warp-2`). Dismissing asks again on the next app start.
+- **→ Clash:** exports a `proxies:` YAML with one mihomo `wireguard` proxy
+  (`reserved` from `client_id`, `amnezia-wg-option` with I1–I5). Adding it to
+  an existing Clash profile comes with the Clash engine (step 3).
 - Expiry: `ExpiryGuardTunnelProvider` (Koin override of `TunnelProvider`)
-  refuses expired starts; `WarpExpiry` keeps one WorkManager job for the next
+  refuses expired starts; auto-tunnel never sees expired tunnels as candidates
+  (`QuartzAutoTunnel`); `WarpExpiry` keeps one WorkManager job for the next
   warning/expiry (WorkManager handles reboot and clock changes; a check also
   runs on app start), stops the tunnel, notifies (lockdown-aware), optionally
-  revokes. Badges via `quartzTunnelDescription`.
-- Not yet: auto-tunnel skipping expired tunnels before trying them (today the
-  start is refused, step 4/5 with the provider and groups); **→ Clash** export
-  (step 3); fork data in backups.
+  revokes. Badges via `quartzTunnelDescription`. Groups skipping expired
+  members comes with groups (step 5).
+- Backups: `tunnel_meta` goes into upstream's backup zip as
+  `quartz/tunnel_meta.json` (`.aes` with the backup's password). Restoring a
+  backup without it (from WG Tunnel) clears `tunnel_meta`; marked tunnels are
+  re-adopted.
 
 ## 10. UI screens
 
@@ -614,10 +626,11 @@ conflicts.
 | `app/schemas/app.quartz.core.data.ForkDatabase/` | New files only (Room schema export of `ForkDatabase`) | Room migrations |
 | `WireGuardAutoTunnel.kt` (Koin startup) | `quartzModule` added last to `modules(…)` | Fork Koin module; overrides `TunnelProvider` |
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
-| Auto-tunnel candidate selection | Skip expired tunnels; allow group targets | WARP expiry, groups |
+| `service/autotunnel/AutoTunnelService.kt` | Tunnel flow wrapped in `QuartzAutoTunnel.candidates(…)` (skips expired, done); group targets later | WARP expiry, groups |
+| `data/backup/BackupArchive.kt`, `DatabaseBackup.kt` | Optional `quartz/…` zip entries (encrypted like the database); `QuartzBackup.export()` / `restore()` calls | Fork data in backups |
 | `ui/navigation/Route.kt` | `Route.Warp` (+ its `Tab` mapping); more routes later | Clash, WARP, import, groups |
 | `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route | Exhaustive `when` over `Route` |
-| `MainActivity.kt` | `entry<Route.Warp> { WarpScreen() }` | Nav graph |
+| `MainActivity.kt` | `entry<Route.Warp> { WarpScreen() }`; `QuartzDialogs()` under the theme (hidden while the PIN lock shows) | Nav graph; WARP import prompt |
 | `ui/screens/settings/SettingsScreen.kt` | "WARP generator" row (done); "Connection info" later | Settings |
 | `ui/screens/tunnels/components/TunnelImportSheet.kt` | "Generate WARP" entry (done); detecting Import replaces the others later | Import |
 | `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
@@ -651,7 +664,7 @@ additions in separate composables called from a single line.
 ## 13. Build order
 
 1. Repo setup: upstream remote, `quartz.gradle`, branding (name, ID and icon done), `quartz-release.yml`. Confirm a clean merge from upstream.
-2. WARP generator, slots and expiry (pure app code; proves the Settings hook). Done; see §9 "Implementation status" for the leftovers.
+2. WARP generator, slots and expiry (pure app code; proves the Settings hook). Done (§9 "Implementation status"); groups and Clash parts land with steps 3 and 5.
 3. Engine submodules + mihomo engine, detecting importer, Clash UI on the
    REST API.
 4. `MultiEngineTunnelProvider`, `ForkDatabase`, `quickConfig` guards — wire

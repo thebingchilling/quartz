@@ -19,7 +19,6 @@ import io.ktor.http.isSuccess
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.UUID
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -78,15 +77,13 @@ class CloudflareWarpApi(
         privateKey: String,
         publicKey: String,
     ): WarpRegistration {
-        val installId = UUID.randomUUID().toString()
+        // Same body as the site's generator (thebingchilling/site tools/warp).
         val body = buildJsonObject {
             put("key", publicKey)
-            put("install_id", installId)
-            put("fcm_token", "$installId:APA91b${UUID.randomUUID().toString().replace("-", "")}")
+            put("install_id", "")
+            put("warp_enabled", true)
             put("tos", TOS_FORMAT.format(Instant.now()))
-            put("model", "PC")
-            put("serial_number", installId)
-            put("type", "Android")
+            put("type", DEVICE_TYPE)
             put("locale", "en_US")
         }
         val response =
@@ -117,9 +114,16 @@ class CloudflareWarpApi(
 
     private suspend fun HttpResponse.json(): JsonObject {
         val text = bodyAsText()
-        if (!status.isSuccess()) throw WarpApiException("HTTP ${status.value}: ${text.take(200)}")
-        return runCatching { JSON.parseToJsonElement(text).jsonObject }
-            .getOrElse { throw WarpApiException("Unexpected response", it) }
+        val json = runCatching { JSON.parseToJsonElement(text).jsonObject }.getOrNull()
+        if (
+            !status.isSuccess() ||
+                json == null ||
+                json["success"]?.jsonPrimitive?.contentOrNull == "false"
+        ) {
+            val message = json?.let(::apiErrorMessage) ?: text.take(200)
+            throw WarpApiException("HTTP ${status.value}: $message")
+        }
+        return json
     }
 
     private fun io.ktor.client.request.HttpRequestBuilder.headers() {
@@ -131,6 +135,7 @@ class CloudflareWarpApi(
         /** Tried in order until one registers (FORK.md §9). */
         val API_VERSIONS = listOf("v0a737", "v0a1909051800", "v0i1909051800")
         private const val CLIENT_VERSION = "a-6.30-3596"
+        private const val DEVICE_TYPE = "Linux"
         private val JSON = Json {
             ignoreUnknownKeys = true
             isLenient = true
@@ -147,13 +152,23 @@ class CloudflareWarpApi(
                 }
             }
 
+        /** Cloudflare's own message from `errors[0].message` or `error.message`, if any. */
+        fun apiErrorMessage(json: JsonObject): String? =
+            ((json["errors"] as? kotlinx.serialization.json.JsonArray)?.firstOrNull() as? JsonObject
+                    ?: json["error"] as? JsonObject)
+                ?.get("message")
+                ?.jsonPrimitive
+                ?.contentOrNull
+
+        private fun stripCidr(address: String) = address.substringBefore('/')
+
         /** Accepts both the bare and the `{"result": …}`-wrapped response shapes. */
         fun parseRegistration(
             response: JsonObject,
             version: String,
             privateKey: String,
         ): WarpRegistration {
-            val root = (response["result"] as? JsonObject) ?: response
+            val root = (response["result"] as? JsonObject)?.takeIf { "config" in it } ?: response
             fun JsonElement?.str(): String? =
                 (this as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
             fun JsonObject.obj(name: String) = this[name] as? JsonObject
@@ -179,9 +194,16 @@ class CloudflareWarpApi(
                         ?: throw WarpApiException("Response has no peer key"),
                 endpointHost = host,
                 addressV4 =
-                    addresses["v4"].str() ?: throw WarpApiException("Response has no IPv4 address"),
-                addressV6 = addresses["v6"].str(),
-                accountType = account?.get("account_type").str(),
+                    addresses["v4"].str()?.let(::stripCidr)
+                        ?: throw WarpApiException("Response has no IPv4 address"),
+                addressV6 = addresses["v6"].str()?.let(::stripCidr),
+                accountType =
+                    listOfNotNull(
+                            "WARP+".takeIf { account?.get("warp_plus").str() == "true" },
+                            account?.get("account_type").str() ?: "free",
+                        )
+                        .joinToString(" "),
+                clientId = config["client_id"].str(),
                 // Unset TTL comes back as 0001-01-01T00:00:00Z: only a future time counts.
                 ttlAt =
                     account

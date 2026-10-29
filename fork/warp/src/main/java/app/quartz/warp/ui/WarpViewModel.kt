@@ -2,6 +2,7 @@ package app.quartz.warp.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.quartz.warp.ClashExport
 import app.quartz.warp.EndpointChoice
 import app.quartz.warp.ExpiryChoice
 import app.quartz.warp.GeneratedWarp
@@ -166,24 +167,49 @@ class WarpViewModel(
 
     fun discard() = _state.update { it.copy(generated = null) }
 
-    fun export(variant: WarpVariant) {
+    /** Exports [variant] as a `.conf`, or with [clash] as a mihomo proxy `.yaml`. */
+    fun export(variant: WarpVariant, clash: Boolean = false) {
         val generated = _state.value.generated ?: return
         val config = generated.configs[variant] ?: return
         val name = WarpConfigBuilder.tunnelName(generated.options.slot, variant)
+        val content =
+            if (clash) ClashExport.proxyYaml(name, config, generated.registration.clientId)
+            else config
         viewModelScope.launch {
             globalEffectRepository.post(
                 GlobalSideEffect.ExportFile(
                     uri = null,
-                    fileName = "$name.conf",
+                    fileName = if (clash) "$name.yaml" else "$name.conf",
                     mimeType = FileUtils.ALL_FILE_TYPES,
                     successMessage = StringValue.StringResource(R.string.export_success),
                     prepareFile = { file ->
-                        file.writeText(config)
+                        file.writeText(content)
                         if (file.length() == 0L) throw IOException("Failed to create config file")
                     },
                 )
             )
         }
+    }
+
+    /**
+     * The config to show as a QR code, or null (with a message) when it's too long for one: an
+     * AmneziaWG config's ~1.2 KB I1 packet is past what a QR code holds, as on the site.
+     */
+    fun qrConfig(variant: WarpVariant): Pair<String, String>? {
+        val generated = _state.value.generated ?: return null
+        val config = generated.configs[variant] ?: return null
+        if (config.toByteArray().size > QR_MAX_BYTES) {
+            viewModelScope.launch {
+                globalEffectRepository.post(
+                    GlobalSideEffect.Snackbar(
+                        StringValue.StringResource(R.string.quartz_warp_qr_too_long),
+                        ToastType.Info,
+                    )
+                )
+            }
+            return null
+        }
+        return WarpConfigBuilder.tunnelName(generated.options.slot, variant) to config
     }
 
     fun detach(tunnelId: Int) = viewModelScope.launch { repository.detach(tunnelId) }
@@ -245,6 +271,9 @@ class WarpViewModel(
     }
 
     private companion object {
+        /** Byte-mode capacity of a version 40 QR code at upstream's error correction (M). */
+        const val QR_MAX_BYTES = 2331
+
         /** host:port, IPv4:port or [IPv6]:port. */
         val ENDPOINT = Regex("^(\\[[0-9a-fA-F:]+]|[A-Za-z0-9.-]+):\\d{1,5}$")
     }

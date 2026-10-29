@@ -30,7 +30,10 @@ enum class JunkPreset(val jc: Int, val jMin: Int, val jMax: Int) {
 
 data class Junk(val jc: Int, val jMin: Int, val jMax: Int) {
     val isValid: Boolean
-        get() = jc in 0..128 && jMin in 0..1280 && jMax in jMin..1280
+        get() = jc in 0..128 && jMin in 0..1280 && jMax in 0..1280
+
+    /** Jmin/Jmax in order, as the site does when they're entered the wrong way round. */
+    fun ordered() = Junk(jc, minOf(jMin, jMax), maxOf(jMin, jMax))
 
     companion object {
         val DEFAULT = Junk(JunkPreset.MEDIUM.jc, JunkPreset.MEDIUM.jMin, JunkPreset.MEDIUM.jMax)
@@ -64,7 +67,7 @@ data class WarpOptions(
     val mtu: Int = DEFAULT_MTU,
     val dns: String = DEFAULT_DNS,
     val allowedIps: String = DEFAULT_ALLOWED_IPS,
-    val keepalive: Int? = DEFAULT_KEEPALIVE,
+    val keepalive: Int? = null,
     val license: String? = null,
     /** Host the I1 QUIC Initial pretends to connect to; null picks one of [MIMIC_HOSTS]. */
     val mimicHost: String? = null,
@@ -77,9 +80,9 @@ data class WarpOptions(
     companion object {
         const val DEFAULT_SLOT = "warp"
         const val DEFAULT_MTU = 1280
-        const val DEFAULT_DNS = "1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001"
+        const val DEFAULT_DNS = "1.1.1.1, 1.0.0.1"
         const val DEFAULT_ALLOWED_IPS = "0.0.0.0/0, ::/0"
-        const val DEFAULT_KEEPALIVE = 25
+        const val DEFAULT_KEEPALIVE = 0
         val MIMIC_HOSTS =
             listOf(
                 "www.google.com",
@@ -99,16 +102,42 @@ data class WarpOptions(
 object WarpEndpoints {
     const val DEFAULT_HOST = "engage.cloudflareclient.com:2408"
 
-    /** WARP anycast addresses (8 each from the three WARP /24s). */
+    /**
+     * WARP anycast addresses and the UDP ports its servers answer on besides 2408 (a network that
+     * blocks the default port often misses these). Same lists as the site's generator and
+     * Skiro1/warp-awg-gen.
+     */
     val IPS: List<String> =
-        listOf("162.159.192", "162.159.193", "162.159.195").flatMap { net ->
-            (1..8).map { "$net.$it" }
-        }
+        listOf(
+                1,
+                11,
+                14,
+                21,
+                24,
+                31,
+                34,
+                41,
+                44,
+                51,
+                54,
+                61,
+                64,
+                71,
+                74,
+                81,
+                84,
+                91,
+                94,
+                101,
+                105,
+                106,
+                205,
+                215,
+            )
+            .map { "162.159.192.$it" }
 
-    /** UDP ports WARP answers on. */
     val PORTS: List<Int> =
         listOf(
-            500,
             854,
             859,
             864,
@@ -138,10 +167,8 @@ object WarpEndpoints {
             1074,
             1180,
             1387,
-            1701,
             1843,
             2371,
-            2408,
             2506,
             3138,
             3476,
@@ -150,7 +177,6 @@ object WarpEndpoints {
             4177,
             4198,
             4233,
-            4500,
             5279,
             5956,
             7103,
@@ -158,6 +184,10 @@ object WarpEndpoints {
             7156,
             7281,
             7559,
+            8319,
+            8742,
+            8854,
+            8886,
         )
 
     fun random(random: Random = Random.Default): String =

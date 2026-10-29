@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import app.quartz.core.QuartzAutoTunnel
 import com.wgtunnel.backend.Backend
 import com.wgtunnel.backend.autotunnel.AutoTunnelReconciler
 import com.zaneschepke.networkmonitor.ActiveNetwork
@@ -214,7 +215,8 @@ class AutoTunnelService : LifecycleService() {
         return combine(
                 settingsRepository.flow.map { it.tunnelMode }.distinctUntilChanged(),
                 autoTunnelRepository.flow,
-                tunnelsRepository.userTunnelsFlow,
+                // [fork] Quartz: expired tunnels aren't auto-tunnel candidates
+                QuartzAutoTunnel.candidates(tunnelsRepository.userTunnelsFlow),
             ) { appMode, autoTunnel, tunnels ->
                 Triple(appMode, autoTunnel, tunnels)
             }

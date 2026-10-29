@@ -3,8 +3,10 @@ package app.quartz.core.data
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /** Fork data for one upstream tunnel (FORK.md §3, data model). */
+@Serializable
 @Entity(tableName = "tunnel_meta")
 data class TunnelMeta(
     @PrimaryKey @ColumnInfo(name = "tunnel_id") val tunnelId: Int,

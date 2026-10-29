@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -39,4 +40,12 @@ interface TunnelMetaDao {
 
     @Query("DELETE FROM tunnel_meta WHERE tunnel_id IN (:tunnelIds)")
     suspend fun deleteAll(tunnelIds: Collection<Int>)
+
+    @Query("DELETE FROM tunnel_meta") suspend fun clear()
+
+    @Transaction
+    suspend fun replaceAll(metas: List<TunnelMeta>) {
+        clear()
+        metas.forEach { upsert(it) }
+    }
 }

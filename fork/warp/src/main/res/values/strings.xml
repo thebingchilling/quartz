@@ -56,11 +56,18 @@
     <string name="quartz_warp_never_expires">Never expires</string>
     <string name="quartz_warp_export">Export</string>
     <string name="quartz_warp_qr">QR</string>
+    <string name="quartz_warp_clash">Clash</string>
+    <string name="quartz_warp_qr_too_long">Too long for a QR code. Export the file instead.</string>
     <string name="quartz_warp_import">Import</string>
     <string name="quartz_warp_replace">Replace %1$d</string>
     <string name="quartz_warp_discard">Discard</string>
     <string name="quartz_warp_imported">Added %1$d WARP tunnel(s)</string>
     <string name="quartz_warp_replaced">Replaced %1$d WARP tunnel(s)</string>
+
+    <string name="quartz_warp_import_conflict_title">WARP slot already in use</string>
+    <string name="quartz_warp_import_conflict_body">“%1$s” was made for slot “%2$s”, which already has “%3$s”. Replace that tunnel (it keeps its name, group and rules), or keep the import as its own tunnel in a new slot?</string>
+    <string name="quartz_warp_replace_existing">Replace existing</string>
+    <string name="quartz_warp_import_separately">Import as separate</string>
 
     <string name="quartz_expired">Expired</string>
     <plurals name="quartz_expires_days">
