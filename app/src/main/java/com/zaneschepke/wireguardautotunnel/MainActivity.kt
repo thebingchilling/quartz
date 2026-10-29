@@ -75,6 +75,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import app.quartz.warp.ui.WarpScreen
 import com.dokar.sonner.TextToastAction
 import com.dokar.sonner.Toast
 import com.dokar.sonner.ToastCloseButton
@@ -755,6 +756,7 @@ class MainActivity : AppCompatActivity() {
                                                 entry<Route.Notifications> { NotificationsScreen() }
                                                 entry<Route.Logs> { LogsScreen() }
                                                 entry<Route.Support> { QuartzInfoScreen() }
+                                                entry<Route.Warp> { WarpScreen() }
                                                 entry<Route.License> { LicenseScreen() }
                                                 entry<Route.Donate> { DonateScreen() }
                                                 entry<Route.Addresses> { AddressesScreen() }

@@ -39,12 +39,13 @@ upstream merge that conflicts, an engine bump). Upstream Android's branch is
     engine-api/                 ← engine interface shared by OpenVPN and mihomo
     engine-openvpn/             ← JNI/SWIG wrapper around openvpn3 ClientAPI (NDK/CMake)
     engine-mihomo/              ← gomobile/cgo wrapper around mihomo
-    engine-bridge/              ← MultiEngineTunnelProvider, ForkDatabase, Koin override
+    core/                       ← ForkDatabase, Quartz Koin module, startup sync, expiry guard, tunnel-row badges
+    engine-bridge/              ← MultiEngineTunnelProvider (replaces core's expiry guard)
     groups/                     ← group types, member selection, delay tests
     importer/                   ← detecting importer (files, links, subscriptions, QR, deep links)
     clash-ui/                   ← Clash screens
     connection-info/            ← geo-IP lookup and connected-row info
-    warp/                       ← WARP generator (logic + screen)
+    warp/                       ← WARP generator (logic + screen); assets/warp/awg-payloads.txt = captured I1 packets
     branding/                   ← resource overlay: icon, TV banner, notification glyph (res/), sources and PNGs (icon/)
   quartz.gradle                 ← Quartz overrides (app ID, name, provider authority); applied by one line in app/build.gradle.kts
   FORK.md                       ← this file
@@ -52,6 +53,14 @@ upstream merge that conflicts, an engine bump). Upstream Android's branch is
     quartz-release.yml          ← weekly: new WG Tunnel Android/Desktop release → merge, build, release; engine bump PRs
     quartz-workflows.yml        ← keeps every upstream workflow except pr.yml disabled
 ```
+
+**How fork code is built:** `fork/<name>/src/{main,test}` are not Gradle
+modules: `quartz.gradle` adds their `java` (Kotlin), `res` and `assets`
+directories to the app's source sets, so fork code uses upstream's types
+(repositories, Koin, Compose components) directly and nothing in upstream's
+build files changes. Fork code lives in the `app.quartz.*` package; strings are
+prefixed `quartz_`. Add a new fork directory to the list in `quartz.gradle`.
+Engine modules with native code (step 3+) will be real Gradle modules.
 
 Submodules are used for the engines so a version bump is a one-line pointer
 change and upstream engine history stays out of this repo. Clone with
@@ -386,6 +395,39 @@ Enforcement:
 Limits: without revocation, expiry only stops this app. The WARP API is
 unofficial, so the client sits behind a small interface.
 
+### Implementation status
+
+Built in step 2 (`fork/warp`, `fork/core`):
+
+- `CloudflareWarpApi`: registration with the version fallback, WARP+ licence,
+  delete. Keys come from wgtunnel/core's `Key` (MIT). Cloudflare's unset
+  `account.ttl` (`0001-01-01…`) is ignored.
+- `WarpConfigBuilder` / `WarpMarkers`: config text and markers; unit tests
+  check upstream's parser reads both variants and keeps the markers through
+  `parseQuickString` → `asQuickString`.
+- I1: taken from `fork/warp/src/main/assets/warp/awg-payloads.txt` when it has
+  entries. **To do:** copy the captured payloads from the site's
+  `vendor/awg-payloads.js` into it (the session that built this couldn't
+  reach the site repo). Until then the app builds a real QUIC v1 Initial
+  carrying a TLS ClientHello for a popular host (`QuicInitial`, checked against
+  RFC 9001's test vectors), so I1 still decrypts to a normal HTTP/3 handshake.
+  The endpoint lists in `WarpEndpoints` should also be checked against the
+  site's.
+- `WarpRepository`: slot + variant replace-in-place, new tunnels by upstream's
+  naming scheme, old registration deleted after replace, reconnect when a
+  replaced tunnel is running, detach. Imported files with markers are adopted
+  by `QuartzSync`: a free slot is kept, a taken one moves to `warp-2`, … (the
+  **Replace existing / Import as separate** prompt comes with the importer,
+  step 3).
+- Expiry: `ExpiryGuardTunnelProvider` (Koin override of `TunnelProvider`)
+  refuses expired starts; `WarpExpiry` keeps one WorkManager job for the next
+  warning/expiry (WorkManager handles reboot and clock changes; a check also
+  runs on app start), stops the tunnel, notifies (lockdown-aware), optionally
+  revokes. Badges via `quartzTunnelDescription`.
+- Not yet: auto-tunnel skipping expired tunnels before trying them (today the
+  start is refused, step 4/5 with the provider and groups); **→ Clash** export
+  (step 3); fork data in backups.
+
 ## 10. UI screens
 
 ### Tunnels tab — nothing connected
@@ -568,14 +610,17 @@ conflicts.
 
 | File | Change | Why |
 |---|---|---|
-| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `app.quartz`, name "Quartz", provider authority `app.quartz.provider`, debug signing with committed `signing/quartz-debug.jks`, LeakCanary excluded (no "Leaks" launcher icon) |
-| Koin startup | Load fork module after upstream's | Override `TunnelProvider` |
+| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `app.quartz`, name "Quartz", provider authority `app.quartz.provider`, debug signing with committed `signing/quartz-debug.jks`, LeakCanary excluded (no "Leaks" launcher icon), fork source directories |
+| `app/schemas/app.quartz.core.data.ForkDatabase/` | New files only (Room schema export of `ForkDatabase`) | Room migrations |
+| `WireGuardAutoTunnel.kt` (Koin startup) | `quartzModule` added last to `modules(…)` | Fork Koin module; overrides `TunnelProvider` |
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
 | Auto-tunnel candidate selection | Skip expired tunnels; allow group targets | WARP expiry, groups |
-| `ui/navigation/Route.kt` | Routes to fork screens | Clash, WARP, import, groups |
-| `ui/screens/settings/SettingsScreen.kt` | "WARP generator" and "Connection info" entries | Settings |
-| `ui/screens/tunnels/components/TunnelImportSheet.kt` | Replace entries with detecting Import + Generate WARP | Import |
-| `ui/screens/tunnels/components/TunnelList.kt` | Engine/expiry/delay badges, group toggle + dropdown, connection info on connected row | Groups, UI |
+| `ui/navigation/Route.kt` | `Route.Warp` (+ its `Tab` mapping); more routes later | Clash, WARP, import, groups |
+| `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route | Exhaustive `when` over `Route` |
+| `MainActivity.kt` | `entry<Route.Warp> { WarpScreen() }` | Nav graph |
+| `ui/screens/settings/SettingsScreen.kt` | "WARP generator" row (done); "Connection info" later | Settings |
+| `ui/screens/tunnels/components/TunnelImportSheet.kt` | "Generate WARP" entry (done); detecting Import replaces the others later | Import |
+| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |
@@ -606,7 +651,7 @@ additions in separate composables called from a single line.
 ## 13. Build order
 
 1. Repo setup: upstream remote, `quartz.gradle`, branding (name, ID and icon done), `quartz-release.yml`. Confirm a clean merge from upstream.
-2. WARP generator, slots and expiry (pure app code; proves the Settings hook).
+2. WARP generator, slots and expiry (pure app code; proves the Settings hook). Done; see §9 "Implementation status" for the leftovers.
 3. Engine submodules + mihomo engine, detecting importer, Clash UI on the
    REST API.
 4. `MultiEngineTunnelProvider`, `ForkDatabase`, `quickConfig` guards — wire

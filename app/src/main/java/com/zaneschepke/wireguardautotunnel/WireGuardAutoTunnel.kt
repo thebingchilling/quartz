@@ -3,6 +3,7 @@ package com.zaneschepke.wireguardautotunnel
 import android.app.Application
 import android.content.ComponentCallbacks2
 import android.os.StrictMode
+import app.quartz.core.quartzModule
 import com.wgtunnel.backend.Backend
 import com.wgtunnel.backend.BackendLog
 import com.wgtunnel.backend.LogLevel
@@ -91,6 +92,7 @@ class WireGuardAutoTunnel : Application(), KoinComponent {
                 tunnelBackendProviderModule,
                 workerModule,
                 coordinatorModule,
+                quartzModule, // Quartz: after upstream's, overrides where they overlap
             )
             options(viewModelScopeFactory())
             lazyModules(networkModule)

@@ -69,3 +69,18 @@ android {
 configurations.configureEach {
     exclude group: "com.squareup.leakcanary"
 }
+
+// Fork code (fork/core, fork/warp, ...) is compiled as part of the app rather than as separate
+// Gradle modules, so it can use upstream's types (TunnelConfig, repositories, Koin, UI) directly.
+// Each fork/<name>/src/{main,test} adds its java, res and assets to the app's source sets.
+android {
+    sourceSets {
+        ["core", "warp"].each { name ->
+            def dir = "$rootDir/fork/$name/src"
+            main.kotlin.directories.add("$dir/main/java")
+            main.res.directories.add("$dir/main/res")
+            main.assets.directories.add("$dir/main/assets")
+            test.kotlin.directories.add("$dir/test/java")
+        }
+    }
+}

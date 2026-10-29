@@ -158,6 +158,9 @@ sealed class Route : NavKey {
     @Keep @Serializable data object Monitoring : Route()
 
     @Keep @Serializable data object TunnelRecovery : Route()
+
+    // [fork-ui] Quartz
+    @Keep @Serializable data object Warp : Route()
 }
 
 @Serializable
@@ -216,6 +219,7 @@ enum class Tab(
                 Route.Security,
                 Route.Monitoring,
                 Route.TunnelRecovery,
+                Route.Warp,
                 Route.Logs -> SETTINGS
                 is Route.Support,
                 Route.License,

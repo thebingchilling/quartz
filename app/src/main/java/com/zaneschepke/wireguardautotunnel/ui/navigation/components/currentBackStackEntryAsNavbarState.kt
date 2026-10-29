@@ -705,6 +705,14 @@ fun currentRouteAsNavbarState(
                         showBottomItems = true,
                     )
                 }
+                // [fork-ui] Quartz
+                Route.Warp -> {
+                    NavbarState(
+                        topLeading = { TvBackButton { navController.pop() } },
+                        topTitle = context.getString(R.string.quartz_warp_generator),
+                        showBottomItems = true,
+                    )
+                }
                 null -> {
                     NavbarState()
                 }

@@ -1,6 +1,7 @@
 package com.zaneschepke.wireguardautotunnel.ui.screens.tunnels.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.ContentPasteGo
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.FileOpen
@@ -11,8 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.ui.LocalIsAndroidTV
+import com.zaneschepke.wireguardautotunnel.ui.LocalNavController
 import com.zaneschepke.wireguardautotunnel.ui.common.sheet.CustomBottomSheet
 import com.zaneschepke.wireguardautotunnel.ui.common.sheet.SheetOption
+import com.zaneschepke.wireguardautotunnel.ui.navigation.Route
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +28,7 @@ fun TunnelImportSheet(
     onUrlClick: () -> Unit,
 ) {
     val isTv = LocalIsAndroidTV.current
+    val navController = LocalNavController.current
 
     CustomBottomSheet(
         buildList {
@@ -76,6 +80,17 @@ fun TunnelImportSheet(
                     onClick = {
                         onDismiss()
                         onManualImportClick()
+                    },
+                )
+            )
+            // [fork-ui] Quartz
+            add(
+                SheetOption(
+                    Icons.Outlined.Cloud,
+                    stringResource(R.string.quartz_generate_warp),
+                    onClick = {
+                        onDismiss()
+                        navController.push(Route.Warp)
                     },
                 )
             )

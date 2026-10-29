@@ -1,0 +1,4 @@
+# Captured WARP QUIC Initial packets for AmneziaWG's I1, one per line (hex or <b 0x...>).
+# Copy them from thebingchilling/site vendor/awg-payloads.js (originally Skiro1/warp-awg-gen)
+# so the app and the site pick from the same set. While this file has no entries, the app
+# builds a real QUIC Initial ClientHello instead (app.quartz.warp.awg.QuicInitial).

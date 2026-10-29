@@ -1,0 +1,84 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "579795c8cab0b9601ff33556b9b607b7",
+    "entities": [
+      {
+        "tableName": "tunnel_meta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tunnel_id` INTEGER NOT NULL, `source` TEXT, `warp_slot` TEXT, `warp_variant` TEXT, `expires_at` INTEGER, `warp_reg_id` TEXT, `warp_token` TEXT, `warp_api_version` TEXT, `revoke_on_expiry` INTEGER NOT NULL, `warned_expiring` INTEGER NOT NULL, `handled_expiry` INTEGER NOT NULL, PRIMARY KEY(`tunnel_id`))",
+        "fields": [
+          {
+            "fieldPath": "tunnelId",
+            "columnName": "tunnel_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "warpSlot",
+            "columnName": "warp_slot",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "warpVariant",
+            "columnName": "warp_variant",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiresAt",
+            "columnName": "expires_at",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "warpRegId",
+            "columnName": "warp_reg_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "warpToken",
+            "columnName": "warp_token",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "warpApiVersion",
+            "columnName": "warp_api_version",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "revokeOnExpiry",
+            "columnName": "revoke_on_expiry",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "warnedExpiring",
+            "columnName": "warned_expiring",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "handledExpiry",
+            "columnName": "handled_expiry",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "tunnel_id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '579795c8cab0b9601ff33556b9b607b7')"
+    ]
+  }
+}

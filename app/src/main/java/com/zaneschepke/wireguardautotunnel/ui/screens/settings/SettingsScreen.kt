@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ViewQuilt
 import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material.icons.outlined.Autorenew
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.MonitorHeart
@@ -269,6 +270,15 @@ fun SettingsScreen(
                 leading = { Icon(Icons.Outlined.Android, null) },
                 title = stringResource(R.string.android_integrations),
                 onClick = { navController.push(Route.AndroidIntegrations) },
+            )
+            // [fork-ui] Quartz
+            SurfaceRow(
+                leading = { Icon(Icons.Outlined.Cloud, null) },
+                title = stringResource(R.string.quartz_warp_generator),
+                description = {
+                    DescriptionText(stringResource(R.string.quartz_warp_generator_desc))
+                },
+                onClick = { navController.push(Route.Warp) },
             )
         }
         Column(modifier = Modifier.padding(bottom = 16.dp)) {

@@ -51,6 +51,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import app.quartz.core.ui.quartzTunnelDescription
 import com.wgtunnel.backend.state.ActiveTunnel
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.domain.model.TunnelConfig
@@ -428,7 +429,9 @@ private fun ListRow(
                     )
                 },
                 title = tunnel.name,
-                description = tunnelRowDescription(tunnel, uiState),
+                // [fork-ui] Quartz badges (expiry)
+                description =
+                    quartzTunnelDescription(tunnel.id, tunnelRowDescription(tunnel, uiState)),
                 onClick = {
                     when {
                         uiState.isReorderMode -> Unit

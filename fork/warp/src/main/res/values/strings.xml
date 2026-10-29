@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quartz strings, prefixed quartz_ so they never clash with upstream's. -->
+<resources>
+    <string name="quartz_warp_generator">WARP generator</string>
+    <string name="quartz_warp_generator_desc">Free Cloudflare WARP configs, standard or obfuscated</string>
+    <string name="quartz_generate_warp">Generate WARP</string>
+
+    <string name="quartz_warp_slot">Slot</string>
+    <string name="quartz_warp_slot_hint">warp</string>
+    <string name="quartz_warp_slot_empty">No tunnels in this slot yet. Generate creates them; regenerating later replaces them in place.</string>
+    <string name="quartz_warp_detach">Detach</string>
+
+    <string name="quartz_warp_output">Output</string>
+    <string name="quartz_warp_output_wg">WireGuard</string>
+    <string name="quartz_warp_output_awg">AmneziaWG</string>
+    <string name="quartz_warp_output_both">Both</string>
+    <string name="quartz_warp_junk">Junk packets</string>
+    <string name="quartz_warp_junk_light">Light</string>
+    <string name="quartz_warp_junk_medium">Medium</string>
+    <string name="quartz_warp_junk_heavy">Heavy</string>
+    <string name="quartz_warp_custom">Custom</string>
+    <string name="quartz_warp_awg_locked">S1, S2 and H1–H4 stay at stock values: Cloudflare\'s end is plain WireGuard, so only client-side junk and I1–I5 work.</string>
+
+    <string name="quartz_warp_expiry">Expiry</string>
+    <string name="quartz_warp_expiry_1d">1 day</string>
+    <string name="quartz_warp_expiry_7d">7 days</string>
+    <string name="quartz_warp_expiry_30d">30 days</string>
+    <string name="quartz_warp_expiry_90d">90 days</string>
+    <string name="quartz_warp_custom_date">Date…</string>
+    <string name="quartz_warp_never">Never</string>
+    <string name="quartz_warp_pick_date">Pick a date</string>
+    <string name="quartz_warp_expiry_desc">Expired tunnels stop and can\'t be started. The date can\'t be changed later; regenerate instead.</string>
+
+    <string name="quartz_warp_endpoint">Endpoint</string>
+    <string name="quartz_warp_endpoint_default">Default</string>
+    <string name="quartz_warp_endpoint_random">Random</string>
+
+    <string name="quartz_warp_advanced">Advanced</string>
+    <string name="quartz_warp_license">WARP+ licence key (optional)</string>
+    <string name="quartz_warp_mimic_host">I1 host</string>
+    <string name="quartz_warp_mimic_host_hint">Random popular site</string>
+    <string name="quartz_warp_group">Add new tunnels to group</string>
+    <string name="quartz_warp_no_group">None</string>
+    <string name="quartz_warp_group_desc">Replaced tunnels keep their group.</string>
+    <string name="quartz_warp_delete_old">Delete old registration</string>
+    <string name="quartz_warp_delete_old_desc">After replacing, remove the previous keys from Cloudflare</string>
+    <string name="quartz_warp_revoke">Revoke registration on expiry</string>
+    <string name="quartz_warp_revoke_desc">Delete it with Cloudflare at expiry, so the keys stop working everywhere</string>
+
+    <string name="quartz_warp_generate">Generate</string>
+    <string name="quartz_warp_regenerate">Regenerate</string>
+    <string name="quartz_warp_generated">Generated</string>
+    <string name="quartz_warp_account">Account: %1$s</string>
+    <string name="quartz_warp_endpoint_value">Endpoint: %1$s</string>
+    <string name="quartz_warp_expires_on">Expires %1$s</string>
+    <string name="quartz_warp_never_expires">Never expires</string>
+    <string name="quartz_warp_export">Export</string>
+    <string name="quartz_warp_qr">QR</string>
+    <string name="quartz_warp_import">Import</string>
+    <string name="quartz_warp_replace">Replace %1$d</string>
+    <string name="quartz_warp_discard">Discard</string>
+    <string name="quartz_warp_imported">Added %1$d WARP tunnel(s)</string>
+    <string name="quartz_warp_replaced">Replaced %1$d WARP tunnel(s)</string>
+
+    <string name="quartz_expired">Expired</string>
+    <plurals name="quartz_expires_days">
+        <item quantity="one">Expires in %1$d day</item>
+        <item quantity="other">Expires in %1$d days</item>
+    </plurals>
+    <plurals name="quartz_expires_hours">
+        <item quantity="one">Expires in %1$d hour</item>
+        <item quantity="other">Expires in %1$d hours</item>
+    </plurals>
+
+    <string name="quartz_warp_expired_title">%1$s has expired</string>
+    <string name="quartz_warp_expired_text">It was stopped and can\'t be started again. Regenerate it in Settings → WARP generator.</string>
+    <string name="quartz_warp_expired_lockdown">It was stopped; lockdown keeps traffic blocked until you connect another tunnel. Regenerate it in Settings → WARP generator.</string>
+    <string name="quartz_warp_expiring_title">%1$s expires soon</string>
+    <plurals name="quartz_warp_expiring_text">
+        <item quantity="one">It stops working in about %1$d hour.</item>
+        <item quantity="other">It stops working in about %1$d hours.</item>
+    </plurals>
+</resources>
