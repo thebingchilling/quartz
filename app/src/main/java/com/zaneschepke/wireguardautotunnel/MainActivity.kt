@@ -97,6 +97,7 @@ import com.zaneschepke.wireguardautotunnel.notification.NotificationService.Comp
 import com.zaneschepke.wireguardautotunnel.notification.NotificationService.Companion.EXTRA_OPEN_SUPPORT
 import com.zaneschepke.wireguardautotunnel.notification.NotificationService.Companion.EXTRA_SHOW_UPDATE
 import com.zaneschepke.wireguardautotunnel.notification.NotificationService.Companion.UPDATE_AVAILABLE_NOTIFICATION_ID
+import com.zaneschepke.wireguardautotunnel.quartz.ui.QuartzInfoScreen
 import com.zaneschepke.wireguardautotunnel.service.tile.TunnelTileRefresher
 import com.zaneschepke.wireguardautotunnel.ui.LocalIsAndroidTV
 import com.zaneschepke.wireguardautotunnel.ui.LocalNavController
@@ -131,7 +132,6 @@ import com.zaneschepke.wireguardautotunnel.ui.screens.settings.monitoring.Monito
 import com.zaneschepke.wireguardautotunnel.ui.screens.settings.proxy.ProxySettingsScreen
 import com.zaneschepke.wireguardautotunnel.ui.screens.settings.recovery.TunnelRecoveryScreen
 import com.zaneschepke.wireguardautotunnel.ui.screens.settings.security.SecurityScreen
-import com.zaneschepke.wireguardautotunnel.ui.screens.support.SupportScreen
 import com.zaneschepke.wireguardautotunnel.ui.screens.support.donate.DonateScreen
 import com.zaneschepke.wireguardautotunnel.ui.screens.support.donate.crypto.AddressesScreen
 import com.zaneschepke.wireguardautotunnel.ui.screens.support.license.LicenseScreen
@@ -754,7 +754,7 @@ class MainActivity : AppCompatActivity() {
                                                 entry<Route.Display> { DisplayScreen() }
                                                 entry<Route.Notifications> { NotificationsScreen() }
                                                 entry<Route.Logs> { LogsScreen() }
-                                                entry<Route.Support> { SupportScreen() }
+                                                entry<Route.Support> { QuartzInfoScreen() }
                                                 entry<Route.License> { LicenseScreen() }
                                                 entry<Route.Donate> { DonateScreen() }
                                                 entry<Route.Addresses> { AddressesScreen() }

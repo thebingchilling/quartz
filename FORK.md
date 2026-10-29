@@ -570,6 +570,7 @@ conflicts.
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.gitmodules` | Entry for `desktop/daemon/winsw` (copied from `desktop/.gitmodules`; git only reads the root file). Update it if desktop changes that submodule's URL. | Desktop build |
+| `app/.../MainActivity.kt` | `Route.Support` shows `quartz/ui/QuartzInfoScreen` instead of `SupportScreen` (import + one line) | Info tab: only About and Updates; Updates opens this repo's releases |
 | `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |
 | `desktop/composeApp/build.gradle.kts` | `appFsName`/`appDisplayName` = quartz/Quartz, vendor, description; `publish.github` → thebingchilling/quartz | Rebrand, updater |
 | `desktop/composeApp/src/jvmMain/composeResources/values/strings.xml` | `app_name`, `tray_open` → Quartz | Window title, tray |
