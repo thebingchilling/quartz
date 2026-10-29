@@ -1,0 +1,60 @@
+name: publish-aur
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Git tag being released (e.g. 2.0.2)"
+        type: string
+        required: true
+      version:
+        description: "Version to publish (e.g. 2.0.2)"
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag'
+        required: false
+        default: '2.0.2'
+
+jobs:
+  publish:
+    name: publish-aur
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Determine version
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+            VERSION="${{ inputs.version }}"
+          else
+            TAG="${{ github.event.inputs.tag_name }}"
+            VERSION="${TAG#v}"
+          fi
+          echo "Publishing version: $VERSION (tag: $TAG)"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Bump pkgver and checksum
+        run: |
+          set -euo pipefail
+          sed -i "s/^pkgver=.*/pkgver=${VERSION}/" packaging/aur/PKGBUILD
+          sed -i "s/^_tag=.*/_tag=\"${TAG}\"/" packaging/aur/PKGBUILD
+          ASSET_URL="https://github.com/wgtunnel/desktop/releases/download/${TAG}/wgtunnel-${VERSION}-linux-x64.pacman"
+          SHA256=$(curl -fsSL "$ASSET_URL" | sha256sum | cut -d' ' -f1)
+          sed -i "s/^sha256sums=.*/sha256sums=('${SHA256}')/" packaging/aur/PKGBUILD
+
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v4.2.0
+        with:
+          pkgname: wgtunnel-bin
+          pkgbuild: packaging/aur/PKGBUILD
+          assets: packaging/aur/wgtunnel-bin.install
+          commit_username: Zane Schepke
+          commit_email: support@wgtunnel.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "upgpkg: wgtunnel-bin ${{ env.VERSION }}-1"

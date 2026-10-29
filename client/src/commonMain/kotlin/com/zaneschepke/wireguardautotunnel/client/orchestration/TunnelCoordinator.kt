@@ -1,0 +1,236 @@
+package com.zaneschepke.wireguardautotunnel.client.orchestration
+
+import co.touchlab.kermit.Logger
+import com.wgtunnel.backend.util.parseDnsServersOnly
+import com.wgtunnel.parser.AmneziaConfigNormalizer
+import com.wgtunnel.parser.Config
+import com.wgtunnel.parser.ConfigReconciler
+import com.zaneschepke.wireguardautotunnel.client.domain.enums.TunnelMode
+import com.zaneschepke.wireguardautotunnel.client.domain.error.ClientException
+import com.zaneschepke.wireguardautotunnel.client.domain.model.DnsSettings
+import com.zaneschepke.wireguardautotunnel.client.domain.model.GeneralSettings
+import com.zaneschepke.wireguardautotunnel.client.domain.model.LockdownSettings
+import com.zaneschepke.wireguardautotunnel.client.domain.model.MonitoringSettings
+import com.zaneschepke.wireguardautotunnel.client.domain.model.ProxySettings
+import com.zaneschepke.wireguardautotunnel.client.domain.model.TunnelConfig
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.ClientCacheRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.DnsSettingsRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.GeneralSettingRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.LockdownSettingsRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.MonitoringSettingsRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.ProxySettingsRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.TunnelRepository
+import com.zaneschepke.wireguardautotunnel.client.service.BackendService
+import com.zaneschepke.wireguardautotunnel.client.service.TunnelService
+import com.zaneschepke.wireguardautotunnel.client.util.toBootstrapDnsModeRequest
+import com.zaneschepke.wireguardautotunnel.client.util.toDto
+import com.zaneschepke.wireguardautotunnel.client.util.toTunnelDnsConfigOrNull
+import com.zaneschepke.wireguardautotunnel.core.ipc.dto.KillSwitchConfigDto
+import com.zaneschepke.wireguardautotunnel.core.ipc.dto.TunnelFeaturesDto
+import com.zaneschepke.wireguardautotunnel.core.ipc.dto.TunnelModeDto
+import com.zaneschepke.wireguardautotunnel.core.ipc.dto.request.StartTunnelRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+class TunnelCoordinator(
+    private val tunnelService: TunnelService,
+    private val backendService: BackendService,
+    private val tunnelRepository: TunnelRepository,
+    private val clientCacheRepository: ClientCacheRepository,
+    settingsRepository: GeneralSettingRepository,
+    private val dnsSettingsRepository: DnsSettingsRepository,
+    monitoringSettingsRepository: MonitoringSettingsRepository,
+    proxyRepository: ProxySettingsRepository,
+    lockdownRepository: LockdownSettingsRepository,
+    scope: CoroutineScope,
+) {
+    private val log = Logger.withTag("TunnelCoordinator")
+
+    data class RuntimeSettingsSnapshot(
+        val general: GeneralSettings,
+        val dns: DnsSettings,
+        val monitoring: MonitoringSettings,
+        val proxy: ProxySettings,
+        val lockdown: LockdownSettings,
+    )
+
+    private val runtimeSettingsSnapshot =
+        combine(
+            settingsRepository.flow,
+            dnsSettingsRepository.flow,
+            monitoringSettingsRepository.flow,
+            proxyRepository.flow,
+            lockdownRepository.flow,
+        ) { general, dns, monitoring, proxy, lockdown ->
+            RuntimeSettingsSnapshot(general, dns, monitoring, proxy, lockdown)
+        }
+
+    private val runtimeSettingsSnapshotState =
+        runtimeSettingsSnapshot.stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = null,
+        )
+
+    private val tunnelMutex = Mutex()
+
+    private suspend fun getSnapshot(): RuntimeSettingsSnapshot {
+        return runtimeSettingsSnapshotState.filterNotNull().first()
+    }
+
+    suspend fun activeTunnelIds(): List<Long> {
+        return backendService.getStatus().getOrNull()?.activeTunnels?.map { it.id }.orEmpty()
+    }
+
+    suspend fun startTunnel(config: TunnelConfig): Result<Unit> = tunnelMutex.withLock {
+        val snapshot = getSnapshot()
+        if (
+            snapshot.general.selectableTunnelMode == TunnelMode.PROXY &&
+                !snapshot.proxy.socks5ProxyEnabled &&
+                !snapshot.proxy.httpProxyEnabled
+        ) {
+            return@withLock Result.failure(ClientException.ProxyBothDisabledException())
+        }
+        activeTunnelIds().filter { it != config.id }.forEach { tunnelService.stopTunnel(it) }
+        val request = buildStartRequest(config, snapshot)
+        tunnelService.startTunnel(config.id, request).onSuccess {
+            clientCacheRepository.updateLastStartedTunnelId(config.id)
+        }
+    }
+
+    suspend fun stopTunnel(id: Long): Result<Unit> = tunnelMutex.withLock {
+        tunnelService.stopTunnel(id)
+    }
+
+    suspend fun stopActiveTunnels(): Result<Unit> = tunnelMutex.withLock {
+        activeTunnelIds().forEach { tunnelService.stopTunnel(it) }
+        Result.success(Unit)
+    }
+
+    suspend fun restartActiveTunnels(): Result<Unit> {
+        val activeIds = activeTunnelIds()
+        if (activeIds.isEmpty()) return Result.success(Unit)
+        val configs = activeIds.mapNotNull { tunnelRepository.getById(it) }
+        stopActiveTunnels().getOrElse {
+            return Result.failure(it)
+        }
+        configs.forEach {
+            startTunnel(it).getOrElse { error ->
+                return Result.failure(error)
+            }
+        }
+        return Result.success(Unit)
+    }
+
+    suspend fun toggleTunnel(config: TunnelConfig): Result<Unit> {
+        val isActive = activeTunnelIds().contains(config.id)
+        return if (isActive) stopTunnel(config.id) else startTunnel(config)
+    }
+
+    fun killSwitchDto(lockdown: LockdownSettings, runConfig: Config?): KillSwitchConfigDto {
+        val dnsServers = runConfig?.parseDnsServersOnly().orEmpty()
+        return lockdown.toDto(dnsServers)
+    }
+
+    suspend fun prepareStartRequest(tunnelConfig: TunnelConfig): StartTunnelRequest {
+        return buildStartRequest(tunnelConfig, getSnapshot())
+    }
+
+    private suspend fun buildStartRequest(
+        tunnelConfig: TunnelConfig,
+        snapshot: RuntimeSettingsSnapshot,
+    ): StartTunnelRequest {
+        var config = AmneziaConfigNormalizer.ensureAmneziaCompatibility(tunnelConfig.asConfig())
+        val dnsSettings = dnsSettingsRepository.get()
+        val policy =
+            ConfigReconciler.ConfigReconcilePolicy(
+                dns = dnsSettings.isGlobalTunnelConfigDnsEnabled,
+                splitTunnel = false,
+                amnezia = snapshot.general.isGlobalAmneziaEnabled,
+            )
+        val globalConfig =
+            if (policy.hasAnyOverrides) {
+                tunnelRepository.globalTunnelFlow.firstOrNull()?.asConfig()
+            } else {
+                null
+            }
+        if (policy.hasAnyOverrides) {
+            config = ConfigReconciler.reconcileConfig(config, globalConfig, policy)
+        }
+
+        val dns = dnsSettings.toTunnelDnsConfigOrNull(config)
+        val uiMode = snapshot.general.selectableTunnelMode
+        val killSwitchEnabled = snapshot.lockdown.enabled
+        val mode =
+            when {
+                uiMode == TunnelMode.PROXY && killSwitchEnabled -> TunnelModeDto.LOCK_DOWN
+                uiMode == TunnelMode.PROXY -> TunnelModeDto.PROXY
+                else -> TunnelModeDto.VPN
+            }
+
+        return StartTunnelRequest(
+            name = tunnelConfig.name,
+            quickConfig = config.asQuickString(),
+            mode = mode,
+            tunnelDns = dns?.toDto(),
+            proxy = if (uiMode == TunnelMode.PROXY) snapshot.proxy.toDto() else null,
+            killSwitch = if (killSwitchEnabled) killSwitchDto(snapshot.lockdown, config) else null,
+            features =
+                TunnelFeaturesDto(
+                    statisticsEnabled = snapshot.monitoring.tunnelStatisticsEnabled,
+                    statisticsPollIntervalSeconds =
+                        snapshot.monitoring.tunnelStatisticsPollInterval,
+                    seamlessRecoveryEnabled = snapshot.general.seamlessRecoveryEnabled,
+                    dynamicDnsRecovery = tunnelConfig.isDdnsTunnel,
+                ),
+            preferIpv6 = tunnelConfig.preferIpv6,
+            ipv6RestoreEnabled = tunnelConfig.ipv6RestoreEnabled,
+            outerQuickConfig = resolveOuterQuickConfig(tunnelConfig, globalConfig, policy),
+            bootstrapDns = dnsSettings.toBootstrapDnsModeRequest(),
+        )
+    }
+
+    private suspend fun resolveOuterQuickConfig(
+        exit: TunnelConfig,
+        globalConfig: Config?,
+        policy: ConfigReconciler.ConfigReconcilePolicy,
+    ): String? {
+        val entryId = exit.entryTunnelId ?: return null
+        if (entryId == exit.id) {
+            log.w { "Ignoring self-referential entry tunnel on ${exit.name}" }
+            return null
+        }
+        val entry = tunnelRepository.getById(entryId)
+        if (entry == null) {
+            log.w { "Entry tunnel id=$entryId missing for ${exit.name}; starting one-hop" }
+            return null
+        }
+        return runCatching {
+            var outer = AmneziaConfigNormalizer.ensureAmneziaCompatibility(entry.asConfig())
+            if (policy.amnezia) {
+                outer =
+                    ConfigReconciler.reconcileConfig(
+                        outer,
+                        globalConfig,
+                        ConfigReconciler.ConfigReconcilePolicy(
+                            dns = false,
+                            splitTunnel = false,
+                            amnezia = true,
+                        ),
+                    )
+            }
+            outer.asQuickString()
+        }
+            .onFailure {
+                log.e(it) { "Failed to load entry tunnel ${entry.name} for ${exit.name}" }
+            }
+            .getOrNull()
+    }
+}

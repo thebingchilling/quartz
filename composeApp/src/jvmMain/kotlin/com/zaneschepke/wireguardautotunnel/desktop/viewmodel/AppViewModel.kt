@@ -1,0 +1,362 @@
+package com.zaneschepke.wireguardautotunnel.desktop.viewmodel
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toArgb
+import androidx.lifecycle.ViewModel
+import co.touchlab.kermit.Logger
+import com.dokar.sonner.ToastType
+import com.materialkolor.ktx.themeColor
+import com.zaneschepke.wireguardautotunnel.client.data.model.AccentStyle
+import com.zaneschepke.wireguardautotunnel.client.data.model.Theme
+import com.zaneschepke.wireguardautotunnel.client.data.model.TrayIconAppearance
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.AutoTunnelSettingsRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.ClientCacheRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.GeneralSettingRepository
+import com.zaneschepke.wireguardautotunnel.client.domain.repository.TunnelRepository
+import com.zaneschepke.wireguardautotunnel.client.orchestration.AutoTunnelCoordinator
+import com.zaneschepke.wireguardautotunnel.client.orchestration.DnsSettingsCoordinator
+import com.zaneschepke.wireguardautotunnel.client.orchestration.LogCoordinator
+import com.zaneschepke.wireguardautotunnel.client.service.BackendService
+import com.zaneschepke.wireguardautotunnel.client.service.DaemonService
+import com.zaneschepke.wireguardautotunnel.composeApp.BuildConfig
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.Res
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_not_running
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.background_service_name
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_outdated_template
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_restart_command_label
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.daemon_start_command_label
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.donate_action
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.donation_prompt_message
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.mac_service_requires_approval_template
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.open_system_settings
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.theme_from_image_failed
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.wifi_helper_service_name
+import com.zaneschepke.wireguardautotunnel.core.profile.AppVariant
+import com.zaneschepke.wireguardautotunnel.desktop.ui.navigation.Route
+import com.zaneschepke.wireguardautotunnel.desktop.ui.sideeffects.AppSideEffect
+import com.zaneschepke.wireguardautotunnel.desktop.ui.state.AppUiState
+import com.zaneschepke.wireguardautotunnel.desktop.ui.state.DaemonConnectionStatus
+import com.zaneschepke.wireguardautotunnel.desktop.ui.theme.Aqua
+import com.zaneschepke.wireguardautotunnel.desktop.update.AppUpdater
+import com.zaneschepke.wireguardautotunnel.desktop.util.LocaleUtil
+import com.zaneschepke.wireguardautotunnel.desktop.wifi.MacWifiNameCoordinator
+import dev.nucleusframework.core.runtime.Platform
+import dev.nucleusframework.servicemanagement.AppService
+import dev.nucleusframework.servicemanagement.AppServiceManager
+import dev.nucleusframework.servicemanagement.AppServiceStatus
+import dev.nucleusframework.updater.UpdateResult
+import io.github.sudarshanmhasrup.localina.api.LocaleUpdater
+import java.io.File
+import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import org.orbitmvi.orbit.OrbitContainerHost
+import org.orbitmvi.orbit.syntax.Syntax
+import org.orbitmvi.orbit.viewmodel.orbitContainer
+
+@OptIn(FlowPreview::class)
+class AppViewModel(
+    private val settingsRepository: GeneralSettingRepository,
+    private val clientCacheRepository: ClientCacheRepository,
+    private val autoTunnelRepository: AutoTunnelSettingsRepository,
+    private val tunnelRepository: TunnelRepository,
+    private val daemonService: DaemonService,
+    private val backendService: BackendService,
+    private val appUpdater: AppUpdater,
+    @Suppress("unused") private val autoTunnelCoordinator: AutoTunnelCoordinator,
+    @Suppress("unused") private val logCoordinator: LogCoordinator,
+    @Suppress("unused") private val dnsSettingsCoordinator: DnsSettingsCoordinator,
+    @Suppress("unused") private val macWifiNameCoordinator: MacWifiNameCoordinator,
+) : OrbitContainerHost<AppUiState, AppUiState, AppSideEffect>, ViewModel() {
+
+    private val log = Logger.withTag("AppViewModel")
+
+    override val container =
+        orbitContainer<AppUiState, AppSideEffect>(
+            AppUiState(),
+            buildSettings = { repeatOnSubscribedStopTimeout = 5_000L },
+        ) {
+            intent { tunnelRepository.ensureGlobalConfigExists() }
+            intent {
+                settingsRepository.flow.collect { settings ->
+                    if (!state.isLoaded || settings.locale != state.locale) {
+                        LocaleUpdater.updateLocale(settings.locale ?: LocaleUtil.systemLocaleTag)
+                    }
+                    reduce {
+                        state.copy(
+                            isLoaded = true,
+                            theme = settings.theme,
+                            locale = settings.locale,
+                            alreadyDonated = settings.alreadyDonated,
+                            restoreTunnelOnBoot = settings.restoreTunnelOnBoot,
+                            launchAtLogin = settings.launchAtLogin,
+                            useSystemColors = settings.useSystemColors,
+                            customSeedColor = settings.customSeedColor,
+                            accentStyle = settings.accentStyle,
+                            trayIconAppearance = settings.trayIconAppearance,
+                            tunnelMode = settings.tunnelMode,
+                        )
+                    }
+                }
+            }
+            intent {
+                combine(daemonService.alive, backendService.statusFlow()) { alive, status ->
+                        alive to status
+                    }
+                    .collect { (alive, status) ->
+                        reduce {
+                            if (!alive) {
+                                state.copy(
+                                    daemonStatus = DaemonConnectionStatus.DISCONNECTED,
+                                    lockdownActive = false,
+                                    tunnelStatuses = emptyList(),
+                                )
+                            } else {
+                                state.copy(
+                                    daemonStatus = DaemonConnectionStatus.CONNECTED,
+                                    tunnelStatuses = status.activeTunnels,
+                                    lockdownActive = status.killSwitchEnabled,
+                                )
+                            }
+                        }
+                    }
+            }
+            intent {
+                daemonService.alive
+                    .debounce { alive -> if (alive) 0.seconds else DISCONNECT_GRACE_PERIOD }
+                    .distinctUntilChanged()
+                    .collect { alive ->
+                        if (alive) {
+                            postSideEffect(AppSideEffect.DismissToast(DAEMON_NOT_RUNNING_TOAST_ID))
+                        } else {
+                            val message = getString(Res.string.daemon_not_running)
+                            postSideEffect(
+                                if (isWindows || isSystemdActive) {
+                                    AppSideEffect.ActionableToast(
+                                        id = DAEMON_NOT_RUNNING_TOAST_ID,
+                                        message = message,
+                                        copyText = daemonStartCommand(),
+                                        copyLabel =
+                                            getString(Res.string.daemon_start_command_label),
+                                    )
+                                } else {
+                                    AppSideEffect.Toast(message = message, type = ToastType.Warning)
+                                }
+                            )
+                        }
+                    }
+            }
+            intent {
+                daemonService.remoteVersion.filterNotNull().collect { remoteVersion ->
+                    if (remoteVersion == BuildConfig.APP_VERSION) {
+                        postSideEffect(AppSideEffect.DismissToast(DAEMON_OUTDATED_TOAST_ID))
+                        return@collect
+                    }
+                    // Unlike a Windows service or Linux systemd, SMAppService doesn't need a
+                    // privileged shell command to restart. The app can just do it itself, the
+                    // same way register() is already called unconditionally on every launch.
+                    if (isMacOS && restartMacDaemon()) return@collect
+                    val message =
+                        getString(
+                            Res.string.daemon_outdated_template,
+                            remoteVersion,
+                            BuildConfig.APP_VERSION,
+                        )
+                    postSideEffect(
+                        if (isWindows || isSystemdActive) {
+                            AppSideEffect.ActionableToast(
+                                id = DAEMON_OUTDATED_TOAST_ID,
+                                message = message,
+                                copyText = daemonRestartCommand(),
+                                copyLabel = getString(Res.string.daemon_restart_command_label),
+                            )
+                        } else {
+                            AppSideEffect.Toast(message = message, type = ToastType.Warning)
+                        }
+                    )
+                }
+            }
+            intent {
+                autoTunnelRepository.flow.collect { settings ->
+                    reduce { state.copy(autoTunnelEnabled = settings.isAutoTunnelEnabled) }
+                }
+            }
+
+            // SMAppService requires an explicit register() call before macOS will ever
+            // load it. Safe to call on every launch as it no-ops if already registered/approved.
+            //
+            // AppServiceManager.register() called twice on the same coroutine hangs, so we register
+            // the agent and daemon on different coroutines
+            if (isMacOS) {
+                intent {
+                    registerMacService(
+                        AppService.Daemon(daemonServiceName),
+                        logLabel = "daemon",
+                        displayName = getString(Res.string.background_service_name),
+                        toastId = DAEMON_APPROVAL_TOAST_ID,
+                    )
+                }
+                intent {
+                    withContext(Dispatchers.IO) {
+                        registerMacService(
+                            AppService.Agent(wifiAgentServiceName),
+                            logLabel = "Wi-Fi helper",
+                            displayName = getString(Res.string.wifi_helper_service_name),
+                            toastId = WIFI_AGENT_APPROVAL_TOAST_ID,
+                        )
+                    }
+                }
+            }
+
+            intent {
+                val result = appUpdater.check(silent = true)
+                if (result is UpdateResult.Error) log.w(result.exception) { "Update check failed" }
+            }
+
+            intent {
+                val lastSeenAppVersion = clientCacheRepository.getLastSeenAppVersion()
+                if (lastSeenAppVersion != BuildConfig.APP_VERSION) {
+                    if (lastSeenAppVersion != null && !settingsRepository.get().alreadyDonated) {
+                        postSideEffect(
+                            AppSideEffect.TextActionToast(
+                                id = DONATION_PROMPT_TOAST_ID,
+                                message = getString(Res.string.donation_prompt_message),
+                                actionLabel = getString(Res.string.donate_action),
+                                onAction = {
+                                    intent { postSideEffect(AppSideEffect.Navigate(Route.Donate)) }
+                                },
+                                type = ToastType.Normal,
+                                duration = DONATION_PROMPT_DURATION,
+                            )
+                        )
+                    }
+                    clientCacheRepository.updateLastSeenAppVersion(BuildConfig.APP_VERSION)
+                }
+            }
+        }
+
+    fun setAlreadyDonated(donated: Boolean) = intent {
+        settingsRepository.updateAlreadyDonated(donated)
+    }
+
+    fun setUseSystemColors(enabled: Boolean) = intent {
+        settingsRepository.updateSystemColors(enabled)
+        // Mutually exclusive with a picked/derived accent color.
+        if (enabled) settingsRepository.updateCustomSeedColor(null)
+    }
+
+    fun setTheme(theme: Theme) = intent { settingsRepository.updateTheme(theme) }
+
+    fun setLocale(locale: String?) = intent { settingsRepository.updateLocale(locale) }
+
+    fun setCustomSeedColor(color: Color?) = intent {
+        settingsRepository.updateCustomSeedColor(color?.toArgb())
+        // Mutually exclusive with the system accent color.
+        if (color != null) settingsRepository.updateSystemColors(false)
+    }
+
+    fun setSeedColorFromImage(image: ImageBitmap) = intent {
+        val color = runCatching { image.themeColor(fallback = Aqua) }.getOrNull()
+        if (color == null) {
+            postSideEffect(
+                AppSideEffect.Toast(
+                    message = getString(Res.string.theme_from_image_failed),
+                    type = ToastType.Error,
+                )
+            )
+            return@intent
+        }
+        settingsRepository.updateCustomSeedColor(color.toArgb())
+        settingsRepository.updateSystemColors(false)
+    }
+
+    fun setAccentStyle(style: AccentStyle) = intent { settingsRepository.updateAccentStyle(style) }
+
+    fun setTrayIconAppearance(appearance: TrayIconAppearance) = intent {
+        settingsRepository.updateTrayIconAppearance(appearance)
+    }
+
+    // Only called when isWindows or isSystemdActive.
+    private fun daemonStartCommand(): String =
+        if (isWindows) "net start $daemonServiceName"
+        else "sudo systemctl enable --now $daemonServiceName.service"
+
+    private fun daemonRestartCommand(): String =
+        if (isWindows) "net stop $daemonServiceName && net start $daemonServiceName"
+        else "sudo systemctl restart $daemonServiceName.service"
+
+    private suspend fun Syntax<AppUiState, AppSideEffect>.registerMacService(
+        service: AppService,
+        logLabel: String,
+        displayName: String,
+        toastId: String,
+    ) {
+        AppServiceManager.register(service).onFailure {
+            log.w(it) { "Failed to register macOS $logLabel" }
+        }
+        val status = AppServiceManager.status(service)
+        log.i { "macOS $logLabel status: $status" }
+        if (status == AppServiceStatus.REQUIRES_APPROVAL) {
+            postSideEffect(
+                AppSideEffect.NavigableToast(
+                    id = toastId,
+                    message =
+                        getString(Res.string.mac_service_requires_approval_template, displayName),
+                    actionLabel = getString(Res.string.open_system_settings),
+                    onAction = { AppServiceManager.openSystemSettingsLoginItems() },
+                )
+            )
+        }
+    }
+
+    /**
+     * Forces launchd to reload the daemon and Wi-Fi helper binaries. Returns true once the daemon
+     * is back and re-registered.
+     */
+    private suspend fun restartMacDaemon(): Boolean {
+        val daemonOk = restartMacService(AppService.Daemon(daemonServiceName), "daemon")
+        // See above registration limitation, same for restart
+        withContext(Dispatchers.IO) {
+            restartMacService(AppService.Agent(wifiAgentServiceName), "Wi-Fi helper")
+        }
+        return daemonOk
+    }
+
+    private suspend fun restartMacService(service: AppService, label: String): Boolean {
+        val unregisterError = suspendCancellableCoroutine { cont ->
+            AppServiceManager.unregister(service) { error -> cont.resume(error) }
+        }
+        if (unregisterError != null) {
+            log.w { "Failed to unregister outdated macOS $label: $unregisterError" }
+            return false
+        }
+        return AppServiceManager.register(service)
+            .onFailure { log.w(it) { "Failed to re-register macOS $label after update" } }
+            .isSuccess
+    }
+
+    companion object {
+        private const val DAEMON_NOT_RUNNING_TOAST_ID = "daemon_not_running"
+        private const val DAEMON_OUTDATED_TOAST_ID = "daemon_outdated"
+        private const val DAEMON_APPROVAL_TOAST_ID = "daemon_requires_approval"
+        private const val WIFI_AGENT_APPROVAL_TOAST_ID = "wifi_agent_requires_approval"
+        private const val DONATION_PROMPT_TOAST_ID = "donation_prompt"
+        private val DISCONNECT_GRACE_PERIOD = 5.seconds
+        private val DONATION_PROMPT_DURATION = 30.seconds
+
+        private val isWindows = Platform.Current == Platform.Windows
+        private val isMacOS = Platform.Current == Platform.MacOS
+        private val daemonServiceName = "${AppVariant.current.linuxFsName}-daemon"
+        private val wifiAgentServiceName = "${AppVariant.current.linuxFsName}-wifi"
+        private val isSystemdActive = File("/run/systemd/system").isDirectory
+    }
+}

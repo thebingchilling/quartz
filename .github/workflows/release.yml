@@ -1,0 +1,140 @@
+name: release
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name (0.0.0 or 0.0.0-beta.1)"
+        required: false
+        default: v1.0.2
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  meta:
+    name: resolve-version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+      package_version: ${{ steps.meta.outputs.package_version }}
+      channel: ${{ steps.meta.outputs.channel }}
+      release_type: ${{ steps.meta.outputs.release_type }}
+      variant: ${{ steps.meta.outputs.variant }}
+    steps:
+      - id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG="${INPUT_TAG}"
+          else
+            TAG="$REF_NAME"
+          fi
+          VERSION="${TAG#v}"
+          PACKAGE_VERSION="${VERSION%%-*}"
+          CHANNEL=latest
+          RELEASE_TYPE=release
+          VARIANT=release
+          if [[ "$VERSION" == *"-beta"* ]]; then
+            CHANNEL=beta
+            RELEASE_TYPE=prerelease
+            VARIANT=beta
+          fi
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "package_version=$PACKAGE_VERSION"
+            echo "channel=$CHANNEL"
+            echo "release_type=$RELEASE_TYPE"
+            echo "variant=$VARIANT"
+          } >> "$GITHUB_OUTPUT"
+
+  linux:
+    needs: meta
+    uses: ./.github/workflows/package-linux.yml
+    secrets: inherit
+    with:
+      variant: ${{ needs.meta.outputs.variant }}
+      version: ${{ needs.meta.outputs.version }}
+      package_version: ${{ needs.meta.outputs.package_version }}
+
+  windows:
+    needs: meta
+    uses: ./.github/workflows/package-windows.yml
+    secrets: inherit
+    with:
+      variant: ${{ needs.meta.outputs.variant }}
+      version: ${{ needs.meta.outputs.version }}
+      package_version: ${{ needs.meta.outputs.package_version }}
+
+  macos:
+    needs: meta
+    uses: ./.github/workflows/package-macos.yml
+    secrets: inherit
+    with:
+      variant: ${{ needs.meta.outputs.variant }}
+      version: ${{ needs.meta.outputs.version }}
+      package_version: ${{ needs.meta.outputs.package_version }}
+
+  apt:
+    needs: [meta, linux]
+    uses: ./.github/workflows/publish-apt.yml
+    secrets: inherit
+    with:
+      channel: ${{ needs.meta.outputs.channel }}
+      version: ${{ needs.meta.outputs.version }}
+
+  publish:
+    needs: [meta, linux, windows, macos]
+    uses: ./.github/workflows/publish-github.yml
+    secrets: inherit
+    with:
+      tag: ${{ needs.meta.outputs.tag }}
+      version: ${{ needs.meta.outputs.version }}
+      channel: ${{ needs.meta.outputs.channel }}
+      release_type: ${{ needs.meta.outputs.release_type }}
+      replace_existing: false
+
+  copr:
+    needs: [meta, publish]
+    if: needs.meta.outputs.release_type == 'release'
+    uses: ./.github/workflows/publish-copr.yml
+    secrets: inherit
+    with:
+      tag: ${{ needs.meta.outputs.tag }}
+      version: ${{ needs.meta.outputs.version }}
+
+  aur:
+    needs: [meta, publish]
+    if: needs.meta.outputs.release_type == 'release'
+    uses: ./.github/workflows/publish-aur.yml
+    secrets: inherit
+    with:
+      tag: ${{ needs.meta.outputs.tag }}
+      version: ${{ needs.meta.outputs.version }}
+
+  homebrew:
+    needs: [meta, publish]
+    if: needs.meta.outputs.release_type == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch update for homebrew tap
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ secrets.PAT }}
+          repository: wgtunnel/homebrew-wgtunnel
+          event-type: homebrew-update

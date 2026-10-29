@@ -1,0 +1,152 @@
+package com.zaneschepke.wireguardautotunnel.desktop.ui.screens.autotunnel.preferred
+
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.dokar.sonner.Toast
+import com.zaneschepke.wireguardautotunnel.client.domain.model.TunnelConfig
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.Res
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.preferred_tunnel
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.trusted_bssid
+import com.zaneschepke.wireguardautotunnel.composeapp.generated.resources.trusted_wifi_names
+import com.zaneschepke.wireguardautotunnel.desktop.ui.common.LocalToaster
+import com.zaneschepke.wireguardautotunnel.desktop.ui.common.button.SurfaceRow
+import com.zaneschepke.wireguardautotunnel.desktop.ui.common.scaffold.NestedSettingsScaffold
+import com.zaneschepke.wireguardautotunnel.desktop.ui.common.scroll.ScrollbarThickness
+import com.zaneschepke.wireguardautotunnel.desktop.ui.common.scroll.appScrollbarStyle
+import com.zaneschepke.wireguardautotunnel.desktop.ui.navigation.TunnelNetwork
+import com.zaneschepke.wireguardautotunnel.desktop.ui.screens.autotunnel.components.NetworkRuleInput
+import com.zaneschepke.wireguardautotunnel.desktop.ui.screens.autotunnel.wifi.MacWifiPermissionCard
+import com.zaneschepke.wireguardautotunnel.desktop.ui.screens.tunnels.components.TunnelPickerList
+import com.zaneschepke.wireguardautotunnel.desktop.ui.sideeffects.AppSideEffect
+import com.zaneschepke.wireguardautotunnel.desktop.viewmodel.AutoTunnelViewModel
+import com.zaneschepke.wireguardautotunnel.desktop.wifi.MacWifiNameCoordinator
+import com.zaneschepke.wireguardautotunnel.desktop.wifi.needsLocationPrompt
+import dev.nucleusframework.core.runtime.Platform
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.orbitmvi.orbit.compose.collectAsState
+import org.orbitmvi.orbit.compose.collectSideEffect
+
+@Composable
+fun PreferredTunnelScreen(
+    tunnelNetwork: TunnelNetwork,
+    viewModel: AutoTunnelViewModel = koinViewModel(),
+) {
+    val toaster = LocalToaster.current
+    val uiState by viewModel.collectAsState()
+    var currentSsidText by rememberSaveable { mutableStateOf("") }
+    var currentBssidText by rememberSaveable { mutableStateOf("") }
+    var selectedTunnel by remember { mutableStateOf<TunnelConfig?>(null) }
+    val wifiNames = koinInject<MacWifiNameCoordinator>()
+    val wifiStatus by wifiNames.authorization.collectAsState()
+
+    viewModel.collectSideEffect { sideEffect ->
+        when (sideEffect) {
+            is AppSideEffect.Toast -> toaster.show(Toast(sideEffect.message, sideEffect.type))
+            else -> Unit
+        }
+    }
+
+    if (!uiState.isLoaded) return
+
+    val currentSelection =
+        remember(uiState.tunnels, tunnelNetwork) {
+            when (tunnelNetwork) {
+                TunnelNetwork.ETHERNET -> uiState.tunnels.firstOrNull { it.isEthernetTunnel }
+                TunnelNetwork.WIFI -> selectedTunnel
+            }
+        }
+
+    NestedSettingsScaffold(title = stringResource(Res.string.preferred_tunnel)) { padding ->
+        if (tunnelNetwork == TunnelNetwork.ETHERNET) {
+            TunnelPickerList(
+                modifier = Modifier.padding(padding),
+                tunnels = uiState.tunnels,
+                isSelected = { it.id == currentSelection?.id },
+                onSelect = { tunnel ->
+                    val selected = currentSelection?.id == tunnel.id
+                    viewModel.setEthernetTunnel(if (selected) null else tunnel)
+                },
+            )
+        } else {
+            val lazyListState = rememberLazyListState()
+            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier.fillMaxSize().padding(end = ScrollbarThickness),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    if (wifiStatus.needsLocationPrompt) {
+                        item {
+                            MacWifiPermissionCard(onOpenSettings = wifiNames::openLocationSettings)
+                        }
+                    }
+                    items(uiState.tunnels, key = { it.id }) { tunnel ->
+                        val expanded = selectedTunnel?.id == tunnel.id
+                        Column {
+                            SurfaceRow(
+                                title = tunnel.name,
+                                selected = expanded || tunnel.tunnelNetworks.isNotEmpty(),
+                                onClick = { selectedTunnel = if (expanded) null else tunnel },
+                            )
+                            if (expanded) {
+                                NetworkRuleInput(
+                                    inputTitle = stringResource(Res.string.trusted_wifi_names),
+                                    placeholder = viewModel.ssidHints.firstOrNull().orEmpty(),
+                                    rules = tunnel.tunnelNetworks,
+                                    onDelete = { viewModel.removeWifiMapping(tunnel, it) },
+                                    currentText = currentSsidText,
+                                    onValueChange = { currentSsidText = it },
+                                    onSave = {
+                                        viewModel.saveWifiMapping(tunnel, it)
+                                        currentSsidText = ""
+                                    },
+                                )
+                                if (Platform.Current == Platform.Linux) {
+                                    NetworkRuleInput(
+                                        inputTitle = stringResource(Res.string.trusted_bssid),
+                                        placeholder = viewModel.bssidHints.firstOrNull().orEmpty(),
+                                        rules = tunnel.tunnelBssids,
+                                        onDelete = { viewModel.removeBssidMapping(tunnel, it) },
+                                        currentText = currentBssidText,
+                                        onValueChange = { currentBssidText = it },
+                                        onSave = {
+                                            viewModel.saveBssidMapping(tunnel, it)
+                                            currentBssidText = ""
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                VerticalScrollbar(
+                    adapter = rememberScrollbarAdapter(lazyListState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    style = appScrollbarStyle(),
+                )
+            }
+        }
+    }
+}

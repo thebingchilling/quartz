@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WG Tunnel</string>
+    <string name="tray_open">Open WG Tunnel</string>
+    <string name="tray_minimize_to_tray">Minimize to Tray</string>
+    <string name="tray_exit">Exit</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="collapse_rail">Collapse rail</string>
+    <string name="expand_rail">Expand rail</string>
+    <string name="failed_to_read_conf_file">Failed to read .conf file</string>
+    <string name="failed_to_read_zip_archive">Failed to read .zip archive</string>
+    <string name="only_conf_or_zip_supported">Only '.conf' or '.zip' files supported</string>
+    <string name="tunnel_state_starting">Starting</string>
+    <string name="tunnel_state_stopping">Stopping</string>
+    <string name="tunnel_state_healthy">Healthy</string>
+    <string name="tunnel_state_handshake_failure">Handshake failure</string>
+    <string name="tunnel_state_resolving_dns">Resolving DNS</string>
+    <string name="tunnel_state_establishing_connection">Establishing connection</string>
+    <string name="tunnel_state_connected">Connected</string>
+    <string name="github_url" translatable="false">https://github.com/wgtunnel/wgtunnel/issues</string>
+    <string name="github_sponsors_url" translatable="false">https://github.com/sponsors/zaneschepke</string>
+    <string name="kofi_url" translatable="false">https://ko-fi.com/zaneschepke</string>
+    <string name="liberapay_url" translatable="false">https://liberapay.com/zaneschepke</string>
+    <string name="docs_url" translatable="false">https://wgtunnel.com/docs/getting-started</string>
+    <string name="website_url" translatable="false">https://wgtunnel.com</string>
+    <string name="privacy_policy_url" translatable="false">https://wgtunnel.com/privacy-policy/</string>
+    <string name="docs_wildcards" translatable="false">https://wgtunnel.com/docs/auto-tunneling</string>
+    <string name="matrix_url" translatable="false">https://matrix.to/#/#wg-tunnel-space:matrix.org</string>
+    <string name="telegram_url" translatable="false">https://t.me/wgtunnel</string>
+    <string name="tunnels">Tunnels</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="tunnel_on_ethernet">Tunnel on ethernet</string>
+    <string name="thank_you">Thank you for using WG Tunnel!</string>
+    <string name="config_changes_saved">Configuration changes saved.</string>
+    <string name="addresses">Addresses</string>
+    <string name="dns_servers">DNS servers</string>
+    <string name="endpoint">Endpoint</string>
+    <string name="name">Name</string>
+    <string name="seconds">Seconds</string>
+    <string name="cancel">Cancel</string>
+    <string name="unknown_error">Unknown error occurred</string>
+    <string name="tunnel_on_wifi">Tunnel on Wi-Fi</string>
+    <string name="my_email" translatable="false">support@zaneschepke.com</string>
+    <string name="email_subject">WG Tunnel Support</string>
+    <string name="docs_description">Read the docs</string>
+    <string name="email_description">Send me an email</string>
+    <string name="delete_tunnel">Delete tunnel</string>
+    <string name="delete_tunnel_message">Are you sure you would like to delete the selected tunnels?</string>
+    <string name="yes">Yes</string>
+    <string name="open_issue">Open an issue</string>
+    <string name="set_primary_tunnel">Tunnel used when no preferred tunnel is configured</string>
+    <string name="settings">Settings</string>
+    <string name="support">Support</string>
+    <string name="never">Never</string>
+    <string name="logs">Logs</string>
+    <string name="appearance">Appearance</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="display_theme">Display theme</string>
+    <string name="language">Language</string>
+    <string name="trusted_wifi_names">Trusted Wi-Fi names</string>
+    <string name="primary_tunnel">Default tunnel</string>
+    <string name="entry_tunnel">Entry tunnel</string>
+    <string name="entry_tunnel_desc">Send this tunnel through another tunnel.</string>
+    <string name="entry_tunnel_none">None</string>
+    <string name="entry_tunnel_none_desc">Use this tunnel on its own.</string>
+    <string name="entry_tunnel_add_another">Add another tunnel to use as entry.</string>
+    <string name="via_entry">via %1$s</string>
+    <string name="use_wildcards">Use name wildcards</string>
+    <string name="learn_more">Learn more</string>
+    <string name="donate">Donate to project</string>
+    <string name="search">Search</string>
+    <string name="donate_action">Donate</string>
+    <string name="donation_prompt_message">Thanks for using WG Tunnel! If you are able, please consider supporting the project to keep it free and improving.</string>
+    <string name="local_logging">Local logs monitor</string>
+    <string name="stop_on_no_internet">Stop on no internet</string>
+    <string name="allow_lan_traffic">Allow LAN traffic</string>
+    <string name="bypass_lan_for_kill_switch">Exempts local network traffic from the kill switch. Use with caution as this can cause leaks if your LAN has its own route to the internet</string>
+    <string name="stop">Stop</string>
+    <string name="auto_tunnel">Auto-tunnel</string>
+    <string name="save">Save</string>
+    <string name="save_and_restart">Save and restart</string>
+    <string name="restart_required">Restart required</string>
+    <string name="restart_to_apply_message">The active tunnel must be restarted for these changes to take effect.</string>
+    <string name="select">Select</string>
+    <string name="join_telegram">Join Telegram community</string>
+    <string name="join_matrix">Join Matrix community</string>
+    <string name="dropdown">Dropdown</string>
+    <string name="export_logs">Export stored logs</string>
+    <string name="delete_logs">Delete and clear logs</string>
+    <string name="copy">Copy</string>
+    <string name="delete">Delete</string>
+    <string name="export_failed">Export failed: %1$s</string>
+    <string name="export_cancelled">Export cancelled</string>
+    <string name="exported_to_template">Exported to %1$s</string>
+    <string name="logs_exported_template">Logs exported to %1$s</string>
+    <string name="stored_logs_deleted">Stored logs deleted</string>
+    <string name="config_error">Invalid config</string>
+    <string name="auth_error">Unauthorized</string>
+    <string name="error_bad_request">Invalid request, please try again.</string>
+    <string name="error_conflict">This action has already been performed.</string>
+    <string name="error_daemon_comms">Daemon communication error, please check the daemon status.</string>
+    <string name="error_internal_server">An internal error occurred, please try again.</string>
+    <string name="error_proxy_both_disabled">Enable at least one proxy (SOCKS5 or HTTP) before starting a tunnel in proxy mode.</string>
+    <string name="check_for_update">Check for update</string>
+    <string name="update_check_failed">Update check failed.</string>
+    <string name="update_download_failed">Update download failed.</string>
+    <string name="licenses">Licenses</string>
+    <string name="amoled">AMOLED</string>
+    <string name="_default">Default</string>
+    <string name="accent_color">Accent color</string>
+    <string name="choose_from_image">Choose from image</string>
+    <string name="pick_a_color">Pick a color</string>
+    <string name="reset_to_default_color">Reset to default</string>
+    <string name="theme_from_image_failed">Could not extract a color from that image.</string>
+    <string name="select_image">Select image</string>
+    <string name="choose_accent_color">Choose accent color</string>
+    <string name="palette_style">Palette style</string>
+    <string name="tray">Tray</string>
+    <string name="tray_icon_color">Tray icon color</string>
+    <string name="automatic">Automatic</string>
+    <string name="accent_style_tonal_spot">Tonal Spot</string>
+    <string name="accent_style_neutral">Neutral</string>
+    <string name="accent_style_vibrant">Vibrant</string>
+    <string name="accent_style_expressive">Expressive</string>
+    <string name="accent_style_rainbow">Rainbow</string>
+    <string name="accent_style_fruit_salad">Fruit Salad</string>
+    <string name="accent_style_monochrome">Monochrome</string>
+    <string name="accent_style_fidelity">Fidelity</string>
+    <string name="accent_style_content">Content</string>
+    <string name="tunnel">Tunnel</string>
+    <string name="start">Start</string>
+    <string name="auto_tunnel_running">Auto-tunnel is running</string>
+    <string name="auto_tunnel_not_running">Auto-tunnel is not running</string>
+    <string name="tunnel_monitoring">Tunnel monitoring</string>
+    <string name="proxy">Proxy</string>
+    <string name="backend_mode">App mode</string>
+    <string name="selected">Selected</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="proxy_settings">Proxy settings</string>
+    <string name="vpn">VPN</string>
+    <string name="dns_settings">DNS settings</string>
+    <string name="system">System</string>
+    <string name="doh">DNS over HTTPS (DoH)</string>
+    <string name="doh_desc">Resolve using DNS-over-HTTPS</string>
+    <string name="bootstrap_system_dns_desc">Resolve using the device's configured DNS</string>
+    <string name="config_error_template">Bad config. %1$s at location: %2$s.</string>
+    <string name="ddns_auto_update">Dynamic DNS auto-update</string>
+    <string name="ddns_auto_update_description">Automatically updates a peer's endpoint address when its DNS-resolved IP changes</string>
+    <string name="lockdown">Lockdown</string>
+    <string name="crypto">Cryptocurrency addresses</string>
+    <string name="github_sponsors">GitHub Sponsors</string>
+    <string name="liberapay">Liberapay</string>
+    <string name="kofi">Ko-fi</string>
+    <string name="bitcoin_address" translatable="false">bc1qu6dwlwhav7cwp5gv3kyv3cpwrjrra80p75js6u</string>
+    <string name="bitcoin_lightning_address" translatable="false">wgtunnel@cake.cash</string>
+    <string name="litecoin_address" translatable="false">ltc1q983jnz3n2zshp2xyme8ant45aah5hv337k8nm7</string>
+    <string name="ethereum_address" translatable="false">0xd711c24D0E355d9D694F60B42FdDAFd8653D2786</string>
+    <string name="bitcoin_cash_address" translatable="false">bitcoincash:qp6xacvswha2tjfp2rscguq3gd4eecxeuvcgtyjv58</string>
+    <string name="solana_address" translatable="false">5qPMZa2Y2R6D6AUzrofS4o2M1nzNpbMiAkcRcBkjsmwQ</string>
+    <string name="polygon_address" translatable="false">0xd711c24D0E355d9D694F60B42FdDAFd8653D2786</string>
+    <string name="tron_address" translatable="false">TCbR2SqstTLxCA9zp52iC7G2DfHUGD9ak2</string>
+    <string name="monero_address" translatable="false">44D1vWL4CqmEGiRhwtUy6MT2SgaCYpk5o3Nh6YxBFyoCXLZ5eZMLiDGj9uoo51mGjeiLxHWyV28MxDPUzQZN4PoqML16ZB9</string>
+    <string name="ecash_address" translatable="false">ecash:qrnnvzhezgm9unazue2mw7np5qhdk2874g996nd2zw</string>
+    <string name="zcash_address" translatable="false">u1fkx80l0mr7cgzmj5xusnf4fa0hlvttaedlqjzl657dyyfqq4tzq49v4ru53u8re0kfnlah7s363msewcva43v8a2rn8zqs56jeeu6m7snrfljs343kfkgv7gsa76xg005wz95855uwlrvgan0er8n3sp75mmmj44n3fnjar5y7jy0pd2k5yw33lgwpuectuknkwstdkkfyqvxh9xq6c</string>
+    <string name="stellar_address" translatable="false">GAOHREIPAOKSTD4ELXCMM7LDZPRGKJ2DNHEIXLU752PJS6CDPBAEM75B</string>
+    <string name="avalanche_address" translatable="false">0xd711c24D0E355d9D694F60B42FdDAFd8653D2786</string>
+    <string name="bitcoin" translatable="false">Bitcoin (BTC)</string>
+    <string name="bitcoin_lightning" translatable="false">Bitcoin Lightning</string>
+    <string name="monero" translatable="false">Monero (XMR)</string>
+    <string name="ethereum" translatable="false">Ethereum (ETH)</string>
+    <string name="litecoin" translatable="false">Litecoin (LTC)</string>
+    <string name="polygon" translatable="false">Polygon (POL)</string>
+    <string name="solana" translatable="false">Solana (SOL)</string>
+    <string name="tron" translatable="false">Tron (TRX)</string>
+    <string name="bitcoin_cash" translatable="false">Bitcoin Cash (BCH)</string>
+    <string name="avalanche" translatable="false">Avalanche (AVAX)</string>
+    <string name="zcash" translatable="false">Zcash (ZEC)</string>
+    <string name="stellar" translatable="false">Stellar (XLM)</string>
+    <string name="ecash" translatable="false">eCash (XEC)</string>
+    <string name="donation_thanks_intro">Thank you for considering donating to this project!</string>
+    <string name="donation_dev_message">As the sole developer, I work tirelessly to make WG Tunnel the best free and open-source WireGuard client for Android, but this is only possible with your support.</string>
+    <string name="donation_closing">It's my dream to work for you on this project full-time.</string>
+    <string name="donation_signoff">Gratefully,</string>
+    <string name="dev_name" translatable="false">Zane</string>
+    <string name="back">Back</string>
+    <string name="configuration">Configuration</string>
+    <string name="about">About</string>
+    <string name="resources">Resources</string>
+    <string name="website">App website</string>
+    <string name="contact">Contact</string>
+    <string name="app_version">App version</string>
+    <string name="system_information">System information</string>
+    <string name="system_information_copied">System information copied to clipboard</string>
+    <string name="options">Options</string>
+    <string name="general">General</string>
+    <string name="networks">Networks</string>
+    <string name="preferred_tunnel_label">Preferred tunnel: </string>
+    <string name="preferred_tunnel">Preferred tunnel</string>
+    <string name="mapped">Mapped</string>
+    <string name="tunnel_mapping">Tunnel mapping</string>
+    <string name="wifi_settings">Wi-Fi settings</string>
+    <string name="wifi_name_permission_title">Location permissions</string>
+    <string name="wifi_name_permission_body">Location Services and permission are required on macOS to read the connected Wi-Fi name for the purposes of auto-tunneling. WG Tunnel never tracks your location.</string>
+    <string name="wifi_name_allow">Open Location Settings</string>
+    <string name="ethernet">Ethernet</string>
+    <string name="no_network">No network connected</string>
+    <string name="active_network">Active Network: </string>
+    <string name="network_name">Network: </string>
+    <string name="wifi">Wi-Fi</string>
+    <string name="tunnel_mapping_description">Map tunnels as preferred by Wi-Fi name</string>
+    <string name="monitoring">Monitoring</string>
+    <string name="lockdown_settings">Lockdown settings</string>
+    <string name="info">Info</string>
+    <string name="already_donated">Already donated</string>
+    <string name="already_donated_description">Disables future donation prompts</string>
+    <string name="mode">Mode</string>
+    <string name="network">Network</string>
+    <string name="view_configuration">View configuration</string>
+    <string name="view_live_tunnel">View live tunnel</string>
+    <string name="ipv6_settings">IPv6 settings</string>
+    <string name="automation">Automation</string>
+    <string name="peer_resolution">Peer Resolution</string>
+    <string name="resolution_method">Resolution method</string>
+    <string name="resolution_method_desc">How hostnames needed to establish the tunnel are resolved</string>
+    <string name="dot">DNS over TLS (DoT)</string>
+    <string name="dot_desc">Resolve using DNS-over-TLS</string>
+    <string name="plain_dns">Plain DNS (port 53)</string>
+    <string name="plain_dns_desc">Resolve using unencrypted DNS</string>
+    <string name="dns_endpoint_label">DNS server endpoint</string>
+    <string name="dns_endpoint_hint">IP, hostname, or DoH URL</string>
+    <string name="prefer_ipv6">Prefer IPv6</string>
+    <string name="prefer_ipv6_desc">Use IPv6 endpoints when the network supports it, falling back to IPv4 automatically if the tunnel is failing</string>
+    <string name="restore_ipv6">Restore IPv6</string>
+    <string name="restore_ipv6_desc">Attempt to restore IPv6 endpoints when the tunnel is healthy on an IPv6 supported network</string>
+    <string name="local_proxy">Local proxy</string>
+    <string name="local_proxy_desc">Expose the tunnel as a local SOCKS5/HTTP proxy</string>
+    <string name="vpn_desc">Standard system-wide VPN mode</string>
+    <string name="stop_on_no_internet_desc">Stop the tunnel when the device has no network connection</string>
+    <string name="restore_auto_tunnel_at_login">Restore auto-tunnel at login</string>
+    <string name="restore_auto_tunnel_at_login_desc">Re-enables auto-tunnel at login so it decides what starts</string>
+    <string name="restore_auto_tunnel_at_login_locked_reason">Turn off restore tunnel at login first, so auto-tunnel decides what starts</string>
+    <string name="local_logging_desc">Local log storage with live viewer</string>
+    <string name="tunnel_globals">Tunnel globals</string>
+    <string name="tunnel_globals_desc">Global configuration overrides for all tunnels</string>
+    <string name="tunnel_configuration">Tunnel configuration</string>
+    <string name="tunnel_recovery">Tunnel recovery</string>
+    <string name="seamless_recovery">Seamless tunnel recovery</string>
+    <string name="seamless_recovery_desc">Maintains protection while recovering from DDNS changes, network switches, and NAT issues</string>
+    <string name="recovery_bounce_delay">Seamless recovery delay</string>
+    <string name="recovery_bounce_delay_desc">Handshake failure threshold before seamless recovery triggers</string>
+    <string name="encrypted_dns">Encrypted DNS</string>
+    <string name="split_dns">Split DNS</string>
+    <string name="system_dns_only">System DNS only</string>
+    <string name="default_dns_desc">Standard plain DNS through the tunnel using the tunnel DNS servers</string>
+    <string name="encrypted_dns_desc">Encrypted DNS through the tunnel using a custom server</string>
+    <string name="split_dns_desc">Split resolution by domain suffix between system DNS and tunnel DNS</string>
+    <string name="system_dns_only_desc">All DNS queries are send to the system's DNS servers and bypass the tunnel</string>
+    <string name="protocol">Protocol</string>
+    <string name="protocol_desc">The transport used for DNS requests through the tunnel</string>
+    <string name="tunnel_dns_mode">Tunnel DNS mode</string>
+    <string name="tunnel_dns_mode_desc">How DNS is resolved while the tunnel is active</string>
+    <string name="tunnel_dns">Tunnel DNS</string>
+    <string name="use_tunnel_dns_servers">Use tunnel DNS servers</string>
+    <string name="split_suffix_target">Route suffixes via</string>
+    <string name="split_suffix_target_sheet_desc">Which resolver handles the domain suffixes above</string>
+    <string name="split_suffix_target_system">System DNS</string>
+    <string name="split_suffix_target_tunnel">Tunnel DNS</string>
+    <string name="split_suffix_target_desc_system">Domain suffixes routed to system DNS. All other queries use tunnel DNS.</string>
+    <string name="split_suffix_target_desc_tunnel">Domain suffixes routed to tunnel DNS. All other queries use system DNS.</string>
+    <string name="transit_dns_policy">Transit DNS requests</string>
+    <string name="transit_dns_policy_desc">How to handle plain DNS request sent to a server different from the tunnel DNS servers</string>
+    <string name="transit_dns_redirect">Redirect</string>
+    <string name="transit_dns_redirect_desc">Intercepts and redirects these requests to the configured tunnel DNS servers and protocol</string>
+    <string name="transit_dns_block">Block</string>
+    <string name="transit_dns_block_desc">Drop the request</string>
+    <string name="transit_dns_allow">Allow</string>
+    <string name="transit_dns_allow_desc">Let the request through unmodified</string>
+    <string name="domain_suffixes">Domain suffixes</string>
+    <string name="kill_switch_label">Kill switch</string>
+    <string name="kill_switch_desc">Block all traffic outside the tunnel, whether or not a tunnel is running</string>
+    <string name="requires_daemon_running">Requires the daemon to be running</string>
+    <string name="refresh_rate_updated">Refresh rate updated</string>
+    <string name="proxy_settings_saved">Proxy settings saved</string>
+    <string name="bssid_pattern_in_use">This BSSID or pattern is already in use</string>
+    <string name="network_pattern_in_use">This network name or pattern is already in use</string>
+    <string name="tunnel_not_found">Tunnel not found</string>
+    <string name="no_tunnels_selected">No tunnels selected</string>
+    <string name="syncing_with_daemon">Syncing with daemon…</string>
+    <string name="daemon_not_running">The WG Tunnel daemon is not running.</string>
+    <string name="daemon_start_command_label">Copy Start Command</string>
+    <string name="daemon_outdated_template">The running daemon (v%1$s) is older than this app (v%2$s). Restart it to finish updating.</string>
+    <string name="daemon_restart_command_label">Copy Restart Command</string>
+    <string name="mac_service_requires_approval_template">WG Tunnel needs your approval to run its %1$s.</string>
+    <string name="background_service_name">background service</string>
+    <string name="wifi_helper_service_name">Wi-Fi helper</string>
+    <string name="open_system_settings">Open Settings</string>
+    <string name="remove_background_service">Remove background service</string>
+    <string name="remove_background_service_desc">Stops and unregisters the daemon and the Wi-Fi helper before you uninstall the app</string>
+    <string name="remove_background_service_message">This disconnects any active tunnel and stops the background service. You can still reopen the app afterward to register it again. Continue?</string>
+    <string name="background_service_removed">Background service removed</string>
+    <string name="background_service_remove_failed">Failed to remove the background service</string>
+    <string name="startup">At Login</string>
+    <string name="startup_desc">What launches automatically when you log in</string>
+    <string name="protect_on_startup">Protect on system startup</string>
+    <string name="protect_on_startup_desc">Blocks all traffic from the moment the daemon starts at boot, before you log in</string>
+    <string name="restore_tunnel_at_login">Restore tunnel at login</string>
+    <string name="restore_tunnel_at_login_desc">Restores the last active tunnel at login</string>
+    <string name="launch_at_login">Launch app login</string>
+    <string name="launch_at_login_desc">App starts in the system tray at login</string>
+    <string name="launch_at_login_locked_reason">Required while restore tunnel or auto-tunnel at login is enabled</string>
+    <string name="autolaunch_update_failed">Failed to update launch at login setting</string>
+    <string name="copied_to_clipboard">Copied to clipboard: %1$s</string>
+    <string name="invalid_config_template">Invalid Config: %1$s</string>
+    <string name="details">Details</string>
+    <string name="install_update">Install update</string>
+    <string name="checking_for_updates">Checking for updates…</string>
+    <string name="update_available_version">Update %1$s is available.</string>
+    <string name="up_to_date">You're up to date</string>
+    <string name="download_update">Download update</string>
+    <string name="downloading_update">Downloading update…</string>
+    <string name="downloading_update_delta">Downloading update (delta)…</string>
+    <string name="update_progress_template">%1$s / %2$s · %3$d%%</string>
+    <string name="restart_and_install">Restart &amp; Install</string>
+    <string name="ready_to_install_version">Update %1$s is ready. Restart to install.</string>
+    <string name="installing_update">Installing…</string>
+    <string name="update_install_failed">Update install failed.</string>
+    <string name="socks5_proxy">SOCKS5 proxy</string>
+    <string name="socks5_bind_address">SOCKS5 bind address</string>
+    <string name="http_proxy">HTTP proxy</string>
+    <string name="http_bind_address">HTTP bind address</string>
+    <string name="credentials_encrypted_at_rest">Credentials (encrypted at rest)</string>
+    <string name="allow_socks4">Allow SOCKS4 clients</string>
+    <string name="allow_socks4_desc">Accept SOCKS4 connections on the SOCKS5 proxy. Only available when proxy credentials are disabled.</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+    <string name="no_logs_yet">No logs yet</string>
+    <string name="add_a_tunnel">Add a tunnel</string>
+    <string name="select_all">Select all</string>
+    <string name="colors">Colors</string>
+    <string name="theme">Theme</string>
+    <string name="use_system_colors">Use system colors</string>
+    <string name="lockdown_active">Lockdown active</string>
+    <string name="auto_tunnel_active">Auto-tunnel enabled</string>
+    <string name="daemon_connected">Daemon connected</string>
+    <string name="connecting_to_daemon">Connecting to daemon…</string>
+    <string name="status_lowercase_template">status: %1$s</string>
+    <string name="recovery_attempts_template">recovery attempts: %1$d</string>
+    <string name="uptime_lowercase_template">uptime: %1$s</string>
+    <string name="socks5_proxy_lowercase_template">socks5 proxy: %1$s</string>
+    <string name="socks5_proxy_protected_lowercase_template">socks5 proxy: %1$s (password protected)</string>
+    <string name="http_proxy_lowercase_template">http proxy: %1$s</string>
+    <string name="http_proxy_protected_lowercase_template">http proxy: %1$s (password protected)</string>
+    <string name="unknown">unknown</string>
+    <string name="peer_template">peer: %1$s</string>
+    <string name="last_handshake_template">last handshake: %1$s</string>
+    <string name="endpoint_lowercase_template">endpoint: %1$s</string>
+    <string name="statistics">Statistics</string>
+    <string name="live_tunnel_statistics">Live tunnel statistics</string>
+    <string name="refresh_rate">Refresh rate</string>
+    <string name="dns_settings_saved">DNS settings saved</string>
+    <string name="dns_error_empty">Endpoint cannot be empty</string>
+    <string name="dns_error_invalid_url">Invalid URL format</string>
+    <string name="dns_error_invalid_scheme">DoH must use HTTPS</string>
+    <string name="dns_error_invalid_host">Host cannot be empty</string>
+    <string name="dns_error_invalid_port">Port must be between 1 and 65535</string>
+    <string name="dns_error_invalid_ip_or_host">Invalid IP address or hostname</string>
+    <string name="no_tunnels_click_add">No tunnels added yet! Click the + symbol to add a tunnel.</string>
+    <string name="delete_selected_tunnels">Are you sure you want to delete the selected tunnels?</string>
+    <string name="export">Export</string>
+    <string name="select_tunnels">Select</string>
+    <string name="delete_selected">Delete selected</string>
+    <string name="export_selected">Export selected</string>
+    <string name="exit_selection_mode">Exit selection mode</string>
+    <string name="seconds_template">%1$ds</string>
+    <string name="minutes_template">%1$dm</string>
+    <string name="live_configuration">Live configuration</string>
+    <string name="no_active_tunnel_data">No active tunnel data</string>
+    <string name="tunnel_name_empty">Tunnel name cannot be empty</string>
+    <string name="add">Add</string>
+    <string name="bssid" translatable="false">BSSID</string>
+    <string name="trusted_bssid">Trusted BSSID</string>
+
+    <string name="wifi_rules">Wi-Fi Rules</string>
+    <string name="wildcard_desc">Enable advanced matching for networks using patterns</string>
+    <string name="wildcard_wifi_desc">Supports *, ?, and ! for blacklisting</string>
+    <string name="wildcard_bssid_desc">Supports * and ! for blacklisting</string>
+    <string name="amnezia_configuration">Amnezia configuration</string>
+    <string name="okay">Okay</string>
+    <string name="add_group">Add group</string>
+    <string name="group_name">Group name</string>
+    <string name="rename_group">Rename group</string>
+    <string name="delete_group">Delete group</string>
+    <string name="delete_group_message">Tunnels in this group will be ungrouped.</string>
+    <string name="delete_group_and_tunnels">Delete group and tunnels</string>
+    <string name="delete_group_and_tunnels_message">This will delete the group and all tunnels inside it.</string>
+    <string name="export_group">Export group</string>
+    <string name="move_to_group">Move to group</string>
+    <string name="ungroup">Ungroup</string>
+    <string name="import_from_file">Import from file</string>
+    <string name="no_tunnels_in_group">This group has no tunnels to export</string>
+    <plurals name="group_tunnel_count">
+        <item quantity="one">%1$d tunnel</item>
+        <item quantity="other">%1$d tunnels</item>
+    </plurals>
+    <string name="group_active_count">%1$d active</string>
+    <string name="add_group_ellipsis">Add group…</string>
+    <string name="expand_group">Expand group</string>
+    <string name="collapse_group">Collapse group</string>
+    <string name="multihop">Multihop</string>
+</resources>

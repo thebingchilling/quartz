@@ -1,0 +1,8 @@
+What's new:
+- Multihop tunnel in a tunnel support
+- SOCKS4 support, especially for Windows clients
+- Bugfixes for kill switch LAN bypass
+- Tunnel group UX improvements
+- Bugfix for macOS suspend handshake issues
+- Windows tunnel start optimizations
+- Various other fixes and improvements
