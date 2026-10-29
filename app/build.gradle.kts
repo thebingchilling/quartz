@@ -294,3 +294,6 @@ tasks.configureEach {
         enabled = false
     }
 }
+
+// Quartz: branding and fork overrides (see FORK.md)
+apply(from = "../quartz.gradle")

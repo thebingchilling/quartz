@@ -1,0 +1,72 @@
+name: quartz-upstream-sync
+
+# Mirrors wgtunnel/android master into the upstream-master branch and opens a
+# PR from it into main. Conflicts show up on the PR; resolve them locally with
+# `git merge upstream/master` (never rebase) and push to main.
+
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: quartz-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          # Upstream merges often touch .github/workflows, which GITHUB_TOKEN
+          # can't push. SYNC_TOKEN is a PAT with repo + workflow scope.
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/wgtunnel/android.git
+          git fetch --no-tags upstream master
+
+      - name: Check for new commits
+        id: check
+        run: |
+          if git merge-base --is-ancestor upstream/master origin/main; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "main already contains upstream/master"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+            echo "count=$(git rev-list --count origin/main..upstream/master)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update upstream-master mirror
+        if: steps.check.outputs.new == 'true'
+        run: git push --force origin upstream/master:refs/heads/upstream-master
+
+      - name: Open or update PR
+        if: steps.check.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+          COUNT: ${{ steps.check.outputs.count }}
+        run: |
+          existing=$(gh pr list --head upstream-master --base main --state open --json number --jq '.[0].number')
+          body="Merges ${COUNT} new commit(s) from [wgtunnel/android](https://github.com/wgtunnel/android) master.
+
+          If GitHub reports conflicts, resolve locally:
+
+          \`\`\`bash
+          git fetch upstream master && git merge upstream/master
+          \`\`\`
+
+          Check the touched-files list in FORK.md §11 when resolving."
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --body "$body"
+          else
+            gh pr create --head upstream-master --base main \
+              --title "Merge upstream WG Tunnel" --body "$body"
+          fi

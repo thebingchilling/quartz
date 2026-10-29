@@ -15,7 +15,7 @@ that keeps the stock WG Tunnel app and adds:
 The goal is to change upstream files as little as possible, so that WG Tunnel,
 openvpn3 and mihomo can each be updated independently.
 
-All work is committed directly to `master` (this repo's main branch).
+All work is committed directly to `main`. Upstream's branch is `master`.
 
 ---
 
@@ -41,10 +41,10 @@ All work is committed directly to `master` (this repo's main branch).
     connection-info/            ← geo-IP lookup and connected-row info
     warp/                       ← WARP generator (logic + screen)
     branding/                   ← resource overlay: name, icon, colours
-  fork.gradle.kts               ← includes fork/* modules; applied by one line in app/build.gradle.kts
+  quartz.gradle                 ← Quartz overrides (app ID, name, provider authority); applied by one line in app/build.gradle.kts
   FORK.md                       ← this file
   .github/workflows/
-    upstream-sync.yml           ← weekly: merge wgtunnel/android master → PR
+    quartz-upstream-sync.yml    ← weekly: mirror wgtunnel/android master → upstream-master, PR into main
     engine-bump.yml             ← new openvpn3/mihomo release tag → PR (or Renovate)
 ```
 
@@ -64,11 +64,18 @@ change and upstream engine history stays out of this repo. Clone with
 
 | Source | How updates come in |
 |---|---|
-| WG Tunnel | `git fetch upstream && git merge upstream/master` (merge, never rebase). `upstream-sync.yml` does this weekly and opens a PR with a build. |
+| WG Tunnel | `git fetch upstream && git merge upstream/master` (merge, never rebase). `quartz-upstream-sync.yml` mirrors upstream into `upstream-master` weekly and opens a PR into `main`. |
 | openvpn3 | Move `engines/openvpn3` to the new tag, check `patches/openvpn3` still apply, rebuild. |
 | mihomo | Move `engines/mihomo` to the new tag, check `patches/mihomo` still apply, rebuild. |
 
 - Enable `git config rerere.enabled true` so resolved conflicts are replayed.
+- Merge sync PRs with **Create a merge commit** — never squash or rebase,
+  or git loses track of which upstream commits are already in `main`.
+- Local setup: `git remote add upstream https://github.com/wgtunnel/android.git`.
+- The sync workflow needs a `SYNC_TOKEN` secret (PAT with `repo` + `workflow`
+  scope), because upstream merges often change `.github/workflows`, which the
+  default `GITHUB_TOKEN` can't push. "Allow GitHub Actions to create pull
+  requests" must be enabled in the repo's Actions settings.
 - Release versions record all three upstreams, e.g. `4.2.1+ovpn3-3.10_mihomo-1.19.x`.
 
 ## 3. Engine integration
@@ -527,7 +534,7 @@ conflicts.
 
 | File | Change | Why |
 |---|---|---|
-| `app/build.gradle.kts` | `apply(from = "../fork.gradle.kts")` | Add fork modules and overlay |
+| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `quartz.app`, name "Quartz", provider authority `quartz.provider` |
 | Koin startup | Load fork module after upstream's | Override `TunnelProvider` |
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
 | Auto-tunnel candidate selection | Skip expired tunnels; allow group targets | WARP expiry, groups |
@@ -556,8 +563,8 @@ additions in separate composables called from a single line.
 
 ## 13. Build order
 
-1. Repo setup: upstream remote, `fork.gradle.kts`, branding overlay,
-   `upstream-sync.yml`. Confirm a clean merge from upstream.
+1. Repo setup: upstream remote, `quartz.gradle`, branding (name/ID done; icon
+   to do), `quartz-upstream-sync.yml`. Confirm a clean merge from upstream.
 2. WARP generator, slots and expiry (pure app code; proves the Settings hook).
 3. Engine submodules + mihomo engine, detecting importer, Clash UI on the
    REST API.

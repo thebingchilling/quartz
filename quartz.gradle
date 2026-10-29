@@ -1,0 +1,39 @@
+// Quartz overrides on top of upstream WG Tunnel's app/build.gradle.kts.
+//
+// Applied by a single line at the end of app/build.gradle.kts, so upstream's
+// own config stays untouched and merges cleanly. Groovy rather than Kotlin
+// script: an applied .gradle.kts can't see AGP's types, Groovy resolves the
+// android extension dynamically.
+//
+// namespace stays upstream's (com.zaneschepke.wireguardautotunnel): it is the
+// package of R and BuildConfig, not the installed app ID.
+
+def quartzId = "quartz.app"
+def quartzName = "Quartz"
+def quartzAuthority = "quartz.provider"
+
+android {
+    defaultConfig {
+        applicationId = quartzId
+    }
+
+    buildTypes {
+        // resValue at build-type level overrides app_name from main's strings.xml,
+        // as upstream's debug/nightly already rely on.
+        release {
+            resValue("string", "app_name", quartzName)
+            manifestPlaceholders["providerAuthority"] = quartzAuthority
+            buildConfigField("String", "FILE_PROVIDER_AUTHORITY", "\"${quartzAuthority}\"")
+        }
+        debug {
+            resValue("string", "app_name", "${quartzName} Debug")
+            manifestPlaceholders["providerAuthority"] = "${quartzAuthority}.debug"
+            buildConfigField("String", "FILE_PROVIDER_AUTHORITY", "\"${quartzAuthority}.debug\"")
+        }
+        nightly {
+            resValue("string", "app_name", "${quartzName} Nightly")
+            manifestPlaceholders["providerAuthority"] = "${quartzAuthority}.nightly"
+            buildConfigField("String", "FILE_PROVIDER_AUTHORITY", "\"${quartzAuthority}.nightly\"")
+        }
+    }
+}
