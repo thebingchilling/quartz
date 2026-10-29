@@ -27,8 +27,8 @@ val isBetaPackaging = packagingVariant == "beta"
 
 val packageSemver = (findProperty("app.packageVersion") as String?) ?: catalogVersion
 val appVersion = (findProperty("app.version") as String?) ?: catalogVersion
-val appFsName = if (isBetaPackaging) "wgtunnel-beta" else "wgtunnel"
-val appDisplayName = if (isBetaPackaging) "WG Tunnel Beta" else "WG Tunnel"
+val appFsName = if (isBetaPackaging) "quartz-beta" else "quartz"
+val appDisplayName = if (isBetaPackaging) "Quartz Beta" else "Quartz"
 
 // Shown by macOS in the Location prompt. The app reads the Wi-Fi name only.
 val macWifiLocationUsage =
@@ -338,8 +338,8 @@ nucleus.application {
         appName = appDisplayName
         packageName = appFsName
         packageVersion = packageSemver
-        vendor = "WG Tunnel"
-        description = "WG Tunnel: An advanced, open-source client for WireGuard and AmneziaWG."
+        vendor = "Quartz"
+        description = "Quartz: WireGuard, AmneziaWG, OpenVPN and Clash client, based on WG Tunnel."
         homepage = "https://wgtunnel.com"
         copyright = "MIT"
 
@@ -362,8 +362,8 @@ nucleus.application {
         publish {
             github {
                 enabled = true
-                owner = "wgtunnel"
-                repo = "desktop"
+                owner = "thebingchilling"
+                repo = "quartz"
                 channel = if (isBetaPackaging) ReleaseChannel.Beta else ReleaseChannel.Latest
                 releaseType = if (isBetaPackaging) ReleaseType.Prerelease else ReleaseType.Release
             }

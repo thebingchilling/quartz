@@ -1,0 +1,310 @@
+name: quartz-release
+
+# Weekly. Quartz releases follow WG Tunnel releases; engine updates don't
+# trigger a release on their own.
+#
+#  - New wgtunnel/android release (e.g. 5.8.3): merge the tag into main, build
+#    the APKs, publish quartz-android-5.8.3.
+#  - New wgtunnel/desktop release (e.g. v2.4.2): subtree-merge the tag into
+#    desktop/, build the Windows installer, publish quartz-desktop-2.4.2.
+#  - New openvpn3 / mihomo release: open a PR bumping the submodule under
+#    engines/. No release; it ships with the next WG Tunnel release.
+#
+# A conflicting merge opens a PR (Android) or an issue (desktop) instead, and
+# that app's release waits until it's resolved on main. Running this by hand
+# with "force" publishes an extra build on the current base (-2, -3, ...).
+#
+# Tags start with "quartz-" so they never trigger upstream's publish.yml.
+# Builds are pre-releases until signing is set up: Android is debug-signed
+# (fdroid flavor, no in-app updater); the Windows installer is unsigned.
+
+on:
+  schedule:
+    - cron: "41 5 * * 1" # Mondays 05:41 UTC
+  workflow_dispatch:
+    inputs:
+      force_android:
+        type: boolean
+        description: "Publish an Android build even without a new WG Tunnel release"
+        default: false
+      force_desktop:
+        type: boolean
+        description: "Publish a Windows build even without a new WG Tunnel Desktop release"
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: quartz-release
+  cancel-in-progress: false
+
+env:
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.done.outputs.sha }}
+      android_release: ${{ steps.android.outputs.release }}
+      android_tag: ${{ steps.android.outputs.tag }}
+      desktop_release: ${{ steps.desktop.outputs.release }}
+      desktop_version: ${{ steps.desktop.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          # Upstream merges often touch .github/workflows, which GITHUB_TOKEN
+          # can't push. SYNC_TOKEN is a PAT with repo + workflow scope.
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+
+      - name: Set up git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/wgtunnel/android.git
+          git remote add upstream-desktop https://github.com/wgtunnel/desktop.git
+
+      # Prints the next free release name for $1 (e.g. quartz-android-5.8.3),
+      # or nothing if it exists and $2 (force) isn't "true".
+      - name: Release name helper
+        run: |
+          cat > "$RUNNER_TEMP/next-release.sh" <<'EOF'
+          base=$1; force=$2
+          if ! gh release view "$base" >/dev/null 2>&1; then echo "$base"; exit 0; fi
+          [ "$force" = "true" ] || exit 0
+          n=2; while gh release view "$base-$n" >/dev/null 2>&1; do n=$((n+1)); done
+          echo "$base-$n"
+          EOF
+          chmod +x "$RUNNER_TEMP/next-release.sh"
+
+      - name: WG Tunnel Android
+        id: android
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+          FORCE: ${{ inputs.force_android }}
+        run: |
+          tag=$(git ls-remote --tags upstream | grep -v '\^{}' | sed 's#.*refs/tags/##' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          release=$("$RUNNER_TEMP/next-release.sh" "quartz-android-$tag" "$FORCE")
+          echo "Latest WG Tunnel Android: $tag; release: ${release:-none}"
+          [ -n "$release" ] || exit 0
+
+          git fetch --no-tags upstream "refs/tags/$tag:refs/tags/upstream-$tag"
+          if ! git merge-base --is-ancestor "upstream-$tag" HEAD; then
+            if git merge --no-edit -m "Merge WG Tunnel $tag" "upstream-$tag"; then
+              git push origin HEAD:main
+            else
+              git merge --abort
+              branch="upstream-$tag"
+              git push --force origin "refs/tags/upstream-$tag:refs/heads/$branch"
+              if [ -z "$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number')" ]; then
+                gh pr create --head "$branch" --base main --title "Merge WG Tunnel $tag" --body "Merging [WG Tunnel $tag](https://github.com/wgtunnel/android/releases/tag/$tag) into main hit conflicts. Quartz Android $tag is published by the next run after this is merged.
+
+          Resolve locally (merge, never rebase), then push to main:
+
+          \`\`\`bash
+          git fetch upstream tag $tag && git merge $tag
+          \`\`\`
+
+          Check the touched-files list in FORK.md §11."
+              fi
+              echo "::warning::Conflicts merging WG Tunnel $tag; opened a PR"
+              exit 0
+            fi
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+
+      - name: WG Tunnel Desktop
+        id: desktop
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+          FORCE: ${{ inputs.force_desktop }}
+        run: |
+          tag=$(git ls-remote --tags upstream-desktop | grep -v '\^{}' | sed 's#.*refs/tags/##' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          version=${tag#v}
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          release=$("$RUNNER_TEMP/next-release.sh" "quartz-desktop-$version" "$FORCE")
+          echo "Latest WG Tunnel Desktop: $tag; release: ${release:-none}"
+          [ -n "$release" ] || exit 0
+
+          # Last desktop tag merged, from git subtree's squash commit metadata.
+          current=$(git log -1 --grep='^git-subtree-dir: desktop$' --format=%B \
+            | sed -n 's/^git-subtree-split: //p')
+          git fetch --no-tags upstream-desktop "refs/tags/$tag:refs/tags/desktop-$tag"
+          if [ "$(git rev-parse "desktop-$tag^{commit}")" != "$current" ]; then
+            if ! git subtree pull --prefix=desktop --squash upstream-desktop "refs/tags/$tag" \
+                -m "Merge WG Tunnel Desktop $tag into desktop/"; then
+              git merge --abort || true
+              title="Merge WG Tunnel Desktop $tag"
+              if [ -z "$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number')" ]; then
+                gh issue create --title "$title" --body "Subtree-merging [WG Tunnel Desktop $tag](https://github.com/wgtunnel/desktop/releases/tag/$tag) into \`desktop/\` hit conflicts. Quartz Desktop $version is published by the next run after this is merged.
+
+          Resolve locally, then push to main:
+
+          \`\`\`bash
+          git remote add upstream-desktop https://github.com/wgtunnel/desktop.git
+          git subtree pull --prefix=desktop --squash upstream-desktop refs/tags/$tag
+          \`\`\`
+
+          Check the touched-files list in FORK.md §11."
+              fi
+              echo "::warning::Conflicts merging WG Tunnel Desktop $tag; opened an issue"
+              exit 0
+            fi
+            git push origin HEAD:main
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+
+      - name: Engines
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+        run: |
+          [ -f .gitmodules ] || { echo "No engines yet"; exit 0; }
+          git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | while read -r key path; do
+            case "$path" in engines/*) ;; *) continue ;; esac
+            name=$(basename "$path")
+            url=$(git config -f .gitmodules --get "${key%.path}.url")
+            pinned=$(git ls-tree HEAD "$path" | awk '{print $3}')
+            latest=$(git ls-remote --tags "$url" | grep -v '\^{}' | sed 's#.*refs/tags/##' \
+              | grep -E '^v?[0-9]+\.[0-9]+(\.[0-9]+)?$' | sort -V | tail -1)
+            [ -n "$latest" ] || continue
+            latest_sha=$(git ls-remote "$url" "refs/tags/$latest^{}" "refs/tags/$latest" | head -1 | awk '{print $1}')
+            [ "$latest_sha" != "$pinned" ] || { echo "$name is up to date ($latest)"; continue; }
+            branch="engine-$name-$latest"
+            git ls-remote --exit-code --heads origin "$branch" >/dev/null && { echo "$branch already open"; continue; }
+            echo "Bumping $name to $latest"
+            git submodule update --init "$path"
+            git -C "$path" fetch --depth 1 origin "refs/tags/$latest:refs/tags/$latest"
+            git -C "$path" checkout -q "$latest"
+            git switch -q -c "$branch"
+            git commit -qm "Bump $name engine to $latest" "$path"
+            git push -q origin "$branch"
+            gh pr create --head "$branch" --base main --title "Bump $name engine to $latest" \
+              --body "New $name release: $latest. Check \`engines/patches/$name\` still apply. Merging this doesn't publish a release; it ships with the next WG Tunnel release."
+            git switch -q main
+          done
+
+      - name: Record commit
+        id: done
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  android:
+    needs: sync
+    if: needs.sync.outputs.android_release != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.sync.outputs.sha }}
+          submodules: recursive
+
+      - name: Read JDK version
+        id: jdk
+        run: echo "version=$(sed -nE 's/^jdk[[:space:]]*=[[:space:]]*"([0-9]+)".*/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.jdk.outputs.version }}
+          cache: gradle
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleFdroidDebug --stacktrace
+          mkdir -p dist
+          for f in app/build/outputs/apk/fdroid/debug/*.apk; do
+            cp "$f" "dist/$(basename "$f" | sed 's/^wgtunnel-/quartz-/')"
+          done
+          ls -l dist
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ needs.sync.outputs.android_release }}
+          TAG: ${{ needs.sync.outputs.android_tag }}
+        run: |
+          gh release create "$RELEASE" dist/*.apk \
+            --target "${{ needs.sync.outputs.sha }}" \
+            --title "Quartz Android ${RELEASE#quartz-android-}" \
+            --prerelease --latest=false \
+            --notes "Quartz for Android, built on [WG Tunnel $TAG](https://github.com/wgtunnel/android/releases/tag/$TAG).
+
+          Debug-signed pre-release (fdroid flavor, no in-app updater). Install the \`arm64\` APK on most phones, \`armv7\` on older ones, or \`universal\` if unsure."
+
+  windows:
+    needs: sync
+    if: needs.sync.outputs.desktop_release != ''
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.sync.outputs.sha }}
+          path: quartz
+          submodules: recursive
+
+      # Same toolchain as upstream desktop's package-windows.yml.
+      - uses: actions/checkout@v7
+        with:
+          repository: NucleusFramework/Nucleus
+          ref: main
+          path: Nucleus
+
+      - uses: ./Nucleus/.github/actions/setup-nucleus
+        with:
+          java-version: "25"
+          setup-gradle: "true"
+          setup-node: "true"
+          graalvm: "true"
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.25"
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "7.0.x"
+
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v3
+        with:
+          platform: x64
+
+      - name: Package NSIS (GraalVM)
+        working-directory: quartz/desktop
+        env:
+          WGTUNNEL_VARIANT: release
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./gradlew :composeApp:packageGraalvmNsis --no-daemon --stacktrace "-Papp.variant=release" "-Papp.version=${{ needs.sync.outputs.desktop_version }}" "-Papp.packageVersion=${{ needs.sync.outputs.desktop_version }}"
+
+      - name: Collect installer
+        shell: bash
+        run: |
+          mkdir -p dist
+          find quartz/desktop/composeApp/build/compose/binaries -type f \
+            \( -name '*.exe' -o -name '*.yml' -o -name '*.blockmap' \) \
+            ! -name 'wgtunnel-daemon.exe' ! -name 'service-wrapper.exe' -exec cp {} dist/ \;
+          ls -l dist
+
+      - name: Publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ needs.sync.outputs.desktop_release }}
+          VERSION: ${{ needs.sync.outputs.desktop_version }}
+        run: |
+          gh release create "$RELEASE" dist/* \
+            --target "${{ needs.sync.outputs.sha }}" \
+            --title "Quartz Desktop ${RELEASE#quartz-desktop-}" \
+            --prerelease \
+            --notes "Quartz for Windows, built on [WG Tunnel Desktop v$VERSION](https://github.com/wgtunnel/desktop/releases/tag/v$VERSION).
+
+          Unsigned pre-release: Windows SmartScreen will warn on install (More info → Run anyway)."

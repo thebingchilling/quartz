@@ -11,16 +11,16 @@ enum class AppVariant(val id: String) {
     val linuxFsName: String
         get() =
             when (this) {
-                RELEASE -> "wgtunnel"
-                else -> "wgtunnel-$id"
+                RELEASE -> "quartz"
+                else -> "quartz-$id"
             }
 
     val desktopAppName: String
         get() =
             when (this) {
-                RELEASE -> "WGTunnel"
-                DEBUG -> "WGTunnel Debug"
-                BETA -> "WGTunnel Beta"
+                RELEASE -> "Quartz"
+                DEBUG -> "Quartz Debug"
+                BETA -> "Quartz Beta"
             }
 
     val displaySuffix: String
@@ -34,30 +34,30 @@ enum class AppVariant(val id: String) {
     val ipcFolder: String
         get() =
             when (this) {
-                RELEASE -> "wgtunnel"
-                else -> "wgtunnel-$id"
+                RELEASE -> "quartz"
+                else -> "quartz-$id"
             }
 
     val keyringService: String
         get() =
             when (this) {
-                RELEASE -> "wg_tunnel"
-                else -> "wg_tunnel_$id"
+                RELEASE -> "quartz"
+                else -> "quartz_$id"
             }
 
     val ifacePrefix: String
         get() =
             when (this) {
-                RELEASE -> "wgtun"
-                DEBUG -> "wgtund"
-                BETA -> "wgtunb"
+                RELEASE -> "qtz"
+                DEBUG -> "qtzd"
+                BETA -> "qtzb"
             }
 
     val lockIdentifier: String
         get() =
             when (this) {
-                RELEASE -> "wg_tunnel"
-                else -> "wg_tunnel_$id"
+                RELEASE -> "quartz"
+                else -> "quartz_$id"
             }
 
     /** Nucleus auto-update channel this variant */

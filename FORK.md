@@ -1,7 +1,8 @@
 # Fork plan
 
 This repository is a fork of [wgtunnel/android](https://github.com/wgtunnel/android)
-that keeps the stock WG Tunnel app and adds:
+that also carries [wgtunnel/desktop](https://github.com/wgtunnel/desktop) under
+`desktop/` (built for Windows). It keeps the stock WG Tunnel apps and adds:
 
 - an **OpenVPN** engine (openvpn3 core)
 - a **mihomo** (Clash Meta) engine, with import of any Clash file, link or
@@ -12,10 +13,11 @@ that keeps the stock WG Tunnel app and adds:
 - a **WARP config generator** in Settings, with expiry, in-place regeneration,
   and standard or obfuscated (AmneziaWG) output
 
-The goal is to change upstream files as little as possible, so that WG Tunnel,
-openvpn3 and mihomo can each be updated independently.
+The goal is to change upstream files as little as possible, so that WG Tunnel
+(Android and Desktop), openvpn3 and mihomo can each be updated independently.
 
-All work is committed directly to `main`. Upstream's branch is `master`.
+All work is committed directly to `main`. Upstream Android's branch is
+`master`; desktop is merged from its release tags.
 
 ---
 
@@ -25,6 +27,7 @@ All work is committed directly to `main`. Upstream's branch is `master`.
 /                               ← fork of wgtunnel/android (remote "upstream")
   app/                          ← upstream, only small hook edits (see §11)
   logcatter/ networkmonitor/ pinger/   ← upstream, untouched
+  desktop/                      ← wgtunnel/desktop via git subtree (squashed); Windows build
   engines/
     openvpn3/                   ← git submodule → OpenVPN/openvpn3, pinned to a release tag
     mihomo/                     ← git submodule → MetaCubeX/mihomo, pinned to a release tag
@@ -44,7 +47,7 @@ All work is committed directly to `main`. Upstream's branch is `master`.
   quartz.gradle                 ← Quartz overrides (app ID, name, provider authority); applied by one line in app/build.gradle.kts
   FORK.md                       ← this file
   .github/workflows/
-    quartz-monthly.yml          ← 1st of month: merge wgtunnel/android master into main, build, GitHub release
+    quartz-release.yml          ← weekly: new WG Tunnel Android/Desktop release → merge, build, release; engine bump PRs
     engine-bump.yml             ← new openvpn3/mihomo release tag → PR (or Renovate)
 ```
 
@@ -64,15 +67,16 @@ change and upstream engine history stays out of this repo. Clone with
 
 | Source | How updates come in |
 |---|---|
-| WG Tunnel | `git fetch upstream && git merge upstream/master` (merge, never rebase). `quartz-monthly.yml` merges it into `main` on the 1st of each month; on conflict it opens a PR from `upstream-master` instead and skips that month's release. |
-| openvpn3 | Move `engines/openvpn3` to the new tag, check `patches/openvpn3` still apply, rebuild. |
-| mihomo | Move `engines/mihomo` to the new tag, check `patches/mihomo` still apply, rebuild. |
+| WG Tunnel Android | We follow its **releases**, not every commit. `quartz-release.yml` checks weekly for a new release tag (e.g. `5.8.3`), merges it into `main` and publishes `quartz-android-5.8.3`. On conflict it opens a PR from `upstream-5.8.3` instead. By hand: `git fetch upstream tag 5.8.3 && git merge 5.8.3` (merge, never rebase). |
+| WG Tunnel Desktop | Same, from its release tags (e.g. `v2.4.2`), subtree-merged into `desktop/` and published as `quartz-desktop-2.4.2`. On conflict it opens an issue. By hand: `git subtree pull --prefix=desktop --squash upstream-desktop refs/tags/v2.4.2` (remote `upstream-desktop` = `https://github.com/wgtunnel/desktop.git`). |
+| openvpn3 | The weekly run opens a PR moving `engines/openvpn3` to the new tag. Check `patches/openvpn3` still apply and merge. **No release**: it ships with the next WG Tunnel release. |
+| mihomo | Same as openvpn3, for `engines/mihomo`. |
 
 - Enable `git config rerere.enabled true` so resolved conflicts are replayed.
-- Merge sync PRs with **Create a merge commit** — never squash or rebase,
+- Merge upstream PRs with **Create a merge commit** — never squash or rebase,
   or git loses track of which upstream commits are already in `main`.
 - Local setup: `git remote add upstream https://github.com/wgtunnel/android.git`.
-- The monthly workflow needs a `SYNC_TOKEN` secret (PAT with `repo` + `workflow`
+- The release workflow needs a `SYNC_TOKEN` secret (PAT with `repo` + `workflow`
   scope), because upstream merges often change `.github/workflows`, which the
   default `GITHUB_TOKEN` can't push. "Allow GitHub Actions to create pull
   requests" must be enabled in the repo's Actions settings.
@@ -80,15 +84,23 @@ change and upstream engine history stays out of this repo. Clone with
 
 ### Releases
 
-- No nightlies. `quartz-monthly.yml` publishes one release a month, tagged
-  `quartz-YYYY.MM` ("Quartz 2026.11 (WG Tunnel 5.8.2)"), and can be run by
-  hand from the Actions tab. Disable upstream's `nightly` and
+- No nightlies. Weekly, Quartz releases follow WG Tunnel releases, each app
+  independently: `quartz-android-5.8.3` for WG Tunnel 5.8.3,
+  `quartz-desktop-2.4.2` for WG Tunnel Desktop v2.4.2. Engine updates never
+  trigger a release. Running `quartz-release` by hand with "force" publishes
+  an extra build on the same base (`-2`, `-3`, …). Tags start with `quartz-`
+  so they never trigger upstream's `publish.yml`. Android releases are
+  created with `--latest=false`, so "latest" is always a desktop release
+  (the desktop updater reads it). Disable upstream's `nightly` and
   `crowdin-contributors` workflows in the Actions UI (not by editing them).
 - For now it ships the **fdroid** flavor: the standalone flavor's updater
   checks `wgtunnel/android` releases (`di/NetworkModule.kt`). To do: point it
   at this repo via a Koin override, then ship standalone.
-- For now builds are **debug-signed** (`signing/quartz-debug.jks`, committed,
-  public) and marked pre-release. Switch to a private release key in the
+- Windows: unsigned NSIS installer (SmartScreen warns), built with upstream
+  desktop's toolchain (GraalVM via NucleusFramework, Go, MinGW, .NET).
+- For now Android builds are **debug-signed** (`signing/quartz-debug.jks`,
+  committed, public); everything is marked pre-release, which also keeps the
+  desktop updater quiet. Switch to a private release key in the
   `KEYSTORE` / `SIGNING_*` secrets once the app works.
 
 ## 3. Engine integration
@@ -557,6 +569,10 @@ conflicts.
 | `ui/screens/tunnels/components/TunnelList.kt` | Engine/expiry/delay badges, group toggle + dropdown, connection info on connected row | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
+| `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |
+| `desktop/composeApp/build.gradle.kts` | `appFsName`/`appDisplayName` = quartz/Quartz, vendor, description; `publish.github` → thebingchilling/quartz | Rebrand, updater |
+| `desktop/composeApp/src/jvmMain/composeResources/values/strings.xml` | `app_name`, `tray_open` → Quartz | Window title, tray |
+| `desktop/composeApp/.../desktop/update/AppUpdater.kt` | `GitHubProvider` → thebingchilling/quartz | Updater must not offer WG Tunnel |
 
 UI rules: prefer resource overlays (`fork/branding`) → new screens in
 `fork/*` → small, `[fork-ui]`-prefixed edits to upstream screens, keeping our
@@ -577,7 +593,7 @@ additions in separate composables called from a single line.
 ## 13. Build order
 
 1. Repo setup: upstream remote, `quartz.gradle`, branding (name/ID done; icon
-   to do), `quartz-monthly.yml`. Confirm a clean merge from upstream.
+   to do), `quartz-release.yml`. Confirm a clean merge from upstream.
 2. WARP generator, slots and expiry (pure app code; proves the Settings hook).
 3. Engine submodules + mihomo engine, detecting importer, Clash UI on the
    REST API.
@@ -588,4 +604,4 @@ additions in separate composables called from a single line.
 7. OpenVPN engine and import.
 8. Kill switch for non-WireGuard engines; test auto-tunnel and groups across
    all engine types.
-9. CI: monthly merge + release; engine bump PRs on new openvpn3/mihomo tags.
+9. CI: release-following merge + release; engine bump PRs on new openvpn3/mihomo tags.

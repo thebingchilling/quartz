@@ -26,7 +26,7 @@ import org.jetbrains.compose.resources.getString
 class AppUpdater(
     private val updater: NucleusUpdater = NucleusUpdater {
         currentVersion = BuildConfig.APP_VERSION
-        provider = GitHubProvider(owner = "wgtunnel", repo = "desktop")
+        provider = GitHubProvider(owner = "thebingchilling", repo = "quartz")
         channel = AppVariant.current.updateChannel
         allowPrerelease = AppVariant.current == AppVariant.BETA
     }

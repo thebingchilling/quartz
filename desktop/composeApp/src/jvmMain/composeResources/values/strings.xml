@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WG Tunnel</string>
-    <string name="tray_open">Open WG Tunnel</string>
+    <string name="app_name">Quartz</string>
+    <string name="tray_open">Open Quartz</string>
     <string name="tray_minimize_to_tray">Minimize to Tray</string>
     <string name="tray_exit">Exit</string>
     <string name="dismiss">Dismiss</string>
