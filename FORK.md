@@ -572,6 +572,7 @@ conflicts.
 | `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |
 | `desktop/composeApp/build.gradle.kts` | `appFsName`/`appDisplayName` = quartz/Quartz, vendor, description; `publish.github` → thebingchilling/quartz | Rebrand, updater |
 | `desktop/composeApp/src/jvmMain/composeResources/values/strings.xml` | `app_name`, `tray_open` → Quartz | Window title, tray |
+| `desktop/packaging/windows/icon.ico`, `desktop/composeApp/src/jvmMain/composeResources/drawable/appicon.png`, `titleicon.svg` | Replaced with the Quartz icon (generated from `fork/branding/icon`; `titleicon.svg` is the monochrome glyph cropped to `viewBox="27 27 54 54"`). On conflict, keep ours. | Desktop icon, tray, title bar |
 | `desktop/composeApp/.../desktop/update/AppUpdater.kt` | `GitHubProvider` → thebingchilling/quartz | Updater must not offer WG Tunnel |
 
 UI rules: prefer resource overlays (`fork/branding`) → new screens in
