@@ -63,3 +63,9 @@ android {
         }
     }
 }
+
+// Upstream adds LeakCanary to debug builds, which puts a separate "Leaks" icon in the
+// launcher. Quartz ships debug builds for now, so leave it out.
+configurations.configureEach {
+    exclude group: "com.squareup.leakcanary"
+}

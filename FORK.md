@@ -559,7 +559,7 @@ conflicts.
 
 | File | Change | Why |
 |---|---|---|
-| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `app.quartz`, name "Quartz", provider authority `app.quartz.provider`, debug signing with committed `signing/quartz-debug.jks` |
+| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `app.quartz`, name "Quartz", provider authority `app.quartz.provider`, debug signing with committed `signing/quartz-debug.jks`, LeakCanary excluded (no "Leaks" launcher icon) |
 | Koin startup | Load fork module after upstream's | Override `TunnelProvider` |
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
 | Auto-tunnel candidate selection | Skip expired tunnels; allow group targets | WARP expiry, groups |
