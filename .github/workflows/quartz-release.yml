@@ -15,8 +15,10 @@ name: quartz-release
 # with "force" publishes an extra build on the current base (-2, -3, ...).
 #
 # Tags start with "quartz-" so they never trigger upstream's publish.yml.
-# Builds are pre-releases until signing is set up: Android is debug-signed
-# (fdroid flavor, no in-app updater); the Windows installer is unsigned.
+# Releases are public (not pre-releases). Until signing is set up, Android is
+# debug-signed with the committed key (fdroid flavor, no in-app updater) and the
+# Windows installer is unsigned. Android releases are never "latest": the
+# desktop updater reads the latest release, which must stay a desktop one.
 
 on:
   schedule:
@@ -248,10 +250,10 @@ jobs:
           gh release create "$RELEASE" dist/*.apk \
             --target "${{ needs.sync.outputs.sha }}" \
             --title "Quartz Android ${RELEASE#quartz-android-}" \
-            --prerelease --latest=false \
+            --latest=false \
             --notes "Quartz for Android, built on [WG Tunnel $TAG](https://github.com/wgtunnel/android/releases/tag/$TAG).
 
-          Debug-signed pre-release (fdroid flavor, no in-app updater). Install the \`arm64\` APK on most phones, \`armv7\` on older ones, or \`universal\` if unsure."
+          Public debug build: signed with Quartz's committed debug key, so every Quartz build installs over the last one (fdroid flavor, no in-app updater). Install the \`arm64\` APK on most phones, \`armv7\` on older ones, or \`universal\` if unsure."
 
   windows:
     needs: sync
@@ -318,7 +320,6 @@ jobs:
           gh release create "$RELEASE" dist/* \
             --target "${{ needs.sync.outputs.sha }}" \
             --title "Quartz Desktop ${RELEASE#quartz-desktop-}" \
-            --prerelease \
             --notes "Quartz for Windows, built on [WG Tunnel Desktop v$VERSION](https://github.com/wgtunnel/desktop/releases/tag/v$VERSION).
 
-          Unsigned pre-release: Windows SmartScreen will warn on install (More info → Run anyway)."
+          Unsigned build: Windows SmartScreen will warn on install (More info → Run anyway)."

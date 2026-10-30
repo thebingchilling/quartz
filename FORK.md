@@ -99,7 +99,8 @@ change and upstream engine history stays out of this repo. Clone with
   independently: `quartz-android-5.8.3` for WG Tunnel 5.8.3,
   `quartz-desktop-2.4.2` for WG Tunnel Desktop v2.4.2. Engine updates never
   trigger a release. Running `quartz-release` by hand with "force" publishes
-  an extra build on the same base (`-2`, `-3`, …). Tags start with `quartz-`
+  an extra build on the same base (`-2`, `-3`, …): that's how fork changes
+  ship between WG Tunnel releases. Tags start with `quartz-`
   so they never trigger upstream's `publish.yml`. Android releases are
   created with `--latest=false`, so "latest" is always a desktop release
   (the desktop updater reads it).
@@ -116,10 +117,12 @@ change and upstream engine history stays out of this repo. Clone with
   at this repo via a Koin override, then ship standalone.
 - Windows: unsigned NSIS installer (SmartScreen warns), built with upstream
   desktop's toolchain (GraalVM via NucleusFramework, Go, MinGW, .NET).
-- For now Android builds are **debug-signed** (`signing/quartz-debug.jks`,
-  committed, public); everything is marked pre-release, which also keeps the
-  desktop updater quiet. Switch to a private release key in the
-  `KEYSTORE` / `SIGNING_*` secrets once the app works.
+- Releases are **public** (not pre-releases). For now Android builds are
+  **public debug builds**, signed with the committed `signing/quartz-debug.jks`
+  so each one installs over the last; the desktop updater sees Quartz desktop
+  releases as updates. Switch to a private release key in the
+  `KEYSTORE` / `SIGNING_*` secrets once the app works (users then reinstall
+  once, since the signature changes).
 
 ## 3. Engine integration
 
