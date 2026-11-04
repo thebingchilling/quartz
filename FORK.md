@@ -312,6 +312,28 @@ The import preview shows detected type, node count, provider usage/expiry,
 name, template, auto-update, User-Agent, target group, and converted/skipped
 counts before saving.
 
+### Implementation status
+
+Built (`fork/importer`, pure Kotlin, unit-tested):
+
+- `ImportDetector.detect(text, fileName)`: WireGuard/AmneziaWG, `.ovpn`,
+  full Clash profile, proxies-only YAML (with `proxy-providers`), share
+  links, base64 bodies, subscription URLs (incl. `clash://` / `clashmeta://`
+  deep links; `http://user:pass@host:port` is an HTTP proxy, not a
+  subscription), sing-box JSON. Unparseable lines are reported as skipped.
+- `ShareLinks`: all the schemes above → mihomo proxies (ws/grpc/h2/
+  httpupgrade/http transports, TLS, Reality, ss plugins, IPv6 servers).
+- `ClashTemplate`: Simple, Rule-based (private + ads + one country direct),
+  Custom (`{{proxies}}`, `{{proxy-names}}`); unique proxy names; fake-ip DNS.
+- `SubscriptionInfo`: `subscription-userinfo`, `profile-update-interval`,
+  `content-disposition` (RFC 6266 `filename*`), `profile-web-page-url`.
+- YAML via snakeyaml-engine (Apache-2.0), added in `quartz.gradle`.
+- `./gradlew :app:buildMihomoHost` builds the engine for the JVM; unit tests
+  then check generated profiles against real mihomo.
+
+Next (with step 4's storage): the Import entry and preview screen, fetching
+and auto-updating subscriptions, saving Clash profiles as tunnels.
+
 ## 8. Clash (mihomo) UI — `fork/clash-ui`
 
 - A Clash tunnel row has its own dropdown listing its proxy groups and nodes,

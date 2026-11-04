@@ -75,7 +75,7 @@ configurations.configureEach {
 // Each fork/<name>/src/{main,test} adds its java, res and assets to the app's source sets.
 android {
     sourceSets {
-        ["core", "warp", "engine-mihomo"].each { name ->
+        ["core", "warp", "engine-mihomo", "importer"].each { name ->
             def dir = "$rootDir/fork/$name/src"
             main.kotlin.directories.add("$dir/main/java")
             main.res.directories.add("$dir/main/res")
@@ -151,6 +151,23 @@ mihomoAbis.each { abi, target ->
     buildMihomo.configure { dependsOn task }
 }
 
+// Host (Linux/macOS) build of the same wrapper, for JVM unit tests that check generated
+// profiles against real mihomo: ./gradlew :app:buildMihomoHost, then tests pick it up.
+def mihomoHostLib = layout.buildDirectory.file("quartz/host/libmihomo.so").get().asFile
+tasks.register("buildMihomoHost", Exec) {
+    description = "Builds libmihomo for this machine's JVM (unit tests only)."
+    workingDir mihomoWrapper
+    def javaHome = System.getProperty("java.home")
+    def os = System.getProperty("os.name").toLowerCase().contains("mac") ? "darwin" : "linux"
+    environment "CGO_ENABLED", "1"
+    environment "CGO_CFLAGS", "-I$javaHome/include -I$javaHome/include/$os"
+    commandLine "go", "build", "-buildmode=c-shared", "-tags", "with_gvisor", "-o", mihomoHostLib.path, "."
+    doLast { new File(mihomoHostLib.parentFile, "libmihomo.h").delete() }
+}
+tasks.withType(Test).configureEach {
+    systemProperty "quartz.mihomo.hostLib", mihomoHostLib.path
+}
+
 android {
     sourceSets.main.jniLibs.directories.add(mihomoJniLibs.path)
     packaging.jniLibs.excludes.add("**/libmihomo.stamp")
@@ -159,3 +176,8 @@ android {
     packaging.jniLibs.useLegacyPackaging = true
 }
 tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach { dependsOn buildMihomo }
+
+// Libraries only fork code uses.
+dependencies {
+    implementation "org.snakeyaml:snakeyaml-engine:2.10" // Clash/mihomo YAML (fork/importer)
+}
