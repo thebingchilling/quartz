@@ -2,6 +2,7 @@ package app.quartz.core
 
 import androidx.room.Room
 import app.quartz.core.data.ForkDatabase
+import app.quartz.engine.mihomo.MihomoEngine
 import app.quartz.warp.CloudflareWarpApi
 import app.quartz.warp.WarpApi
 import app.quartz.warp.WarpExpiry
@@ -13,6 +14,7 @@ import com.zaneschepke.wireguardautotunnel.core.tunnel.TunnelBackendProvider
 import com.zaneschepke.wireguardautotunnel.core.tunnel.TunnelProvider
 import com.zaneschepke.wireguardautotunnel.di.Dispatcher
 import com.zaneschepke.wireguardautotunnel.di.Scope
+import java.io.File
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.core.module.dsl.viewModelOf
@@ -40,6 +42,8 @@ val quartzModule = module {
             get(),
         )
     }
+
+    single { MihomoEngine(File(androidContext().filesDir, "mihomo")) }
 
     single<WarpApi> { CloudflareWarpApi() }
     single {

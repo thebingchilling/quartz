@@ -38,7 +38,7 @@ upstream merge that conflicts, an engine bump). Upstream Android's branch is
   fork/
     engine-api/                 ← engine interface shared by OpenVPN and mihomo
     engine-openvpn/             ← JNI/SWIG wrapper around openvpn3 ClientAPI (NDK/CMake)
-    engine-mihomo/              ← gomobile/cgo wrapper around mihomo
+    engine-mihomo/              ← cgo/JNI wrapper around mihomo (go/) + Kotlin MihomoEngine (src/)
     core/                       ← ForkDatabase, Quartz Koin module, startup sync, expiry guard, tunnel-row badges
     engine-bridge/              ← MultiEngineTunnelProvider (replaces core's expiry guard)
     groups/                     ← group types, member selection, delay tests
@@ -158,6 +158,28 @@ the fd in: openvpn3 via `tun_builder` callbacks, mihomo by fd as
 ClashMetaForAndroid does. Lockdown (`setLockDown`) is implemented by the
 WireGuard backend, so a kill switch for the new engines must be built
 separately.
+
+### mihomo engine (built)
+
+- `engines/mihomo` is pinned to a release tag (v1.19.33) and **not patched**:
+  the TUN comes from the VpnService as `tun.file-descriptor`, and mihomo's
+  own sockets are protected through `dialer.DefaultSocketHook` (the hook
+  mihomo keeps for Android clients), which calls back into Kotlin's
+  `SocketProtector` → `VpnService.protect(fd)`.
+- `fork/engine-mihomo/go` (`engine.go`, `jni.c`): start/stop/validate/version.
+  Any profile runs as-is; the wrapper forces TUN on, `auto-route`,
+  `auto-detect-interface` and `interface-name` off, DNS hijack on, and the
+  REST controller on a random loopback port with a random secret.
+- `quartz.gradle` builds `libmihomo.so` for `arm64-v8a` and `armeabi-v7a`
+  (Go on PATH, NDK pinned as `quartzNdkVersion`), skipped while the submodule
+  commit and wrapper are unchanged; `-PprebuiltEngines` skips it. CI installs
+  Go and the NDK and caches the `.so` files by the same key. Native libraries
+  are compressed in the APK (`useLegacyPackaging`): ~71 MB per split APK.
+- `MihomoEngine` (Koin single): `start(profile, tunFd, protector)` returns the
+  controller address and secret for the Clash UI; `validate(profile)` checks a
+  profile without running it (used by the importer).
+- Smoke-tested on the JVM with a host build (loads, version, validates good
+  and bad profiles); running it on a device needs step 4's VpnService.
 
 ### Data model
 
@@ -640,6 +662,7 @@ conflicts.
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |
+| `.gitmodules` (engines) | `engines/mihomo` submodule entry | mihomo engine |
 | `.gitmodules` | Entry for `desktop/daemon/winsw` (copied from `desktop/.gitmodules`; git only reads the root file). Update it if desktop changes that submodule's URL. | Desktop build |
 | `app/.../MainActivity.kt` | `Route.Support` shows `quartz/ui/QuartzInfoScreen` instead of `SupportScreen` (import + one line) | Info tab: only About and Updates; Updates opens this repo's releases |
 | `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |

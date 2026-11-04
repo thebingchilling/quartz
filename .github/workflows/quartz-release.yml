@@ -231,6 +231,27 @@ jobs:
           java-version: ${{ steps.jdk.outputs.version }}
           cache: gradle
 
+      # mihomo engine (FORK.md §3): Go + the NDK pinned in quartz.gradle. The built .so files
+      # are cached by submodule commit + wrapper, so an unchanged engine isn't rebuilt.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: fork/engine-mihomo/go/go.mod
+          cache-dependency-path: fork/engine-mihomo/go/go.sum
+
+      - name: Engine cache key
+        id: engines
+        run: |
+          echo "ndk=$(sed -nE 's/^def quartzNdkVersion = "([^"]+)"/\1/p' quartz.gradle)" >> "$GITHUB_OUTPUT"
+          echo "mihomo=$(git rev-parse HEAD:engines/mihomo)" >> "$GITHUB_OUTPUT"
+
+      - name: Install NDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${{ steps.engines.outputs.ndk }}" > /dev/null
+
+      - uses: actions/cache@v5
+        with:
+          path: app/build/generated/quartz/jniLibs
+          key: mihomo-${{ steps.engines.outputs.mihomo }}-${{ hashFiles('fork/engine-mihomo/go/**') }}-ndk${{ steps.engines.outputs.ndk }}
+
       - name: Build
         run: |
           chmod +x gradlew

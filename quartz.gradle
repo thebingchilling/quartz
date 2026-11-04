@@ -75,7 +75,7 @@ configurations.configureEach {
 // Each fork/<name>/src/{main,test} adds its java, res and assets to the app's source sets.
 android {
     sourceSets {
-        ["core", "warp"].each { name ->
+        ["core", "warp", "engine-mihomo"].each { name ->
             def dir = "$rootDir/fork/$name/src"
             main.kotlin.directories.add("$dir/main/java")
             main.res.directories.add("$dir/main/res")
@@ -84,3 +84,78 @@ android {
         }
     }
 }
+
+// mihomo engine: engines/mihomo (submodule, unpatched) + fork/engine-mihomo/go (cgo/JNI wrapper),
+// built into libmihomo.so per ABI with the NDK and Go on PATH. Skipped while the submodule
+// commit and the wrapper are unchanged (a stamp next to the .so), so CI can restore the
+// outputs from a cache keyed the same way. -PprebuiltEngines skips the build entirely and
+// packages whatever is in build/generated/quartz/jniLibs.
+def quartzNdkVersion = "29.0.14206865"
+def mihomoAbis = [
+    "arm64-v8a"  : [goarch: "arm64", goarm: "", clang: "aarch64-linux-android26-clang"],
+    "armeabi-v7a": [goarch: "arm", goarm: "7", clang: "armv7a-linux-androideabi26-clang"],
+]
+def mihomoSrc = file("$rootDir/engines/mihomo")
+def mihomoWrapper = file("$rootDir/fork/engine-mihomo/go")
+def mihomoJniLibs = layout.buildDirectory.dir("generated/quartz/jniLibs").get().asFile
+
+def mihomoStamp = providers.provider {
+    def commit = providers.exec {
+        commandLine "git", "-C", mihomoSrc.path, "rev-parse", "HEAD"
+        ignoreExitValue = true
+    }.standardOutput.asText.get().trim()
+    def wrapper = fileTree(mihomoWrapper).files.sort { it.name }
+        .collect { it.name + ":" + it.bytes.encodeHex().toString().md5() }.join(",")
+    commit + "|" + wrapper.md5()
+}
+def mihomoVersion = providers.provider {
+    providers.exec {
+        commandLine "git", "-C", mihomoSrc.path, "describe", "--tags", "--always"
+        ignoreExitValue = true
+    }.standardOutput.asText.get().trim()
+}
+
+def buildMihomo = tasks.register("buildMihomo") {
+    description = "Builds libmihomo.so for every ABI (engines/mihomo + fork/engine-mihomo/go)."
+}
+mihomoAbis.each { abi, target ->
+    def outDir = new File(mihomoJniLibs, abi)
+    def task = tasks.register("buildMihomo" + abi.replace("-", "").capitalize(), Exec) {
+        onlyIf("prebuiltEngines not set") { !project.hasProperty("prebuiltEngines") }
+        onlyIf("submodule or wrapper changed") {
+            def stamp = new File(outDir, "libmihomo.stamp")
+            !(new File(outDir, "libmihomo.so").exists() && stamp.exists() && stamp.text == mihomoStamp.get())
+        }
+        workingDir mihomoWrapper
+        doFirst {
+            def toolchain = new File(androidComponents.sdkComponents.sdkDirectory.get().asFile,
+                "ndk/$quartzNdkVersion/toolchains/llvm/prebuilt/linux-x86_64/bin")
+            if (!toolchain.exists()) {
+                throw new GradleException("NDK $quartzNdkVersion not found: sdkmanager \"ndk;$quartzNdkVersion\"")
+            }
+            outDir.mkdirs()
+            environment "CGO_ENABLED", "1"
+            environment "GOOS", "android"
+            environment "GOARCH", target.goarch
+            if (target.goarm) environment "GOARM", target.goarm
+            environment "CC", new File(toolchain, target.clang).path
+        }
+        commandLine "go", "build", "-trimpath", "-buildmode=c-shared", "-tags", "with_gvisor",
+            "-ldflags", "-s -w -buildid= -X github.com/metacubex/mihomo/constant.Version=${-> mihomoVersion.get()}",
+            "-o", new File(outDir, "libmihomo.so").path, "."
+        doLast {
+            new File(outDir, "libmihomo.h").delete()
+            new File(outDir, "libmihomo.stamp").text = mihomoStamp.get()
+        }
+    }
+    buildMihomo.configure { dependsOn task }
+}
+
+android {
+    sourceSets.main.jniLibs.directories.add(mihomoJniLibs.path)
+    packaging.jniLibs.excludes.add("**/libmihomo.stamp")
+    // Compress native libraries in the APK: libmihomo.so is ~60 MB per ABI uncompressed.
+    // Android extracts them at install; a much smaller download matters more for sideloading.
+    packaging.jniLibs.useLegacyPackaging = true
+}
+tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach { dependsOn buildMihomo }
