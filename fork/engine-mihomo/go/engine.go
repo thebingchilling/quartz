@@ -72,8 +72,10 @@ func start(homeDir, configPath string, tunFd int, controller, secret string) str
 // applyAndroidOverrides makes any profile run inside Android's VpnService:
 // mihomo reads packets from our TUN instead of creating one, and leaves
 // routing and interface binding to Android.
+// A negative tunFd runs without a TUN (proxy ports and controller only), for
+// host tests.
 func applyAndroidOverrides(raw *config.RawConfig, tunFd int, controller, secret string) {
-	raw.Tun.Enable = true
+	raw.Tun.Enable = tunFd >= 0
 	raw.Tun.FileDescriptor = tunFd
 	raw.Tun.AutoRoute = false
 	raw.Tun.AutoRedirect = false

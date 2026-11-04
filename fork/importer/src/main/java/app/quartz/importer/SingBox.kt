@@ -23,7 +23,8 @@ object SingBox {
 
     fun isSingBox(text: String): Boolean = runCatching {
         (json.parseToJsonElement(text) as? JsonObject)?.get("outbounds") is JsonArray
-    }.getOrDefault(false)
+    }
+        .getOrDefault(false)
 
     fun convert(text: String): Converted {
         val outbounds =

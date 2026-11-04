@@ -347,6 +347,15 @@ The UI talks to mihomo's `external-controller` REST API on localhost
 is stable, so mihomo updates rarely break the UI; the Go bindings only need
 start, stop and "set TUN fd".
 
+### Implementation status
+
+- `MihomoApi` (`fork/engine-mihomo`): groups and nodes in profile order,
+  last delay, select, per-node and per-group URL tests, mode get/set,
+  providers and provider update, version. Tested against a running host
+  build of mihomo (no TUN: the wrapper treats a negative fd as "no TUN").
+- Next (needs step 4's running profiles): the Clash tunnel row's dropdown,
+  mode switch, search/sort and subscription footer.
+
 ## 9. WARP generator — `fork/warp`
 
 A Kotlin port of the generator at `thebingchilling/site` (`tools/warp`), so

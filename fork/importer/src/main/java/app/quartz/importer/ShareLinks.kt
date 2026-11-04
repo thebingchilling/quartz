@@ -73,7 +73,8 @@ object ShareLinks {
         val body = link.removePrefix("vmess://").substringBefore('#')
         val obj = runCatching {
             json.parseToJsonElement(decodeBase64(body)).jsonObject
-        }.getOrElse { throw ShareLinkException("vmess link isn't base64 JSON") }
+        }
+            .getOrElse { throw ShareLinkException("vmess link isn't base64 JSON") }
         fun s(key: String) = (obj[key] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotEmpty() }
         val server = s("add") ?: throw ShareLinkException("vmess link has no server")
         val node =
@@ -390,7 +391,8 @@ object ShareLinks {
 
     private fun uri(link: String): URI = runCatching {
         URI(link.trim().replace(" ", "%20"))
-    }.getOrElse { throw ShareLinkException("Malformed link") }
+    }
+        .getOrElse { throw ShareLinkException("Malformed link") }
 
     private fun host(uri: URI) = uri.host?.removePrefix("[")?.removeSuffix("]") ?: missing("server")
 
