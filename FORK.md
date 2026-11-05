@@ -105,6 +105,32 @@ When they are: uncomment `quartz-workflows`' `schedule:` block, then run
 upstream). That run is also the first CI build of the mihomo engine (Go +
 NDK + cache) and of the dual release, so check its log.
 
+### Use Actions minutes sparingly (standing rule)
+
+GitHub Actions minutes are limited, so every workflow run has to be worth
+it. Code agents and people working on this repo follow this:
+
+- **Build and test locally, not in CI.** `./gradlew :app:testFdroidDebugUnitTest
+  :app:assembleFdroidDebug` (plus `:app:buildMihomoHost` for the engine
+  tests) is the check before every push. Share a test APK straight from the
+  local build instead of running a release to get one.
+- **Never start a workflow without the owner asking for it.** No automatic
+  re-runs, no "just to check" runs. `quartz-release` is manual only and runs
+  only when there's something worth releasing (a batch of user-visible
+  changes, or an upstream update).
+- **Don't tick "update" unless the in-app "Check upstream versions" (or the
+  owner) says an upstream is newer:** it adds merge and bump work to the run.
+- **Commits that touch `.github/workflows` carry `[skip ci]`** in their
+  message, so the push doesn't trigger `quartz-workflows`.
+- **Keep runs cheap:** the mihomo `.so` files are cached by submodule commit,
+  Gradle and Go caches stay on, the release builds only the `fdroid` debug
+  flavor. The Windows job is the most expensive one (Windows runners use
+  minutes faster): don't change it in ways that make it rebuild more.
+- **No schedules** while minutes are tight (`quartz-workflows`' weekly safety
+  net is off; see below). `pr.yml` (upstream's format check) runs on pull
+  requests, so avoid opening PRs here; work goes straight to `main`.
+- Pushes that don't touch `.github/workflows` start nothing.
+
 ### Releases
 
 - No nightlies, no schedule: `quartz-release` runs **only when started by
