@@ -46,7 +46,8 @@ jobs:
               --jq ".workflow_runs[] | select(.id != $keep and .created_at < \"$before\") | .id")
             for id in "${ids[@]}"; do
               [ -n "$id" ] || continue
-              if gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" --silent; then
+              if gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" --silent ||
+                 { sleep 5; gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" --silent; }; then
                 deleted=$((deleted + 1))
               else
                 echo "::warning::could not delete run $id"
@@ -89,6 +90,7 @@ jobs:
             set -- $c
             echo "Deleting cache $1 ($(( $2 / 1048576 )) MB)"
             gh api -X DELETE "repos/$GH_REPO/actions/caches/$1" --silent ||
+              { sleep 5; gh api -X DELETE "repos/$GH_REPO/actions/caches/$1" --silent; } ||
               echo "::warning::could not delete cache $1"
           done
 
