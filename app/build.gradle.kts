@@ -296,4 +296,4 @@ tasks.configureEach {
 }
 
 // Quartz: branding and fork overrides (see FORK.md)
-apply(from = "../quartz.gradle")
+apply(from = "../quartz/android/quartz.gradle")

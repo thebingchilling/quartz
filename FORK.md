@@ -27,40 +27,39 @@ upstream merge that conflicts, an engine bump). Upstream Android's branch is
 
 ```
 /                               ← fork of wgtunnel/android (remote "upstream")
-  app/                          ← upstream, only small hook edits (see §11)
+  app/                          ← upstream Android app, only small hook edits (see §11)
   logcatter/ networkmonitor/ pinger/   ← upstream, untouched
-  desktop/                      ← wgtunnel/desktop via git subtree (squashed); Windows build
-  engines/
-    openvpn3/                   ← git submodule → OpenVPN/openvpn3, pinned to a release tag
-    mihomo/                     ← git submodule → MetaCubeX/mihomo, pinned to a release tag
-    patches/openvpn3/*.patch    ← our patches, applied at build time (never commit inside a submodule)
-    patches/mihomo/*.patch
-  fork/
-    engine-api/                 ← engine interface shared by OpenVPN and mihomo
-    engine-openvpn/             ← JNI/SWIG wrapper around openvpn3 ClientAPI (NDK/CMake)
-    engine-mihomo/              ← cgo/JNI wrapper around mihomo (go/) + Kotlin MihomoEngine (src/)
-    core/                       ← ForkDatabase, Quartz Koin module, startup sync, expiry guard, tunnel-row badges
-    engine-bridge/              ← MultiEngineTunnelProvider (replaces core's expiry guard)
-    groups/                     ← group types, member selection, delay tests
-    importer/                   ← detecting importer (files, links, subscriptions, QR, deep links)
-    clash-ui/                   ← Clash screens
-    connection-info/            ← geo-IP lookup and connected-row info
-    warp/                       ← WARP generator (logic + screen); assets/warp/awg-payloads.txt = captured I1 packets
-    branding/                   ← resource overlay: icon, TV banner, notification glyph (res/), sources and PNGs (icon/)
-  quartz.gradle                 ← Quartz overrides (app ID, name, provider authority); applied by one line in app/build.gradle.kts
+  desktop/                      ← wgtunnel/desktop via git subtree (squashed); Windows build, small rebrand edits (§11)
+  quartz/                       ← ALL of Quartz's own app files; a push touching quartz/** builds and releases
+    android/
+      quartz.gradle             ← Quartz overrides (app ID, name, signing, fork sources, engine build); applied by one line in app/build.gradle.kts
+      signing/quartz-debug.jks  ← committed debug key
+      engines/
+        mihomo/                 ← git submodule → MetaCubeX/mihomo, pinned to a release tag (unpatched)
+        openvpn3/               ← (step 7) git submodule → OpenVPN/openvpn3
+        versions.properties     ← pinned engine releases (read by the app's "Check upstream versions")
+      core/                     ← ForkDatabase, Quartz Koin module, startup sync, dialogs, Info tab, tunnel-row badges, upstream version check
+      engine-bridge/            ← MultiEngineTunnelProvider, Clash profiles, mihomo VpnService + companion, manifest
+      engine-mihomo/            ← cgo/JNI wrapper around mihomo (go/) + Kotlin MihomoEngine and REST API client (src/)
+      importer/                 ← detecting importer (share links, Clash YAML, subscriptions, sing-box, templates)
+      warp/                     ← WARP generator (logic + screen); assets/warp/awg-payloads.txt = captured I1 packets
+      branding/                 ← resource overlay: icon, TV banner, notification glyph (res/), sources and PNGs (icon/)
+      (later: engine-openvpn/, groups/, clash-ui/, connection-info/)
+    windows/                    ← Quartz files for the desktop app (none needed yet; see its README)
   FORK.md                       ← this file
   .github/workflows/
-    quartz-release.yml          ← weekly: new WG Tunnel Android/Desktop release → merge, build, release; engine bump PRs
+    quartz-release.yml          ← push to quartz/** or manual → build both apps, one release; "update" input merges upstream
     quartz-workflows.yml        ← keeps every upstream workflow except pr.yml disabled
 ```
 
-**How fork code is built:** `fork/<name>/src/{main,test}` are not Gradle
-modules: `quartz.gradle` adds their `java` (Kotlin), `res` and `assets`
+**How fork code is built:** `quartz/android/<name>/src/{main,test}` are not
+Gradle modules: `quartz.gradle` adds their `java` (Kotlin), `res` and `assets`
 directories to the app's source sets, so fork code uses upstream's types
 (repositories, Koin, Compose components) directly and nothing in upstream's
-build files changes. Fork code lives in the `app.quartz.*` package; strings are
-prefixed `quartz_`. Add a new fork directory to the list in `quartz.gradle`.
-Engine modules with native code (step 3+) will be real Gradle modules.
+build files changes beyond the one `apply` line. Fork code lives in the
+`app.quartz.*` package; strings are prefixed `quartz_`. Add a new directory
+to the list in `quartz.gradle`. The mihomo engine's native library is built
+by a task in `quartz.gradle` too.
 
 Submodules are used for the engines so a version bump is a one-line pointer
 change and upstream engine history stays out of this repo. Clone with
@@ -80,8 +79,8 @@ change and upstream engine history stays out of this repo. Clone with
 |---|---|
 | WG Tunnel Android | We follow its **releases**, not every commit. A manual `quartz-release` run with **update** checks for a new release tag (e.g. `5.8.3`), merges it into `main` and publishes a dual release (below). On conflict it opens a PR from `upstream-5.8.3` instead. By hand: `git fetch upstream tag 5.8.3 && git merge 5.8.3` (merge, never rebase). |
 | WG Tunnel Desktop | Same, from its release tags (e.g. `v2.4.2`), subtree-merged into `desktop/`; same dual release. On conflict it opens an issue. By hand: `git subtree pull --prefix=desktop --squash upstream-desktop refs/tags/v2.4.2` (remote `upstream-desktop` = `https://github.com/wgtunnel/desktop.git`). |
-| openvpn3 | A run with **update** opens a PR moving `engines/openvpn3` to the new tag. Check `patches/openvpn3` still apply and merge. **No release**: it ships with the next WG Tunnel release. |
-| mihomo | Same as openvpn3, for `engines/mihomo`. |
+| openvpn3 | A run with **update** opens a PR moving `quartz/android/engines/openvpn3` to the new tag. Merging it touches `quartz/**`, so it builds a release. |
+| mihomo | Same as openvpn3, for `quartz/android/engines/mihomo`. |
 
 - Enable `git config rerere.enabled true` so resolved conflicts are replayed.
 - Merge upstream PRs with **Create a merge commit** — never squash or rebase,
@@ -97,12 +96,12 @@ change and upstream engine history stays out of this repo. Clone with
 
 The account's GitHub Actions minutes are used up for the month, so **no
 workflow is started**: `quartz-workflows`' weekly schedule is commented out,
-and commits that touch `.github/workflows` carry `[skip ci]` so the push
-doesn't trigger it. Nothing is released until the minutes are back.
+and commits that touch `.github/workflows` or `quartz/` carry `[skip ci]` so
+the push doesn't start a run. Nothing is released until the minutes are back.
 
 When they are: uncomment `quartz-workflows`' `schedule:` block, then run
 `quartz-release` once **without** "update" (main already has the latest
-upstream). That run is also the first CI build of the mihomo engine (Go +
+upstream), or push a `quartz/` change without `[skip ci]`. That run is also the first CI build of the mihomo engine (Go +
 NDK + cache) and of the dual release, so check its log.
 
 ### Use Actions minutes sparingly (standing rule)
@@ -114,10 +113,11 @@ it. Code agents and people working on this repo follow this:
   :app:assembleFdroidDebug` (plus `:app:buildMihomoHost` for the engine
   tests) is the check before every push. Share a test APK straight from the
   local build instead of running a release to get one.
-- **Never start a workflow without the owner asking for it.** No automatic
-  re-runs, no "just to check" runs. `quartz-release` is manual only and runs
-  only when there's something worth releasing (a batch of user-visible
-  changes, or an upstream update).
+- **Every push that changes `quartz/**` builds a release**, so batch work:
+  commit as often as you like locally, push `quartz/` changes when a batch
+  is ready. A push meant only to save work carries `[skip ci]`.
+- **Never start a workflow by hand without the owner asking for it.** No
+  re-runs, no "just to check" runs.
 - **Don't tick "update" unless the in-app "Check upstream versions" (or the
   owner) says an upstream is newer:** it adds merge and bump work to the run.
 - **Commits that touch `.github/workflows` carry `[skip ci]`** in their
@@ -133,8 +133,11 @@ it. Code agents and people working on this repo follow this:
 
 ### Releases
 
-- No nightlies, no schedule: `quartz-release` runs **only when started by
-  hand**. **Every run is a dual release:** one GitHub release with the
+- No nightlies, no schedule: `quartz-release` runs on **pushes to `main`
+  that change `quartz/**`** (Quartz's own app files) and when started by
+  hand. Docs, workflow files and upstream folders don't start it; a commit
+  message with `[skip ci]` skips it; a newer push cancels an unfinished
+  push build. **Every run is a dual release:** one GitHub release with the
   Android APKs and the Windows installer, built from the same commit and
   named after both bases, e.g. `quartz-5.8.2-desktop-2.4.1` (`-2`, `-3`, …
   for later builds on the same bases).
@@ -165,7 +168,7 @@ it. Code agents and people working on this repo follow this:
 - Windows: unsigned NSIS installer (SmartScreen warns), built with upstream
   desktop's toolchain (GraalVM via NucleusFramework, Go, MinGW, .NET).
 - Releases are **public** (not pre-releases). For now Android builds are
-  **public debug builds**, signed with the committed `signing/quartz-debug.jks`
+  **public debug builds**, signed with the committed `quartz/android/signing/quartz-debug.jks`
   so each one installs over the last; the desktop updater sees Quartz desktop
   releases as updates. Switch to a private release key in the
   `KEYSTORE` / `SIGNING_*` secrets once the app works (users then reinstall
@@ -179,7 +182,7 @@ Upstream routes all tunnel start/stop through `TunnelProvider`
 `di/TunnelModule.kt`. The WireGuard/AmneziaWG backend itself comes from the
 external `com.wgtunnel:backend` library (wgtunnel/core).
 
-`MultiEngineTunnelProvider` (in `fork/engine-bridge`) implements
+`MultiEngineTunnelProvider` (in `quartz/android/engine-bridge`) implements
 `TunnelProvider` and:
 
 - routes WireGuard/AmneziaWG tunnels to the existing backend unchanged, and
@@ -208,12 +211,12 @@ separately.
 
 ### mihomo engine (built)
 
-- `engines/mihomo` is pinned to a release tag (v1.19.33) and **not patched**:
+- `quartz/android/engines/mihomo` is pinned to a release tag (v1.19.33) and **not patched**:
   the TUN comes from the VpnService as `tun.file-descriptor`, and mihomo's
   own sockets are protected through `dialer.DefaultSocketHook` (the hook
   mihomo keeps for Android clients), which calls back into Kotlin's
   `SocketProtector` → `VpnService.protect(fd)`.
-- `fork/engine-mihomo/go` (`engine.go`, `jni.c`): start/stop/validate/version.
+- `quartz/android/engine-mihomo/go` (`engine.go`, `jni.c`): start/stop/validate/version.
   Any profile runs as-is; the wrapper forces TUN on, `auto-route`,
   `auto-detect-interface` and `interface-name` off, DNS hijack on, and the
   REST controller on a random loopback port with a random secret.
@@ -230,7 +233,7 @@ separately.
 
 ### Multi-engine routing (built)
 
-- `MultiEngineTunnelProvider` (`fork/engine-bridge`) is the Koin-bound
+- `MultiEngineTunnelProvider` (`quartz/android/engine-bridge`) is the Koin-bound
   `TunnelProvider`: it wraps upstream's `TunnelBackendProvider` for WireGuard,
   routes tunnels that have an `engine_profile` row to mihomo, stops the other
   engine first, refuses expired tunnels (replacing the step-2 expiry guard)
@@ -247,7 +250,7 @@ separately.
   DNS 172.19.0.2 hijacked into mihomo, MTU 9000) and hands its fd to mihomo;
   `MihomoCompanionService` holds upstream's tunnel notification in the
   foreground, mirroring upstream's VpnService + VpnCompanionService split.
-  Both are declared in `fork/engine-bridge/src/main/AndroidManifest.xml`,
+  Both are declared in `quartz/android/engine-bridge/src/main/AndroidManifest.xml`,
   merged through the flavor+build-type source sets.
 - The wrapper turns on mihomo's DNS (fake-ip, DoH) when a profile leaves it
   off, since the TUN's DNS goes to it.
@@ -275,7 +278,7 @@ would clash with upstream's migration numbers. Instead:
 - backups carry our data as extra `quartz/…` entries in upstream's backup zip
   (upstream's own entries are unchanged; see §9 "Implementation status").
 
-## 4. Groups — `fork/groups`
+## 4. Groups — `quartz/android/groups`
 
 Upstream already has groups (`TunnelGroup`: name, position, expanded) that
 act as collapsible folders, and a tunnel belongs to at most one
@@ -322,7 +325,7 @@ Results fade when older than ~10 minutes. Test URL is configurable (default
 | OpenVPN (not connected) | TCP connect (TCP servers) or ICMP ping (UDP servers), via upstream's `pinger` | Reachability; labelled "ping" |
 | Connected tunnel | URL test through the live tunnel | Real |
 
-## 6. Connection info — `fork/connection-info`
+## 6. Connection info — `quartz/android/connection-info`
 
 Shown **only on the connected tunnel's row**, as upstream does today. Other
 rows show just name, engine badge and delay.
@@ -347,7 +350,7 @@ via Wi-Fi “Home” · Spark NZ
   Connection info offers other providers (ipinfo.io, ip-api.com, Cloudflare
   trace — IP + country only) and an off switch.
 
-## 7. Import — `fork/importer`
+## 7. Import — `quartz/android/importer`
 
 One **Import** entry detects what it was given.
 
@@ -388,7 +391,7 @@ counts before saving.
 
 ### Implementation status
 
-Built (`fork/importer`, pure Kotlin, unit-tested):
+Built (`quartz/android/importer`, pure Kotlin, unit-tested):
 
 - `ImportDetector.detect(text, fileName)`: WireGuard/AmneziaWG, `.ovpn`,
   full Clash profile, proxies-only YAML (with `proxy-providers`), share
@@ -408,7 +411,7 @@ Built (`fork/importer`, pure Kotlin, unit-tested):
 Next (with step 4's storage): the Import entry and preview screen, fetching
 and auto-updating subscriptions, saving Clash profiles as tunnels.
 
-## 8. Clash (mihomo) UI — `fork/clash-ui`
+## 8. Clash (mihomo) UI — `quartz/android/clash-ui`
 
 - A Clash tunnel row has its own dropdown listing its proxy groups and nodes,
   with delay per node and the mode switch (Rule / Global / Direct).
@@ -423,14 +426,14 @@ start, stop and "set TUN fd".
 
 ### Implementation status
 
-- `MihomoApi` (`fork/engine-mihomo`): groups and nodes in profile order,
+- `MihomoApi` (`quartz/android/engine-mihomo`): groups and nodes in profile order,
   last delay, select, per-node and per-group URL tests, mode get/set,
   providers and provider update, version. Tested against a running host
   build of mihomo (no TUN: the wrapper treats a negative fd as "no TUN").
 - Next (needs step 4's running profiles): the Clash tunnel row's dropdown,
   mode switch, search/sort and subscription footer.
 
-## 9. WARP generator — `fork/warp`
+## 9. WARP generator — `quartz/android/warp`
 
 A Kotlin port of the generator at `thebingchilling/site` (`tools/warp`), so
 both produce identical, interchangeable configs. No engine work is needed: the
@@ -527,7 +530,7 @@ unofficial, so the client sits behind a small interface.
 
 ### Implementation status
 
-Built in step 2 (`fork/warp`, `fork/core`):
+Built in step 2 (`quartz/android/warp`, `quartz/android/core`):
 
 - **Parity with the site** (`thebingchilling/site` `tools/warp`): same API
   versions and registration body (`type: Linux`, `warp_enabled`), same
@@ -535,7 +538,7 @@ Built in step 2 (`fork/warp`, `fork/core`):
   lists for **Random**, same defaults (DNS `1.1.1.1, 1.0.0.1` + their IPv6 pair, MTU 1280,
   keepalive off), Jmin/Jmax swapped when entered the wrong way round, I2–I5
   as 1–3 blocks of 16–63 random bytes, and the same three captured I1 packets
-  (`fork/warp/src/main/assets/warp/awg-payloads.txt`, copied from the site's
+  (`quartz/android/warp/src/main/assets/warp/awg-payloads.txt`, copied from the site's
   `vendor/awg-payloads.js`). If that file is ever empty the app builds a real
   QUIC v1 Initial instead (`QuicInitial`, checked against RFC 9001's vectors).
   Like the site, an AmneziaWG config too long for a QR code says so.
@@ -751,7 +754,7 @@ conflicts.
 
 | File | Change | Why |
 |---|---|---|
-| `app/build.gradle.kts` | `apply(from = "../quartz.gradle")` (last line) | App ID `app.quartz`, name "Quartz", provider authority `app.quartz.provider`, debug signing with committed `signing/quartz-debug.jks`, LeakCanary excluded (no "Leaks" launcher icon), fork source directories |
+| `app/build.gradle.kts` | `apply(from = "../quartz/android/quartz.gradle")` (last line) | App ID `app.quartz`, name "Quartz", provider authority `app.quartz.provider`, debug signing with committed `quartz/android/signing/quartz-debug.jks`, LeakCanary excluded (no "Leaks" launcher icon), fork source directories |
 | `app/schemas/app.quartz.core.data.ForkDatabase/` | New files only (Room schema export of `ForkDatabase`) | Room migrations |
 | `WireGuardAutoTunnel.kt` (Koin startup) | `quartzModule` added last to `modules(…)` | Fork Koin module; overrides `TunnelProvider` |
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
@@ -766,17 +769,17 @@ conflicts.
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |
-| `.gitmodules` (engines) | `engines/mihomo` submodule entry | mihomo engine |
+| `.gitmodules` (engines) | `quartz/android/engines/mihomo` submodule entry (its name is still `engines/mihomo`) | mihomo engine |
 | `.gitmodules` | Entry for `desktop/daemon/winsw` (copied from `desktop/.gitmodules`; git only reads the root file). Update it if desktop changes that submodule's URL. | Desktop build |
 | `app/.../MainActivity.kt` | `Route.Support` shows `quartz/ui/QuartzInfoScreen` instead of `SupportScreen` (import + one line) | Info tab: only About and Updates; Updates opens this repo's releases |
 | `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |
 | `desktop/composeApp/build.gradle.kts` | `appFsName`/`appDisplayName` = quartz/Quartz, vendor, description; `publish.github` → thebingchilling/quartz | Rebrand, updater |
 | `desktop/composeApp/src/jvmMain/composeResources/values/strings.xml` | `app_name`, `tray_open` → Quartz | Window title, tray |
-| `desktop/packaging/windows/icon.ico`, `desktop/composeApp/src/jvmMain/composeResources/drawable/appicon.png`, `titleicon.svg` | Replaced with the Quartz icon (generated from `fork/branding/icon`; `titleicon.svg` is the monochrome glyph cropped to `viewBox="27 27 54 54"`). On conflict, keep ours. | Desktop icon, tray, title bar |
+| `desktop/packaging/windows/icon.ico`, `desktop/composeApp/src/jvmMain/composeResources/drawable/appicon.png`, `titleicon.svg` | Replaced with the Quartz icon (generated from `quartz/android/branding/icon`; `titleicon.svg` is the monochrome glyph cropped to `viewBox="27 27 54 54"`). On conflict, keep ours. | Desktop icon, tray, title bar |
 | `desktop/composeApp/.../desktop/update/AppUpdater.kt` | `GitHubProvider` → thebingchilling/quartz | Updater must not offer WG Tunnel |
 
-UI rules: prefer resource overlays (`fork/branding`) → new screens in
-`fork/*` → small, `[fork-ui]`-prefixed edits to upstream screens, keeping our
+UI rules: prefer resource overlays (`quartz/android/branding`) → new screens in
+`quartz/android/*` → small, `[fork-ui]`-prefixed edits to upstream screens, keeping our
 additions in separate composables called from a single line.
 
 ## 12. Licensing

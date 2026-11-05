@@ -1,9 +1,13 @@
 name: quartz-release
 
-# Manual only (Actions → quartz-release → Run workflow). Every run builds both
-# apps from main and publishes one dual release: the Android APKs and the
-# Windows installer in a single GitHub release, e.g. quartz-5.8.2-desktop-2.4.1
-# (-2, -3, … for further builds on the same bases).
+# Runs on pushes to main that change Quartz's own app files (everything under
+# quartz/: quartz/android, quartz/windows) and when started by hand. Docs,
+# workflow files and upstream's folders (app/, desktop/) don't start it. A
+# commit message with [skip ci] skips the build. Every run builds both apps
+# from main and publishes one dual release: the Android APKs and the Windows
+# installer in a single GitHub release, e.g. quartz-5.8.2-desktop-2.4.1 (-2,
+# -3, … for further builds on the same bases). A newer push cancels a
+# push-triggered build that hasn't finished, to save Actions minutes.
 #
 # "update" (off by default) first brings in upstream resources, and is the only
 # thing that does:
@@ -20,6 +24,9 @@ name: quartz-release
 # installer is unsigned.
 
 on:
+  push:
+    branches: [main]
+    paths: ["quartz/**"]
   workflow_dispatch:
     inputs:
       update:
@@ -34,7 +41,7 @@ permissions:
 
 concurrency:
   group: quartz-release
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 env:
   GH_REPO: ${{ github.repository }}
@@ -192,7 +199,7 @@ jobs:
         run: |
           [ -f .gitmodules ] || { echo "No engines yet"; exit 0; }
           git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | while read -r key path; do
-            case "$path" in engines/*) ;; *) continue ;; esac
+            case "$path" in quartz/android/engines/*) ;; *) continue ;; esac
             name=$(basename "$path")
             url=$(git config -f .gitmodules --get "${key%.path}.url")
             pinned=$(git ls-tree HEAD "$path" | awk '{print $3}')
@@ -208,13 +215,13 @@ jobs:
             git -C "$path" fetch --depth 1 origin "refs/tags/$latest:refs/tags/$latest"
             git -C "$path" checkout -q "$latest"
             git switch -q -c "$branch"
-            # engines/versions.properties records the pinned release for the app.
-            sed -i "s#^$name=.*#$name=$latest#" engines/versions.properties
-            grep -q "^$name=" engines/versions.properties || echo "$name=$latest" >> engines/versions.properties
-            git commit -qm "Bump $name engine to $latest" "$path" engines/versions.properties
+            # quartz/android/engines/versions.properties records the pinned release for the app.
+            sed -i "s#^$name=.*#$name=$latest#" quartz/android/engines/versions.properties
+            grep -q "^$name=" quartz/android/engines/versions.properties || echo "$name=$latest" >> quartz/android/engines/versions.properties
+            git commit -qm "Bump $name engine to $latest" "$path" quartz/android/engines/versions.properties
             git push -q origin "$branch"
             gh pr create --head "$branch" --base main --title "Bump $name engine to $latest" \
-              --body "New $name release: $latest. Check \`engines/patches/$name\` still apply. Merging this doesn't publish a release; it ships with the next quartz-release build."
+              --body "New $name release: $latest. Check \`quartz/android/engines/patches/$name\` still apply. Merging this doesn't publish a release; it ships with the next quartz-release build."
             git switch -q main
           done
 
@@ -246,14 +253,14 @@ jobs:
       # are cached by submodule commit + wrapper, so an unchanged engine isn't rebuilt.
       - uses: actions/setup-go@v7
         with:
-          go-version-file: fork/engine-mihomo/go/go.mod
-          cache-dependency-path: fork/engine-mihomo/go/go.sum
+          go-version-file: quartz/android/engine-mihomo/go/go.mod
+          cache-dependency-path: quartz/android/engine-mihomo/go/go.sum
 
       - name: Engine cache key
         id: engines
         run: |
-          echo "ndk=$(sed -nE 's/^def quartzNdkVersion = "([^"]+)"/\1/p' quartz.gradle)" >> "$GITHUB_OUTPUT"
-          echo "mihomo=$(git rev-parse HEAD:engines/mihomo)" >> "$GITHUB_OUTPUT"
+          echo "ndk=$(sed -nE 's/^def quartzNdkVersion = "([^"]+)"/\1/p' quartz/android/quartz.gradle)" >> "$GITHUB_OUTPUT"
+          echo "mihomo=$(git rev-parse HEAD:quartz/android/engines/mihomo)" >> "$GITHUB_OUTPUT"
 
       - name: Install NDK
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${{ steps.engines.outputs.ndk }}" > /dev/null
@@ -261,7 +268,7 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: app/build/generated/quartz/jniLibs
-          key: mihomo-${{ steps.engines.outputs.mihomo }}-${{ hashFiles('fork/engine-mihomo/go/**') }}-ndk${{ steps.engines.outputs.ndk }}
+          key: mihomo-${{ steps.engines.outputs.mihomo }}-${{ hashFiles('quartz/android/engine-mihomo/go/**') }}-ndk${{ steps.engines.outputs.ndk }}
 
       - name: Build
         run: |

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quartz strings (quartz/android/core), prefixed quartz_ so they never clash with upstream's. -->
+<resources>
+    <string name="quartz_upstream_check">Check upstream versions</string>
+    <string name="quartz_upstream_check_desc">WG Tunnel, mihomo and OpenVPN against this build</string>
+    <string name="quartz_upstream_up_to_date">Everything is up to date</string>
+    <string name="quartz_upstream_updates_available">Upstream updates available</string>
+    <string name="quartz_upstream_current">%1$s ✓</string>
+    <string name="quartz_upstream_newer">%1$s → %2$s</string>
+    <string name="quartz_upstream_not_included">not included yet (latest %1$s)</string>
+    <string name="quartz_upstream_failed">%1$s (couldn\'t check)</string>
+    <string name="quartz_upstream_how_to_update">To update, run quartz-release on GitHub with “update” ticked. It merges the new releases into main and publishes a new Quartz build.</string>
+    <string name="quartz_upstream_update">Open GitHub</string>
+</resources>
