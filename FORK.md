@@ -92,6 +92,17 @@ change and upstream engine history stays out of this repo. Clone with
   requests" must be enabled in the repo's Actions settings.
 - Release versions record all three upstreams, e.g. `4.2.1+ovpn3-3.10_mihomo-1.19.x`.
 
+### Actions unavailable (until further notice)
+
+GitHub Actions is off for now. **Push only; build and test in the working
+session** (`./gradlew :app:buildMihomoHost :app:testFdroidDebugUnitTest
+:app:assembleFdroidDebug`) and hand test APKs over directly. No workflow is
+started by hand, and every push that touches `quartz/` or
+`.github/workflows` carries `[skip ci]` so nothing queues. The last CI
+release is `quartz-5.8.2-desktop-2.4.1` (first CI build of the mihomo
+engine and the dual release, both green). When Actions is back, the rules
+below apply again and the next push without `[skip ci]` releases.
+
 ### Use Actions minutes sparingly (standing rule)
 
 GitHub Actions minutes are limited, so every workflow run has to be worth
