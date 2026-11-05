@@ -6,14 +6,14 @@ name: quartz-workflows
 # is disabled through the API rather than edited or deleted, so upstream
 # merges never conflict on them. Runs whenever a push to main changes
 # .github/workflows (an upstream merge that adds a workflow is disabled
-# right away), and weekly as a safety net.
+# right away).
 
 on:
   push:
     branches: [main]
     paths: [".github/workflows/**"]
-  # PAUSED (FORK.md, "Actions paused"): Actions minutes are used up for the month.
-  # Restore when they're back:
+  # Off to save Actions minutes (FORK.md, "Use Actions minutes sparingly"); the push
+  # trigger above already catches workflows an upstream merge adds.
   # schedule:
   #   - cron: "17 4 * * 1" # Mondays 04:17 UTC, before quartz-release
   workflow_dispatch:

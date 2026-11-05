@@ -92,18 +92,6 @@ change and upstream engine history stays out of this repo. Clone with
   requests" must be enabled in the repo's Actions settings.
 - Release versions record all three upstreams, e.g. `4.2.1+ovpn3-3.10_mihomo-1.19.x`.
 
-### Actions paused (November 2026)
-
-The account's GitHub Actions minutes are used up for the month, so **no
-workflow is started**: `quartz-workflows`' weekly schedule is commented out,
-and commits that touch `.github/workflows` or `quartz/` carry `[skip ci]` so
-the push doesn't start a run. Nothing is released until the minutes are back.
-
-When they are: uncomment `quartz-workflows`' `schedule:` block, then run
-`quartz-release` once **without** "update" (main already has the latest
-upstream), or push a `quartz/` change without `[skip ci]`. That run is also the first CI build of the mihomo engine (Go +
-NDK + cache) and of the dual release, so check its log.
-
 ### Use Actions minutes sparingly (standing rule)
 
 GitHub Actions minutes are limited, so every workflow run has to be worth
@@ -113,9 +101,10 @@ it. Code agents and people working on this repo follow this:
   :app:assembleFdroidDebug` (plus `:app:buildMihomoHost` for the engine
   tests) is the check before every push. Share a test APK straight from the
   local build instead of running a release to get one.
-- **Every push that changes `quartz/**` builds a release**, so batch work:
-  commit as often as you like locally, push `quartz/` changes when a batch
-  is ready. A push meant only to save work carries `[skip ci]`.
+- **Every push that changes `quartz/**` builds a release** (both apps, ~1 h
+  of runner time with Windows), so batch work: commit as often as you like
+  locally, push `quartz/` changes when a batch is ready. A push meant only
+  to save work carries `[skip ci]`.
 - **Never start a workflow by hand without the owner asking for it.** No
   re-runs, no "just to check" runs.
 - **Don't tick "update" unless the in-app "Check upstream versions" (or the
@@ -126,8 +115,9 @@ it. Code agents and people working on this repo follow this:
   Gradle and Go caches stay on, the release builds only the `fdroid` debug
   flavor. The Windows job is the most expensive one (Windows runners use
   minutes faster): don't change it in ways that make it rebuild more.
-- **No schedules** while minutes are tight (`quartz-workflows`' weekly safety
-  net is off; see below). `pr.yml` (upstream's format check) runs on pull
+- **No schedules:** `quartz-workflows`' weekly safety net is off (its push
+  trigger already catches workflows an upstream merge adds); `quartz-release`
+  has none. `pr.yml` (upstream's format check) runs on pull
   requests, so avoid opening PRs here; work goes straight to `main`.
 - Pushes that don't touch `.github/workflows` start nothing.
 
