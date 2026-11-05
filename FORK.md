@@ -114,7 +114,13 @@ NDK + cache) and of the dual release, so check its log.
   for later builds on the same bases).
 - **Updating upstream resources is opt-in:** only a manual run with
   **update** ticked merges new WG Tunnel Android/Desktop releases and opens
-  engine bump PRs. Without it the run just builds what's on `main`. Tags start with
+  engine bump PRs. Without it the run just builds what's on `main`.
+- **In-app check:** Info tab → **Check upstream versions** compares this
+  build's bases (baked into `BuildConfig` by `quartz.gradle`: WG Tunnel
+  Android/Desktop versions, `engines/versions.properties` for the engines)
+  with the latest WG Tunnel Android, WG Tunnel Desktop, mihomo and openvpn3
+  releases, and if any is newer offers to open the `quartz-release` page to
+  run it with **update**. The app can't start the workflow itself. Tags start with
   `quartz-` so they never trigger upstream's `publish.yml`. Each release is
   marked latest; it carries the installer's `latest.yml`, which the desktop
   updater reads. Older releases (`quartz-android-*`, `quartz-desktop-*`)

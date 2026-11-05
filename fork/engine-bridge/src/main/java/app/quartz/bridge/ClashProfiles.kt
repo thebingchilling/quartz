@@ -124,5 +124,6 @@ object EnginePlaceholder {
     /** Whether upstream's parser accepts the placeholder (checked by a unit test). */
     internal fun parses(engine: String): Boolean = runCatching {
         Config.parseQuickString(config(engine))
-    }.isSuccess
+    }
+        .isSuccess
 }

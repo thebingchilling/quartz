@@ -183,3 +183,30 @@ tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach { dependsOn 
 dependencies {
     implementation "org.snakeyaml:snakeyaml-engine:2.10" // Clash/mihomo YAML (fork/importer)
 }
+
+// Upstream bases this build is made from, for the in-app "Check upstream versions" (Info tab).
+def quartzEngineVersions = new Properties()
+file("$rootDir/engines/versions.properties").with { if (it.exists()) it.withInputStream { quartzEngineVersions.load(it) } }
+def quartzGitTag = { String dir ->
+    def pinned = quartzEngineVersions.getProperty(new File(dir).name)
+    if (pinned) return pinned
+    def path = file(dir)
+    if (!new File(path, ".git").exists()) return ""
+    providers.exec {
+        commandLine "git", "-C", path.path, "describe", "--tags", "--abbrev=0"
+        ignoreExitValue = true
+    }.standardOutput.asText.get().trim()
+}
+def quartzDesktopBase = {
+    def toml = file("$rootDir/desktop/gradle/libs.versions.toml")
+    def match = toml.exists() ? (toml.text =~ /(?m)^app\s*=\s*"([^"]+)"/) : null
+    match?.find() ? match.group(1) : ""
+}
+android {
+    defaultConfig {
+        buildConfigField "String", "QUARTZ_ANDROID_BASE", "\"${libs.versions.versionName.get()}\""
+        buildConfigField "String", "QUARTZ_DESKTOP_BASE", "\"${quartzDesktopBase()}\""
+        buildConfigField "String", "QUARTZ_MIHOMO_VERSION", "\"${quartzGitTag("$rootDir/engines/mihomo")}\""
+        buildConfigField "String", "QUARTZ_OPENVPN3_VERSION", "\"${quartzGitTag("$rootDir/engines/openvpn3")}\""
+    }
+}

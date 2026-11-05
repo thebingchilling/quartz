@@ -22,6 +22,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.quartz.core.ui.UpstreamVersionsRow
 import com.dokar.sonner.ToastType
 import com.zaneschepke.wireguardautotunnel.BuildConfig
 import com.zaneschepke.wireguardautotunnel.R
@@ -98,6 +99,7 @@ fun QuartzInfoScreen(viewModel: SupportViewModel = koinViewModel()) {
                     }
                 },
             )
+            UpstreamVersionsRow()
         }
     }
 }

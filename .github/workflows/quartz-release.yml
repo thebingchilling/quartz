@@ -208,10 +208,13 @@ jobs:
             git -C "$path" fetch --depth 1 origin "refs/tags/$latest:refs/tags/$latest"
             git -C "$path" checkout -q "$latest"
             git switch -q -c "$branch"
-            git commit -qm "Bump $name engine to $latest" "$path"
+            # engines/versions.properties records the pinned release for the app.
+            sed -i "s#^$name=.*#$name=$latest#" engines/versions.properties
+            grep -q "^$name=" engines/versions.properties || echo "$name=$latest" >> engines/versions.properties
+            git commit -qm "Bump $name engine to $latest" "$path" engines/versions.properties
             git push -q origin "$branch"
             gh pr create --head "$branch" --base main --title "Bump $name engine to $latest" \
-              --body "New $name release: $latest. Check \`engines/patches/$name\` still apply. Merging this doesn't publish a release; it ships with the next WG Tunnel release."
+              --body "New $name release: $latest. Check \`engines/patches/$name\` still apply. Merging this doesn't publish a release; it ships with the next quartz-release build."
             git switch -q main
           done
 
