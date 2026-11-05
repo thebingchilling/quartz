@@ -75,8 +75,10 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import app.quartz.clash.ui.ClashScreen
 import app.quartz.core.ui.QuartzDialogs
 import app.quartz.core.ui.QuartzInfoScreen
+import app.quartz.importer.ui.ImportScreen
 import app.quartz.warp.ui.WarpScreen
 import com.dokar.sonner.TextToastAction
 import com.dokar.sonner.Toast
@@ -759,6 +761,8 @@ class MainActivity : AppCompatActivity() {
                                                 entry<Route.Logs> { LogsScreen() }
                                                 entry<Route.Support> { QuartzInfoScreen() }
                                                 entry<Route.Warp> { WarpScreen() }
+                                                entry<Route.QuartzImport> { ImportScreen() }
+                                                entry<Route.Clash> { key -> ClashScreen(key.id) }
                                                 entry<Route.License> { LicenseScreen() }
                                                 entry<Route.Donate> { DonateScreen() }
                                                 entry<Route.Addresses> { AddressesScreen() }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quartz strings (quartz/android/importer), prefixed quartz_. -->
+<resources>
+    <string name="quartz_import">Import</string>
+    <string name="quartz_import_sheet">Import Clash, links or subscription</string>
+    <string name="quartz_import_source">What to import</string>
+    <string name="quartz_import_source_desc">Paste a subscription URL, share links (vless://, vmess://, trojan://, ss://, hy2://, …), a Clash/mihomo profile, a sing-box config or a WireGuard config, or open a file.</string>
+    <string name="quartz_import_input">Link, text or URL</string>
+    <string name="quartz_import_paste">Paste</string>
+    <string name="quartz_import_file">File</string>
+    <string name="quartz_import_detect">Detect</string>
+    <string name="quartz_import_detected">Found</string>
+    <string name="quartz_import_type_wireguard">A WireGuard / AmneziaWG config</string>
+    <string name="quartz_import_type_openvpn">An OpenVPN config. OpenVPN support arrives in a later Quartz version.</string>
+    <string name="quartz_import_type_profile">A Clash profile with %1$d proxies, kept as it is</string>
+    <string name="quartz_import_type_proxies">%1$d proxies, made into a profile with a template</string>
+    <string name="quartz_import_providers">%1$d proxy providers</string>
+    <string name="quartz_import_skipped">Skipped %1$d: %2$s</string>
+    <string name="quartz_import_as_wireguard">Add as WireGuard tunnel</string>
+    <string name="quartz_import_usage">%1$s of %2$s used</string>
+    <string name="quartz_import_sub_expires">expires %1$s</string>
+    <string name="quartz_import_name">Name</string>
+    <string name="quartz_import_template">Template</string>
+    <string name="quartz_import_template_simple">Simple</string>
+    <string name="quartz_import_template_rules">Rule-based</string>
+    <string name="quartz_import_template_custom">Custom</string>
+    <string name="quartz_import_country">Country sent direct (2 letters)</string>
+    <string name="quartz_import_custom">Template YAML ({{proxies}}, {{proxy-names}})</string>
+    <string name="quartz_import_interval">Auto-update every (hours, 0 = off)</string>
+    <string name="quartz_import_wifi_only">Update on Wi-Fi only</string>
+    <string name="quartz_import_user_agent">User-Agent</string>
+    <string name="quartz_import_group">Add to group</string>
+    <string name="quartz_import_no_group">None</string>
+    <string name="quartz_import_validation">mihomo reports: %1$s</string>
+    <string name="quartz_import_save_anyway">Save anyway</string>
+    <string name="quartz_import_save">Save as Clash tunnel</string>
+    <string name="quartz_import_saved">Added %1$s</string>
+    <string name="quartz_engine_clash">Clash</string>
+</resources>

@@ -4,8 +4,12 @@ import androidx.room.Room
 import app.quartz.bridge.ClashProfiles
 import app.quartz.bridge.MihomoRunner
 import app.quartz.bridge.MultiEngineTunnelProvider
+import app.quartz.bridge.SubscriptionWorker
+import app.quartz.bridge.Subscriptions
+import app.quartz.clash.ui.ClashViewModel
 import app.quartz.core.data.ForkDatabase
 import app.quartz.engine.mihomo.MihomoEngine
+import app.quartz.importer.ui.ImportViewModel
 import app.quartz.warp.CloudflareWarpApi
 import app.quartz.warp.WarpApi
 import app.quartz.warp.WarpExpiry
@@ -20,6 +24,7 @@ import com.zaneschepke.wireguardautotunnel.di.Scope
 import java.io.File
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.workerOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -55,6 +60,12 @@ val quartzModule = module {
     single { MihomoEngine(File(androidContext().filesDir, "mihomo")) }
     single { MihomoRunner(androidContext()) }
     single { ClashProfiles(androidContext(), get(), get(), get(named(Dispatcher.IO))) }
+    single { Subscriptions(get(), get(), get(), get(named(Dispatcher.IO))) }
+    workerOf(::SubscriptionWorker)
+    viewModelOf(::ImportViewModel)
+    viewModel { (tunnelId: Int) ->
+        ClashViewModel(tunnelId, get(), get(), get(), get(), get(), get(), get())
+    }
 
     single<WarpApi> { CloudflareWarpApi() }
     single {
@@ -84,6 +95,7 @@ val quartzModule = module {
     viewModelOf(::WarpViewModel)
 
     single(createdAtStart = true) {
+        SubscriptionWorker.schedule(androidContext())
         QuartzSync(get(named(Scope.APPLICATION)), get(), get(), get(), get(), get())
     }
 }

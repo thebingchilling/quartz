@@ -706,6 +706,20 @@ fun currentRouteAsNavbarState(
                     )
                 }
                 // [fork-ui] Quartz
+                Route.QuartzImport -> {
+                    NavbarState(
+                        topLeading = { TvBackButton { navController.pop() } },
+                        topTitle = context.getString(R.string.quartz_import),
+                        showBottomItems = true,
+                    )
+                }
+                is Route.Clash -> {
+                    NavbarState(
+                        topLeading = { TvBackButton { navController.pop() } },
+                        topTitle = context.getString(R.string.quartz_clash),
+                        showBottomItems = true,
+                    )
+                }
                 Route.Warp -> {
                     NavbarState(
                         topLeading = { TvBackButton { navController.pop() } },

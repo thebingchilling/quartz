@@ -5,6 +5,7 @@ import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.ContentPasteGo
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.FileOpen
+import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -84,6 +85,16 @@ fun TunnelImportSheet(
                 )
             )
             // [fork-ui] Quartz
+            add(
+                SheetOption(
+                    Icons.Outlined.Hub,
+                    stringResource(R.string.quartz_import_sheet),
+                    onClick = {
+                        onDismiss()
+                        navController.push(Route.QuartzImport)
+                    },
+                )
+            )
             add(
                 SheetOption(
                     Icons.Outlined.Cloud,

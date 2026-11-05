@@ -52,6 +52,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.quartz.core.ui.quartzTunnelDescription
+import app.quartz.core.ui.quartzTunnelRoute
 import com.wgtunnel.backend.state.ActiveTunnel
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.domain.model.TunnelConfig
@@ -300,7 +301,11 @@ fun TunnelList(
                     isTv = isTv,
                     isDragging = false,
                     focusRequester = if (index == 0) focusRequester else null,
-                    onNavigateTunnel = { navController.push(Route.TunnelSettings(it)) },
+                    onNavigateTunnel = {
+                        navController.push(
+                            quartzTunnelRoute(it, uiState.tunnels) ?: Route.TunnelSettings(it)
+                        )
+                    },
                     modifier = Modifier.animateItem(),
                 )
             }
@@ -431,7 +436,11 @@ private fun ListRow(
                 title = tunnel.name,
                 // [fork-ui] Quartz badges (expiry)
                 description =
-                    quartzTunnelDescription(tunnel.id, tunnelRowDescription(tunnel, uiState)),
+                    quartzTunnelDescription(
+                        tunnel.id,
+                        tunnelRowDescription(tunnel, uiState),
+                        tunnel.quickConfig,
+                    ),
                 onClick = {
                     when {
                         uiState.isReorderMode -> Unit
