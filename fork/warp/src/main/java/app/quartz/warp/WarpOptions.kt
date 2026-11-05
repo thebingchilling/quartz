@@ -80,7 +80,7 @@ data class WarpOptions(
     companion object {
         const val DEFAULT_SLOT = "warp"
         const val DEFAULT_MTU = 1280
-        const val DEFAULT_DNS = "1.1.1.1, 1.0.0.1"
+        const val DEFAULT_DNS = "1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001"
         const val DEFAULT_ALLOWED_IPS = "0.0.0.0/0, ::/0"
         const val DEFAULT_KEEPALIVE = 0
         val MIMIC_HOSTS =

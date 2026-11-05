@@ -1,37 +1,35 @@
 name: quartz-release
 
-# Weekly. Quartz releases follow WG Tunnel releases; engine updates don't
-# trigger a release on their own.
+# Weekly. Every Quartz release is a dual release: one GitHub release holding
+# both the Android APKs and the Windows installer, built from the same commit.
 #
-#  - New wgtunnel/android release (e.g. 5.8.3): merge the tag into main, build
-#    the APKs, publish quartz-android-5.8.3.
-#  - New wgtunnel/desktop release (e.g. v2.4.2): subtree-merge the tag into
-#    desktop/, build the Windows installer, publish quartz-desktop-2.4.2.
+#  - New wgtunnel/android release (e.g. 5.8.3) or wgtunnel/desktop release
+#    (e.g. v2.4.2): merge it (desktop as a subtree under desktop/), build both
+#    apps, publish quartz-5.8.3-desktop-2.4.2.
 #  - New openvpn3 / mihomo release: open a PR bumping the submodule under
 #    engines/. No release; it ships with the next WG Tunnel release.
 #
 # A conflicting merge opens a PR (Android) or an issue (desktop) instead, and
-# that app's release waits until it's resolved on main. Running this by hand
-# with "force" publishes an extra build on the current base (-2, -3, ...).
+# nothing is released until it's resolved on main. Running this by hand with
+# "force" publishes an extra build on the current bases (-2, -3, ...): that's
+# how fork changes ship between WG Tunnel releases.
 #
 # Tags start with "quartz-" so they never trigger upstream's publish.yml.
-# Releases are public (not pre-releases). Until signing is set up, Android is
-# debug-signed with the committed key (fdroid flavor, no in-app updater) and the
-# Windows installer is unsigned. Android releases are never "latest": the
-# desktop updater reads the latest release, which must stay a desktop one.
+# Releases are public and marked latest (the desktop updater reads the latest
+# release's latest.yml). Until signing is set up, Android is debug-signed with
+# the committed key (fdroid flavor, no in-app updater) and the Windows
+# installer is unsigned.
 
 on:
-  schedule:
-    - cron: "41 5 * * 1" # Mondays 05:41 UTC
+  # PAUSED (FORK.md, "Actions paused"): Actions minutes are used up for the month.
+  # Restore when they're back:
+  # schedule:
+  #   - cron: "41 5 * * 1" # Mondays 05:41 UTC
   workflow_dispatch:
     inputs:
-      force_android:
+      force:
         type: boolean
-        description: "Publish an Android build even without a new WG Tunnel release"
-        default: false
-      force_desktop:
-        type: boolean
-        description: "Publish a Windows build even without a new WG Tunnel Desktop release"
+        description: "Publish a release (Android + Windows) even without a new WG Tunnel release"
         default: false
 
 permissions:
@@ -51,9 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.done.outputs.sha }}
-      android_release: ${{ steps.android.outputs.release }}
+      release: ${{ steps.release.outputs.release }}
       android_tag: ${{ steps.android.outputs.tag }}
-      desktop_release: ${{ steps.desktop.outputs.release }}
       desktop_version: ${{ steps.desktop.outputs.version }}
     steps:
       - uses: actions/checkout@v7
@@ -88,14 +85,11 @@ jobs:
         id: android
         env:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
-          FORCE: ${{ inputs.force_android }}
         run: |
           tag=$(git ls-remote --tags upstream | grep -v '\^{}' | sed 's#.*refs/tags/##' \
             | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          release=$("$RUNNER_TEMP/next-release.sh" "quartz-android-$tag" "$FORCE")
-          echo "Latest WG Tunnel Android: $tag; release: ${release:-none}"
-          [ -n "$release" ] || exit 0
+          echo "Latest WG Tunnel Android: $tag"
 
           git fetch --no-tags upstream "refs/tags/$tag:refs/tags/upstream-$tag"
           if ! git merge-base --is-ancestor "upstream-$tag" HEAD; then
@@ -120,7 +114,7 @@ jobs:
               branch="upstream-$tag"
               git push --force origin "refs/tags/upstream-$tag:refs/heads/$branch"
               if [ -z "$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number')" ]; then
-                gh pr create --head "$branch" --base main --title "Merge WG Tunnel $tag" --body "Merging [WG Tunnel $tag](https://github.com/wgtunnel/android/releases/tag/$tag) into main hit conflicts. Quartz Android $tag is published by the next run after this is merged.
+                gh pr create --head "$branch" --base main --title "Merge WG Tunnel $tag" --body "Merging [WG Tunnel $tag](https://github.com/wgtunnel/android/releases/tag/$tag) into main hit conflicts. The next Quartz release is published by the first run after this is merged.
 
           Resolve locally (merge, never rebase), then push to main:
 
@@ -131,24 +125,20 @@ jobs:
           Check the touched-files list in FORK.md §11."
               fi
               echo "::warning::Conflicts merging WG Tunnel $tag; opened a PR"
-              exit 0
+              echo "conflict=true" >> "$GITHUB_OUTPUT"
             fi
           fi
-          echo "release=$release" >> "$GITHUB_OUTPUT"
 
       - name: WG Tunnel Desktop
         id: desktop
         env:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
-          FORCE: ${{ inputs.force_desktop }}
         run: |
           tag=$(git ls-remote --tags upstream-desktop | grep -v '\^{}' | sed 's#.*refs/tags/##' \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           version=${tag#v}
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          release=$("$RUNNER_TEMP/next-release.sh" "quartz-desktop-$version" "$FORCE")
-          echo "Latest WG Tunnel Desktop: $tag; release: ${release:-none}"
-          [ -n "$release" ] || exit 0
+          echo "Latest WG Tunnel Desktop: $tag"
 
           # Last desktop tag merged, from git subtree's squash commit metadata.
           current=$(git log -1 --grep='^git-subtree-dir: desktop$' --format=%B \
@@ -160,7 +150,7 @@ jobs:
               git merge --abort || true
               title="Merge WG Tunnel Desktop $tag"
               if [ -z "$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number')" ]; then
-                gh issue create --title "$title" --body "Subtree-merging [WG Tunnel Desktop $tag](https://github.com/wgtunnel/desktop/releases/tag/$tag) into \`desktop/\` hit conflicts. Quartz Desktop $version is published by the next run after this is merged.
+                gh issue create --title "$title" --body "Subtree-merging [WG Tunnel Desktop $tag](https://github.com/wgtunnel/desktop/releases/tag/$tag) into \`desktop/\` hit conflicts. The next Quartz release is published by the first run after this is merged.
 
           Resolve locally, then push to main:
 
@@ -172,10 +162,24 @@ jobs:
           Check the touched-files list in FORK.md §11."
               fi
               echo "::warning::Conflicts merging WG Tunnel Desktop $tag; opened an issue"
-              exit 0
+              echo "conflict=true" >> "$GITHUB_OUTPUT"
+            else
+              git push origin HEAD:main
             fi
-            git push origin HEAD:main
           fi
+
+      # One release for both apps, named after both bases. Nothing is released
+      # while either merge waits on a person.
+      - name: Release name
+        id: release
+        if: steps.android.outputs.conflict != 'true' && steps.desktop.outputs.conflict != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          release=$("$RUNNER_TEMP/next-release.sh" \
+            "quartz-${{ steps.android.outputs.tag }}-desktop-${{ steps.desktop.outputs.version }}" "$FORCE")
+          echo "Release: ${release:-none}"
           echo "release=$release" >> "$GITHUB_OUTPUT"
 
       - name: Engines
@@ -213,7 +217,7 @@ jobs:
 
   android:
     needs: sync
-    if: needs.sync.outputs.android_release != ''
+    if: needs.sync.outputs.release != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -262,23 +266,15 @@ jobs:
           done
           ls -l dist
 
-      - name: Publish
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE: ${{ needs.sync.outputs.android_release }}
-          TAG: ${{ needs.sync.outputs.android_tag }}
-        run: |
-          gh release create "$RELEASE" dist/*.apk \
-            --target "${{ needs.sync.outputs.sha }}" \
-            --title "Quartz Android ${RELEASE#quartz-android-}" \
-            --latest=false \
-            --notes "Quartz for Android, built on [WG Tunnel $TAG](https://github.com/wgtunnel/android/releases/tag/$TAG).
-
-          Public debug build: signed with Quartz's committed debug key, so every Quartz build installs over the last one (fdroid flavor, no in-app updater). Install the \`arm64\` APK on most phones, \`armv7\` on older ones, or \`universal\` if unsure."
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: dist/*.apk
+          retention-days: 3
 
   windows:
     needs: sync
-    if: needs.sync.outputs.desktop_release != ''
+    if: needs.sync.outputs.release != ''
     runs-on: windows-latest
     timeout-minutes: 120
     steps:
@@ -331,16 +327,35 @@ jobs:
             ! -name 'wgtunnel-daemon.exe' ! -name 'service-wrapper.exe' -exec cp {} dist/ \;
           ls -l dist
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: dist/*
+          retention-days: 3
+
+  publish:
+    needs: [sync, android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
       - name: Publish
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE: ${{ needs.sync.outputs.desktop_release }}
+          RELEASE: ${{ needs.sync.outputs.release }}
+          TAG: ${{ needs.sync.outputs.android_tag }}
           VERSION: ${{ needs.sync.outputs.desktop_version }}
         run: |
+          ls -l dist
+          suffix=${RELEASE#quartz-$TAG-desktop-$VERSION}
           gh release create "$RELEASE" dist/* \
             --target "${{ needs.sync.outputs.sha }}" \
-            --title "Quartz Desktop ${RELEASE#quartz-desktop-}" \
-            --notes "Quartz for Windows, built on [WG Tunnel Desktop v$VERSION](https://github.com/wgtunnel/desktop/releases/tag/v$VERSION).
+            --title "Quartz $TAG$suffix · Desktop $VERSION" \
+            --notes "One release, both apps, from the same commit.
 
-          Unsigned build: Windows SmartScreen will warn on install (More info → Run anyway)."
+          **Android**, built on [WG Tunnel $TAG](https://github.com/wgtunnel/android/releases/tag/$TAG): public debug build, signed with Quartz's committed debug key so every Quartz build installs over the last one (fdroid flavor, no in-app updater). Install the \`arm64\` APK on most phones, \`armv7\` on older ones, or \`universal\` if unsure.
+
+          **Windows**, built on [WG Tunnel Desktop v$VERSION](https://github.com/wgtunnel/desktop/releases/tag/v$VERSION): unsigned installer, so Windows SmartScreen will warn on install (More info → Run anyway). The desktop app updates itself from these releases."

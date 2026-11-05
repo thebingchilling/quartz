@@ -78,8 +78,8 @@ change and upstream engine history stays out of this repo. Clone with
 
 | Source | How updates come in |
 |---|---|
-| WG Tunnel Android | We follow its **releases**, not every commit. `quartz-release.yml` checks weekly for a new release tag (e.g. `5.8.3`), merges it into `main` and publishes `quartz-android-5.8.3`. On conflict it opens a PR from `upstream-5.8.3` instead. By hand: `git fetch upstream tag 5.8.3 && git merge 5.8.3` (merge, never rebase). |
-| WG Tunnel Desktop | Same, from its release tags (e.g. `v2.4.2`), subtree-merged into `desktop/` and published as `quartz-desktop-2.4.2`. On conflict it opens an issue. By hand: `git subtree pull --prefix=desktop --squash upstream-desktop refs/tags/v2.4.2` (remote `upstream-desktop` = `https://github.com/wgtunnel/desktop.git`). |
+| WG Tunnel Android | We follow its **releases**, not every commit. `quartz-release.yml` checks weekly for a new release tag (e.g. `5.8.3`), merges it into `main` and publishes a dual release (below). On conflict it opens a PR from `upstream-5.8.3` instead. By hand: `git fetch upstream tag 5.8.3 && git merge 5.8.3` (merge, never rebase). |
+| WG Tunnel Desktop | Same, from its release tags (e.g. `v2.4.2`), subtree-merged into `desktop/`; same dual release. On conflict it opens an issue. By hand: `git subtree pull --prefix=desktop --squash upstream-desktop refs/tags/v2.4.2` (remote `upstream-desktop` = `https://github.com/wgtunnel/desktop.git`). |
 | openvpn3 | The weekly run opens a PR moving `engines/openvpn3` to the new tag. Check `patches/openvpn3` still apply and merge. **No release**: it ships with the next WG Tunnel release. |
 | mihomo | Same as openvpn3, for `engines/mihomo`. |
 
@@ -93,17 +93,31 @@ change and upstream engine history stays out of this repo. Clone with
   requests" must be enabled in the repo's Actions settings.
 - Release versions record all three upstreams, e.g. `4.2.1+ovpn3-3.10_mihomo-1.19.x`.
 
+### Actions paused (November 2026)
+
+The account's GitHub Actions minutes are used up for the month, so **no
+workflow is started by hand**, and the weekly schedules of `quartz-release`
+and `quartz-workflows` are commented out. Commits that touch
+`.github/workflows` carry `[skip ci]` so the push doesn't trigger
+`quartz-workflows`. Nothing is released until the minutes are back.
+
+When they are: uncomment the two `schedule:` blocks, then run
+`quartz-release` with **force** once. That first run is also the first CI
+build of the mihomo engine (Go + NDK + cache) and of the dual release, so
+check its log.
+
 ### Releases
 
-- No nightlies. Weekly, Quartz releases follow WG Tunnel releases, each app
-  independently: `quartz-android-5.8.3` for WG Tunnel 5.8.3,
-  `quartz-desktop-2.4.2` for WG Tunnel Desktop v2.4.2. Engine updates never
-  trigger a release. Running `quartz-release` by hand with "force" publishes
-  an extra build on the same base (`-2`, `-3`, …): that's how fork changes
-  ship between WG Tunnel releases. Tags start with `quartz-`
-  so they never trigger upstream's `publish.yml`. Android releases are
-  created with `--latest=false`, so "latest" is always a desktop release
-  (the desktop updater reads it).
+- No nightlies. **Every release is a dual release:** one GitHub release with
+  the Android APKs and the Windows installer, built from the same commit, e.g.
+  `quartz-5.8.3-desktop-2.4.2`. A new WG Tunnel Android *or* Desktop release
+  triggers one; engine updates never do. Running `quartz-release` by hand
+  with **force** publishes an extra build on the same bases (`-2`, `-3`, …):
+  that's how fork changes ship between WG Tunnel releases. Tags start with
+  `quartz-` so they never trigger upstream's `publish.yml`. Each release is
+  marked latest; it carries the installer's `latest.yml`, which the desktop
+  updater reads. Older releases (`quartz-android-*`, `quartz-desktop-*`)
+  predate this.
 - **Upstream automation never runs here.** `quartz-workflows.yml` disables
   every upstream workflow (`nightly`, `crowdin-contributors`, `notifications`,
   `publish*`, `build*`, …) through the Actions API, on each push to `main`
@@ -458,16 +472,15 @@ Built in step 2 (`fork/warp`, `fork/core`):
 - **Parity with the site** (`thebingchilling/site` `tools/warp`): same API
   versions and registration body (`type: Linux`, `warp_enabled`), same
   `{result: …}` handling and `success: false` errors, same anycast IP and port
-  lists for **Random**, same defaults (DNS `1.1.1.1, 1.0.0.1`, MTU 1280,
+  lists for **Random**, same defaults (DNS `1.1.1.1, 1.0.0.1` + their IPv6 pair, MTU 1280,
   keepalive off), Jmin/Jmax swapped when entered the wrong way round, I2–I5
   as 1–3 blocks of 16–63 random bytes, and the same three captured I1 packets
   (`fork/warp/src/main/assets/warp/awg-payloads.txt`, copied from the site's
   `vendor/awg-payloads.js`). If that file is ever empty the app builds a real
   QUIC v1 Initial instead (`QuicInitial`, checked against RFC 9001's vectors).
   Like the site, an AmneziaWG config too long for a QR code says so.
-- **Site to do:** the site doesn't write the `# WGT-…` markers yet, so its
-  configs import as plain tunnels. Adding the four comment lines inside
-  `[Interface]` (see above) makes them slot-aware here.
+- The site writes the same `# WGT-…` markers (advanced options **Slot** and
+  **Expires**), so its configs import into a slot here.
 - `CloudflareWarpApi`: also WARP+ licence and delete; `client_id` is kept for
   Clash's `reserved`. Keys come from wgtunnel/core's `Key` (MIT). Cloudflare's
   unset `account.ttl` (`0001-01-01…`) is ignored.

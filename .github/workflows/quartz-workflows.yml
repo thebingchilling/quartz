@@ -12,8 +12,10 @@ on:
   push:
     branches: [main]
     paths: [".github/workflows/**"]
-  schedule:
-    - cron: "17 4 * * 1" # Mondays 04:17 UTC, before quartz-release
+  # PAUSED (FORK.md, "Actions paused"): Actions minutes are used up for the month.
+  # Restore when they're back:
+  # schedule:
+  #   - cron: "17 4 * * 1" # Mondays 04:17 UTC, before quartz-release
   workflow_dispatch:
 
 permissions:
