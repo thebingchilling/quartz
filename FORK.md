@@ -50,6 +50,7 @@ upstream merge that conflicts, an engine bump). Upstream Android's branch is
   .github/workflows/
     quartz-release.yml          ← push to quartz/** or manual → build both apps, one release; "update" input merges upstream
     quartz-workflows.yml        ← keeps every upstream workflow except pr.yml disabled
+    quartz-cleanup.yml          ← after a successful run, deletes that workflow's earlier runs (artifacts, logs) and stale caches; by hand: purges the repo
 ```
 
 **How fork code is built:** `quartz/android/<name>/src/{main,test}` are not

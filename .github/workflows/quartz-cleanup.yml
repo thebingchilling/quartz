@@ -1,0 +1,97 @@
+name: quartz-cleanup
+
+# Actions storage is limited. Once a run succeeds, every earlier run of the same workflow is
+# deleted, and their artifacts and logs go with them. Caches are pruned too: only the most
+# recently used cache for each set of paths is kept. This workflow also deletes its own
+# earlier runs.
+#
+# Run it by hand (Actions > quartz-cleanup > Run workflow) to purge the whole
+# repository. For every workflow it keeps only the newest successful run (or the newest run,
+# if none succeeded) and anything newer than that.
+on:
+  workflow_run:
+    workflows: ["quartz-release", "quartz-workflows", "on-pr"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+concurrency:
+  group: cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      EVENT: ${{ github.event_name }}
+      DONE_WORKFLOW: ${{ github.event.workflow_run.workflow_id }}
+      DONE_RUN: ${{ github.event.workflow_run.id }}
+    steps:
+      - name: Delete earlier runs, their artifacts and old caches
+        run: |
+          set -euo pipefail
+          deleted=0
+
+          # deletes every finished run of workflow $1 created before run $2 (and not $2 itself)
+          prune() {
+            local wf=$1 keep=$2 before ids id
+            before=$(gh api "repos/$GH_REPO/actions/runs/$keep" --jq .created_at)
+            mapfile -t ids < <(gh api --paginate \
+              "repos/$GH_REPO/actions/workflows/$wf/runs?status=completed&per_page=100" \
+              --jq ".workflow_runs[] | select(.id != $keep and .created_at < \"$before\") | .id")
+            for id in "${ids[@]}"; do
+              [ -n "$id" ] || continue
+              if gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" --silent; then
+                deleted=$((deleted + 1))
+              else
+                echo "::warning::could not delete run $id"
+              fi
+            done
+          }
+
+          # the newest successful run of workflow $1, else its newest finished run
+          newest() {
+            local id
+            id=$(gh api "repos/$GH_REPO/actions/workflows/$1/runs?status=success&per_page=1" \
+              --jq '.workflow_runs[0].id // empty')
+            [ -n "$id" ] || id=$(gh api "repos/$GH_REPO/actions/workflows/$1/runs?status=completed&per_page=1" \
+              --jq '.workflow_runs[0].id // empty')
+            echo "$id"
+          }
+
+          self=$(gh api "repos/$GH_REPO/actions/runs/$GITHUB_RUN_ID" --jq .workflow_id)
+
+          if [ "$EVENT" = workflow_run ]; then
+            prune "$DONE_WORKFLOW" "$DONE_RUN"
+          else
+            mapfile -t workflows < <(gh api --paginate "repos/$GH_REPO/actions/workflows?per_page=100" \
+              --jq '.workflows[].id')
+            for wf in "${workflows[@]}"; do
+              [ "$wf" != "$self" ] || continue
+              keep=$(newest "$wf")
+              [ -z "$keep" ] || prune "$wf" "$keep"
+            done
+          fi
+          prune "$self" "$GITHUB_RUN_ID"   # this workflow's own earlier runs
+          echo "Deleted $deleted runs (with their artifacts and logs)"
+
+          # caches: keep the most recently used one for each set of paths (same "version")
+          mapfile -t caches < <(gh api --paginate "repos/$GH_REPO/actions/caches?per_page=100" \
+            --jq '.actions_caches[] | "\(.version) \(.last_accessed_at) \(.id) \(.size_in_bytes)"' |
+            sort -k1,1 -k2,2r | awk 'seen[$1]++ { print $3 " " $4 }')
+          for c in "${caches[@]}"; do
+            [ -n "$c" ] || continue
+            set -- $c
+            echo "Deleting cache $1 ($(( $2 / 1048576 )) MB)"
+            gh api -X DELETE "repos/$GH_REPO/actions/caches/$1" --silent ||
+              echo "::warning::could not delete cache $1"
+          done
+
+          # what is left
+          gh api --paginate "repos/$GH_REPO/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired | not) | "kept artifact: \(.name) (\(.size_in_bytes / 1048576 | floor) MB, run \(.workflow_run.id))"'
