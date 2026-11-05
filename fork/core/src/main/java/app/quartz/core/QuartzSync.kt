@@ -1,5 +1,6 @@
 package app.quartz.core
 
+import app.quartz.bridge.ClashProfiles
 import app.quartz.core.data.TunnelMetaDao
 import app.quartz.warp.WarpExpiry
 import app.quartz.warp.WarpRepository
@@ -16,10 +17,13 @@ class QuartzSync(
     metaDao: TunnelMetaDao,
     warpRepository: WarpRepository,
     warpExpiry: WarpExpiry,
+    clashProfiles: ClashProfiles,
 ) {
     init {
         scope.launch {
             tunnelRepository.userTunnelsFlow.collect { tunnels ->
+                runCatching { clashProfiles.removeOrphans(tunnels.map { it.id }.toSet()) }
+                    .onFailure { Timber.e(it, "Engine profile cleanup failed") }
                 runCatching { warpRepository.sync(tunnels) }
                     .onFailure { Timber.e(it, "WARP sync failed") }
             }

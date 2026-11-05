@@ -204,13 +204,15 @@ class MihomoApi(
 
     private suspend fun json(response: HttpResponse): JsonObject = runCatching {
         JSON.parseToJsonElement(response.bodyAsText()).jsonObject
-    }.getOrElse { throw MihomoApiException("Unexpected response from mihomo") }
+    }
+        .getOrElse { throw MihomoApiException("Unexpected response from mihomo") }
 
     private suspend fun check(response: HttpResponse) {
         if (!response.status.isSuccess()) {
             val message = runCatching {
                 (json(response)["message"] as? JsonPrimitive)?.contentOrNull
-            }.getOrNull()
+            }
+                .getOrNull()
             throw MihomoApiException(message ?: "HTTP ${response.status.value}")
         }
     }

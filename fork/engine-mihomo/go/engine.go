@@ -84,6 +84,21 @@ func applyAndroidOverrides(raw *config.RawConfig, tunFd int, controller, secret 
 	if len(raw.Tun.DNSHijack) == 0 {
 		raw.Tun.DNSHijack = []string{"any:53"}
 	}
+	// The TUN's DNS server is hijacked into mihomo's resolver, so it must be on.
+	if raw.Tun.Enable && !raw.DNS.Enable {
+		raw.DNS.Enable = true
+		raw.DNS.IPv6 = true
+		raw.DNS.EnhancedMode = C2.DNSFakeIP
+		if raw.DNS.FakeIPRange == "" {
+			raw.DNS.FakeIPRange = "198.18.0.1/16"
+		}
+		if len(raw.DNS.NameServer) == 0 {
+			raw.DNS.NameServer = []string{"https://1.1.1.1/dns-query", "https://dns.google/dns-query"}
+		}
+		if len(raw.DNS.DefaultNameserver) == 0 {
+			raw.DNS.DefaultNameserver = []string{"1.1.1.1", "8.8.8.8"}
+		}
+	}
 	raw.Interface = ""
 	raw.RoutingMark = 0
 	raw.ExternalController = controller

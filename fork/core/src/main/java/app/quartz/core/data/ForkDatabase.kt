@@ -1,5 +1,6 @@
 package app.quartz.core.data
 
+import androidx.room.AutoMigration
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Query
@@ -13,9 +14,16 @@ import kotlinx.coroutines.flow.Flow
  * with ours. Rows are keyed by upstream's tunnel ID; there is no foreign key across the two
  * databases, so [app.quartz.core.QuartzSync] removes rows whose tunnel is gone.
  */
-@Database(entities = [TunnelMeta::class], version = 1, exportSchema = true)
+@Database(
+    entities = [TunnelMeta::class, EngineProfile::class],
+    version = 2,
+    exportSchema = true,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
+)
 abstract class ForkDatabase : RoomDatabase() {
     abstract fun tunnelMetaDao(): TunnelMetaDao
+
+    abstract fun engineProfileDao(): EngineProfileDao
 
     companion object {
         const val NAME = "quartz.db"

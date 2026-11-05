@@ -1,6 +1,9 @@
 package app.quartz.core
 
 import androidx.room.Room
+import app.quartz.bridge.ClashProfiles
+import app.quartz.bridge.MihomoRunner
+import app.quartz.bridge.MultiEngineTunnelProvider
 import app.quartz.core.data.ForkDatabase
 import app.quartz.engine.mihomo.MihomoEngine
 import app.quartz.warp.CloudflareWarpApi
@@ -30,20 +33,28 @@ val quartzModule = module {
         Room.databaseBuilder(androidContext(), ForkDatabase::class.java, ForkDatabase.NAME).build()
     }
     single { get<ForkDatabase>().tunnelMetaDao() }
+    single { get<ForkDatabase>().engineProfileDao() }
 
-    // Overrides upstream's binding in TunnelModule.kt with the same provider, wrapped.
+    // Overrides upstream's binding in TunnelModule.kt: upstream's provider handles WireGuard,
+    // wrapped by the one that routes Clash tunnels to mihomo (FORK.md §3).
     single<TunnelProvider> {
-        ExpiryGuardTunnelProvider(
-            TunnelBackendProvider(
-                get<Backend>(),
-                get(named(Scope.APPLICATION)),
-                get(named(Dispatcher.IO)),
-            ),
-            get(),
+        MultiEngineTunnelProvider(
+            wireGuard =
+                TunnelBackendProvider(
+                    get<Backend>(),
+                    get(named(Scope.APPLICATION)),
+                    get(named(Dispatcher.IO)),
+                ),
+            metaDao = get(),
+            profiles = get(),
+            mihomo = get(),
+            scope = get(named(Scope.APPLICATION)),
         )
     }
 
     single { MihomoEngine(File(androidContext().filesDir, "mihomo")) }
+    single { MihomoRunner(androidContext()) }
+    single { ClashProfiles(androidContext(), get(), get(), get(named(Dispatcher.IO))) }
 
     single<WarpApi> { CloudflareWarpApi() }
     single {
@@ -73,6 +84,6 @@ val quartzModule = module {
     viewModelOf(::WarpViewModel)
 
     single(createdAtStart = true) {
-        QuartzSync(get(named(Scope.APPLICATION)), get(), get(), get(), get())
+        QuartzSync(get(named(Scope.APPLICATION)), get(), get(), get(), get(), get())
     }
 }

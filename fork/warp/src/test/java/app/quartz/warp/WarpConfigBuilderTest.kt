@@ -134,7 +134,9 @@ class WarpConfigBuilderTest {
     @Test
     fun defaultsMatchTheSite() {
         val text = build(WarpVariant.WG)
-        assertTrue(text.contains("DNS = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001\n"))
+        assertTrue(
+            text.contains("DNS = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001\n")
+        )
         assertTrue("keepalive 0 writes no line", !text.contains("PersistentKeepalive"))
         assertEquals(24, WarpEndpoints.IPS.size)
         assertEquals(50, WarpEndpoints.PORTS.size)

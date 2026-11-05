@@ -59,6 +59,8 @@ android {
         ["fdroid", "google", "standalone"].each { flavor ->
             ["debug", "release", "nightly"].each { type ->
                 maybeCreate(flavor + type.capitalize()).res.directories.add("$rootDir/fork/branding/res")
+                // Fork services (MihomoVpnService, ...): merged into upstream's manifest.
+                maybeCreate(flavor + type.capitalize()).manifest.srcFile("$rootDir/fork/engine-bridge/src/main/AndroidManifest.xml")
             }
         }
     }
@@ -75,7 +77,7 @@ configurations.configureEach {
 // Each fork/<name>/src/{main,test} adds its java, res and assets to the app's source sets.
 android {
     sourceSets {
-        ["core", "warp", "engine-mihomo", "importer"].each { name ->
+        ["core", "warp", "engine-mihomo", "engine-bridge", "importer"].each { name ->
             def dir = "$rootDir/fork/$name/src"
             main.kotlin.directories.add("$dir/main/java")
             main.res.directories.add("$dir/main/res")

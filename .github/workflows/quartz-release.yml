@@ -1,18 +1,17 @@
 name: quartz-release
 
-# Weekly. Every Quartz release is a dual release: one GitHub release holding
-# both the Android APKs and the Windows installer, built from the same commit.
+# Manual only (Actions → quartz-release → Run workflow). Every run builds both
+# apps from main and publishes one dual release: the Android APKs and the
+# Windows installer in a single GitHub release, e.g. quartz-5.8.2-desktop-2.4.1
+# (-2, -3, … for further builds on the same bases).
 #
-#  - New wgtunnel/android release (e.g. 5.8.3) or wgtunnel/desktop release
-#    (e.g. v2.4.2): merge it (desktop as a subtree under desktop/), build both
-#    apps, publish quartz-5.8.3-desktop-2.4.2.
-#  - New openvpn3 / mihomo release: open a PR bumping the submodule under
-#    engines/. No release; it ships with the next WG Tunnel release.
-#
-# A conflicting merge opens a PR (Android) or an issue (desktop) instead, and
-# nothing is released until it's resolved on main. Running this by hand with
-# "force" publishes an extra build on the current bases (-2, -3, ...): that's
-# how fork changes ship between WG Tunnel releases.
+# "update" (off by default) first brings in upstream resources, and is the only
+# thing that does:
+#  - a new wgtunnel/android release is merged into main, a new wgtunnel/desktop
+#    release is subtree-merged into desktop/; a conflicting merge opens a PR
+#    (Android) or an issue (desktop) and nothing is released until it's fixed;
+#  - new openvpn3 / mihomo releases get submodule bump PRs (no release).
+# Without it the run only builds what's on main.
 #
 # Tags start with "quartz-" so they never trigger upstream's publish.yml.
 # Releases are public and marked latest (the desktop updater reads the latest
@@ -21,15 +20,11 @@ name: quartz-release
 # installer is unsigned.
 
 on:
-  # PAUSED (FORK.md, "Actions paused"): Actions minutes are used up for the month.
-  # Restore when they're back:
-  # schedule:
-  #   - cron: "41 5 * * 1" # Mondays 05:41 UTC
   workflow_dispatch:
     inputs:
-      force:
+      update:
         type: boolean
-        description: "Publish a release (Android + Windows) even without a new WG Tunnel release"
+        description: "Update first: merge new WG Tunnel Android/Desktop releases, open engine bump PRs"
         default: false
 
 permissions:
@@ -50,8 +45,8 @@ jobs:
     outputs:
       sha: ${{ steps.done.outputs.sha }}
       release: ${{ steps.release.outputs.release }}
-      android_tag: ${{ steps.android.outputs.tag }}
-      desktop_version: ${{ steps.desktop.outputs.version }}
+      android_tag: ${{ steps.versions.outputs.android }}
+      desktop_version: ${{ steps.versions.outputs.desktop }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -83,6 +78,7 @@ jobs:
 
       - name: WG Tunnel Android
         id: android
+        if: inputs.update
         env:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
         run: |
@@ -131,6 +127,7 @@ jobs:
 
       - name: WG Tunnel Desktop
         id: desktop
+        if: inputs.update
         env:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
         run: |
@@ -168,6 +165,13 @@ jobs:
             fi
           fi
 
+      # The bases as they are on main now (after any merge above).
+      - name: Current versions
+        id: versions
+        run: |
+          echo "android=$(sed -nE 's/^versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+          echo "desktop=$(sed -nE 's/^app[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' desktop/gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+
       # One release for both apps, named after both bases. Nothing is released
       # while either merge waits on a person.
       - name: Release name
@@ -175,14 +179,14 @@ jobs:
         if: steps.android.outputs.conflict != 'true' && steps.desktop.outputs.conflict != 'true'
         env:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
-          FORCE: ${{ inputs.force }}
         run: |
           release=$("$RUNNER_TEMP/next-release.sh" \
-            "quartz-${{ steps.android.outputs.tag }}-desktop-${{ steps.desktop.outputs.version }}" "$FORCE")
+            "quartz-${{ steps.versions.outputs.android }}-desktop-${{ steps.versions.outputs.desktop }}" true)
           echo "Release: ${release:-none}"
           echo "release=$release" >> "$GITHUB_OUTPUT"
 
       - name: Engines
+        if: inputs.update
         env:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
         run: |

@@ -78,9 +78,9 @@ change and upstream engine history stays out of this repo. Clone with
 
 | Source | How updates come in |
 |---|---|
-| WG Tunnel Android | We follow its **releases**, not every commit. `quartz-release.yml` checks weekly for a new release tag (e.g. `5.8.3`), merges it into `main` and publishes a dual release (below). On conflict it opens a PR from `upstream-5.8.3` instead. By hand: `git fetch upstream tag 5.8.3 && git merge 5.8.3` (merge, never rebase). |
+| WG Tunnel Android | We follow its **releases**, not every commit. A manual `quartz-release` run with **update** checks for a new release tag (e.g. `5.8.3`), merges it into `main` and publishes a dual release (below). On conflict it opens a PR from `upstream-5.8.3` instead. By hand: `git fetch upstream tag 5.8.3 && git merge 5.8.3` (merge, never rebase). |
 | WG Tunnel Desktop | Same, from its release tags (e.g. `v2.4.2`), subtree-merged into `desktop/`; same dual release. On conflict it opens an issue. By hand: `git subtree pull --prefix=desktop --squash upstream-desktop refs/tags/v2.4.2` (remote `upstream-desktop` = `https://github.com/wgtunnel/desktop.git`). |
-| openvpn3 | The weekly run opens a PR moving `engines/openvpn3` to the new tag. Check `patches/openvpn3` still apply and merge. **No release**: it ships with the next WG Tunnel release. |
+| openvpn3 | A run with **update** opens a PR moving `engines/openvpn3` to the new tag. Check `patches/openvpn3` still apply and merge. **No release**: it ships with the next WG Tunnel release. |
 | mihomo | Same as openvpn3, for `engines/mihomo`. |
 
 - Enable `git config rerere.enabled true` so resolved conflicts are replayed.
@@ -96,24 +96,25 @@ change and upstream engine history stays out of this repo. Clone with
 ### Actions paused (November 2026)
 
 The account's GitHub Actions minutes are used up for the month, so **no
-workflow is started by hand**, and the weekly schedules of `quartz-release`
-and `quartz-workflows` are commented out. Commits that touch
-`.github/workflows` carry `[skip ci]` so the push doesn't trigger
-`quartz-workflows`. Nothing is released until the minutes are back.
+workflow is started**: `quartz-workflows`' weekly schedule is commented out,
+and commits that touch `.github/workflows` carry `[skip ci]` so the push
+doesn't trigger it. Nothing is released until the minutes are back.
 
-When they are: uncomment the two `schedule:` blocks, then run
-`quartz-release` with **force** once. That first run is also the first CI
-build of the mihomo engine (Go + NDK + cache) and of the dual release, so
-check its log.
+When they are: uncomment `quartz-workflows`' `schedule:` block, then run
+`quartz-release` once **without** "update" (main already has the latest
+upstream). That run is also the first CI build of the mihomo engine (Go +
+NDK + cache) and of the dual release, so check its log.
 
 ### Releases
 
-- No nightlies. **Every release is a dual release:** one GitHub release with
-  the Android APKs and the Windows installer, built from the same commit, e.g.
-  `quartz-5.8.3-desktop-2.4.2`. A new WG Tunnel Android *or* Desktop release
-  triggers one; engine updates never do. Running `quartz-release` by hand
-  with **force** publishes an extra build on the same bases (`-2`, `-3`, …):
-  that's how fork changes ship between WG Tunnel releases. Tags start with
+- No nightlies, no schedule: `quartz-release` runs **only when started by
+  hand**. **Every run is a dual release:** one GitHub release with the
+  Android APKs and the Windows installer, built from the same commit and
+  named after both bases, e.g. `quartz-5.8.2-desktop-2.4.1` (`-2`, `-3`, …
+  for later builds on the same bases).
+- **Updating upstream resources is opt-in:** only a manual run with
+  **update** ticked merges new WG Tunnel Android/Desktop releases and opens
+  engine bump PRs. Without it the run just builds what's on `main`. Tags start with
   `quartz-` so they never trigger upstream's `publish.yml`. Each release is
   marked latest; it carries the installer's `latest.yml`, which the desktop
   updater reads. Older releases (`quartz-android-*`, `quartz-desktop-*`)
@@ -194,6 +195,33 @@ separately.
   profile without running it (used by the importer).
 - Smoke-tested on the JVM with a host build (loads, version, validates good
   and bad profiles); running it on a device needs step 4's VpnService.
+
+### Multi-engine routing (built)
+
+- `MultiEngineTunnelProvider` (`fork/engine-bridge`) is the Koin-bound
+  `TunnelProvider`: it wraps upstream's `TunnelBackendProvider` for WireGuard,
+  routes tunnels that have an `engine_profile` row to mihomo, stops the other
+  engine first, refuses expired tunnels (replacing the step-2 expiry guard)
+  and merges mihomo's running tunnel into `backendStatus` as an
+  `ActiveTunnel`, so upstream's list, tile and notification show it like any
+  tunnel. Clash tunnels run in VPN mode only for now.
+- **Shell rows:** a Clash tunnel's upstream row holds a placeholder WireGuard
+  config (`# WGT-Engine = mihomo`, random key, loopback endpoint) that
+  upstream's ~25 `quickConfig` parsers accept, so **no upstream file needed a
+  guard**; it's never connected. The YAML lives in `files/clash/`
+  (`ClashProfiles`), with subscription fields in the same `engine_profile`
+  row (one table instead of a separate `subscription` table).
+- `MihomoVpnService` builds the TUN (172.19.0.1/30 + fdfe:dcba:9876::1/126,
+  DNS 172.19.0.2 hijacked into mihomo, MTU 9000) and hands its fd to mihomo;
+  `MihomoCompanionService` holds upstream's tunnel notification in the
+  foreground, mirroring upstream's VpnService + VpnCompanionService split.
+  Both are declared in `fork/engine-bridge/src/main/AndroidManifest.xml`,
+  merged through the flavor+build-type source sets.
+- The wrapper turns on mihomo's DNS (fake-ip, DoH) when a profile leaves it
+  off, since the TUN's DNS goes to it.
+- Backups carry `engine_profile` rows and the YAML files.
+- Not tested on a device yet (no emulator here). Next: the Import screen and
+  Clash screen, which create and show these tunnels.
 
 ### Data model
 
