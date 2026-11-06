@@ -29,11 +29,13 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
-class WarpApiException(message: String, cause: Throwable? = null) : Exception(message, cause)
+/** [rejected]: Cloudflare answered `success: false`, so other API versions won't help. */
+class WarpApiException(message: String, cause: Throwable? = null, val rejected: Boolean = false) :
+    Exception(message, cause)
 
 /** Cloudflare's WARP client API. Unofficial, so it sits behind this small interface. */
 interface WarpApi {
-    suspend fun register(license: String?): WarpRegistration
+    suspend fun register(deviceType: String, locale: String): WarpRegistration
 
     suspend fun delete(id: String, token: String, apiVersion: String)
 }
@@ -43,19 +45,20 @@ class CloudflareWarpApi(
     private val baseUrl: String = "https://api.cloudflareclient.com",
 ) : WarpApi {
 
-    override suspend fun register(license: String?): WarpRegistration {
+    /** Every API version in turn, as the site does; a `success: false` answer stops at once. */
+    override suspend fun register(deviceType: String, locale: String): WarpRegistration {
         val privateKey = Key.generatePrivateKey()
         val publicKey = Key.generatePublicKey(privateKey).toBase64()
         var lastError: Throwable? = null
         for (version in API_VERSIONS) {
-            val result = runCatching { registerWith(version, privateKey.toBase64(), publicKey) }
-            result.onSuccess { registration ->
-                license?.trim()?.takeIf { it.isNotEmpty() }?.let { applyLicense(registration, it) }
-                return registration
+            val result = runCatching {
+                registerWith(version, privateKey.toBase64(), publicKey, deviceType, locale)
+            }
+            result.onSuccess {
+                return it
             }
             lastError = result.exceptionOrNull()
-            if (lastError is WarpApiException && lastError.message?.startsWith("License") == true)
-                throw lastError
+            if (lastError is WarpApiException && lastError.rejected) throw lastError
         }
         throw WarpApiException("WARP registration failed: ${lastError?.message}", lastError)
     }
@@ -76,6 +79,8 @@ class CloudflareWarpApi(
         version: String,
         privateKey: String,
         publicKey: String,
+        deviceType: String,
+        locale: String,
     ): WarpRegistration {
         // Same body as the site's generator (thebingchilling/site tools/warp).
         val body = buildJsonObject {
@@ -83,8 +88,8 @@ class CloudflareWarpApi(
             put("install_id", "")
             put("warp_enabled", true)
             put("tos", TOS_FORMAT.format(Instant.now()))
-            put("type", DEVICE_TYPE)
-            put("locale", "en_US")
+            put("type", deviceType.ifBlank { WarpOptions.DEFAULT_DEVICE_TYPE })
+            put("locale", locale.ifBlank { WarpOptions.DEFAULT_LOCALE })
         }
         val response =
             client.post("$baseUrl/$version/reg") {
@@ -96,22 +101,6 @@ class CloudflareWarpApi(
         return parseRegistration(json, version, privateKey)
     }
 
-    private suspend fun applyLicense(registration: WarpRegistration, license: String) {
-        val response =
-            client.put("$baseUrl/${registration.apiVersion}/reg/${registration.id}/account") {
-                headers()
-                bearerAuth(registration.token)
-                contentType(ContentType.Application.Json)
-                setBody(buildJsonObject { put("license", license) }.toString())
-            }
-        if (!response.status.isSuccess()) {
-            runCatching { delete(registration.id, registration.token, registration.apiVersion) }
-            throw WarpApiException(
-                "License not accepted: HTTP ${response.status.value} ${response.bodyAsText().take(200)}"
-            )
-        }
-    }
-
     private suspend fun HttpResponse.json(): JsonObject {
         val text = bodyAsText()
         val json = runCatching { JSON.parseToJsonElement(text).jsonObject }.getOrNull()
@@ -121,7 +110,10 @@ class CloudflareWarpApi(
                 json["success"]?.jsonPrimitive?.contentOrNull == "false"
         ) {
             val message = json?.let(::apiErrorMessage) ?: text.take(200)
-            throw WarpApiException("HTTP ${status.value}: $message")
+            throw WarpApiException(
+                "HTTP ${status.value}: $message",
+                rejected = status.isSuccess() && json != null,
+            )
         }
         return json
     }
@@ -135,7 +127,6 @@ class CloudflareWarpApi(
         /** Tried in order until one registers (FORK.md §9). */
         val API_VERSIONS = listOf("v0a737", "v0a1909051800", "v0i1909051800")
         private const val CLIENT_VERSION = "a-6.30-3596"
-        private const val DEVICE_TYPE = "Linux"
         private val JSON = Json {
             ignoreUnknownKeys = true
             isLenient = true
@@ -204,6 +195,11 @@ class CloudflareWarpApi(
                         )
                         .joinToString(" "),
                 clientId = config["client_id"].str(),
+                license = account?.get("license").str(),
+                createdAt =
+                    root["created"].str()?.let {
+                        runCatching { Instant.parse(it).toEpochMilli() }.getOrNull()
+                    },
                 // Unset TTL comes back as 0001-01-01T00:00:00Z: only a future time counts.
                 ttlAt =
                     account

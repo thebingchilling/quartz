@@ -85,10 +85,38 @@ class WarpConfigBuilderTest {
     }
 
     @Test
-    fun effectiveExpiryIsTheEarlier() {
-        assertEquals(5L, WarpConfigBuilder.effectiveExpiry(5L, 9L))
-        assertEquals(9L, WarpConfigBuilder.effectiveExpiry(null, 9L))
-        assertNull(WarpConfigBuilder.effectiveExpiry(null, null))
+    fun expiryIsNinetyDaysOrCloudflaresTtl() {
+        val day = 86_400_000L
+        val created = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli()
+        val reg = registration.copy(createdAt = created)
+        assertEquals(created + 90 * day, WarpConfigBuilder.expiry(reg))
+        assertEquals(
+            created + 10 * day,
+            WarpConfigBuilder.expiry(reg.copy(ttlAt = created + 10 * day)),
+        )
+        assertEquals(1_000L + 90 * day, WarpConfigBuilder.expiry(registration, now = 1_000L))
+    }
+
+    @Test
+    fun formFallsBackLikeTheSite() {
+        val options =
+            app.quartz.warp.ui
+                .WarpForm(mtu = "", keepalive = "", jc = "x", slot = "Not Valid!", dns = "")
+                .toOptions()
+        assertEquals(1280, options.mtu)
+        assertNull(options.keepalive)
+        assertEquals(4, options.junk.jc)
+        assertEquals("warp", options.slot)
+        val text =
+            WarpConfigBuilder.build(
+                registration,
+                WarpVariant.WG,
+                options,
+                registration.endpointHost,
+                null,
+                expires,
+            )
+        assertTrue("empty DNS uses the site's fallback", text.contains("DNS = 1.1.1.1, 1.0.0.1\n"))
     }
 
     @Test

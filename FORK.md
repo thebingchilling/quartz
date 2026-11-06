@@ -432,93 +432,76 @@ both produce identical, interchangeable configs. No engine work is needed: the
 output is a normal WireGuard or AmneziaWG tunnel. Entry: Settings → Tunnel →
 **WARP generator**, and **Generate WARP** in the ＋ sheet.
 
+**Rule: the app follows the site's configurator.** Same choice (WireGuard or
+AmneziaWG, one at a time), same advanced options, same defaults and
+fallbacks, same output (account info, QR or "too long", config text, Copy,
+Download as `warp.conf` / `warp-awg.conf`). The only additions are the
+Quartz-specific ones: the **Slot** field and **Add to tunnels / Replace in
+slot**. Don't add options the site doesn't have; change both together.
+
 ### Generation
 
-1. Generate a Curve25519 key pair on the device (use an X25519 library, not
-   the site's GPL-2.0 vendored file).
+1. Curve25519 key pair on the device (wgtunnel/core's `Key`, not the site's
+   GPL-2.0 vendored file).
 2. Register with Cloudflare's WARP client API
-   (`https://api.cloudflareclient.com/<version>/reg`), falling back through
-   `v0a737` → `v0a1909051800` → `v0i1909051800`. Optional WARP+ licence key.
-   The app calls Cloudflare directly; no CORS proxy needed.
+   (`https://api.cloudflareclient.com/<version>/reg`), trying `v0a737` →
+   `v0a1909051800` → `v0i1909051800`; body `{key, install_id: "",
+   warp_enabled: true, tos, type: <device type>, locale}`. The app calls
+   Cloudflare directly (no CORS proxy).
 3. Build the config from the response (peer key, endpoint, v4/v6 addresses).
-4. Options: endpoint (default / random from the 24 anycast IPs × 50 ports /
-   custom), MTU (default 1280), DNS, AllowedIPs, keepalive, target group.
+   Changing an option afterwards rebuilds it from the same registration;
+   only **Register a new device** registers again.
 
-### Standard vs obfuscated
+**Advanced options** (as on the site): endpoint (default / random from the
+24 anycast IPs × 50 ports, with re-roll / custom; editing a random pick makes
+it custom), DNS (default `1.1.1.1, 1.0.0.1` + IPv6 pair; empty → `1.1.1.1,
+1.0.0.1`), MTU 1280, Allowed IPs `0.0.0.0/0, ::/0`, keepalive 0 (= no line),
+device type `Linux`, locale `en_US`, and for AmneziaWG Jc/Jmin/Jmax (4 / 40 /
+70, swapped if entered the wrong way round). Blank or invalid fields fall
+back to the default, never an error.
 
-- **WireGuard:** plain config, saved as `ConfigType.WG`.
-- **AmneziaWG (obfuscated):** same keys plus, saved as `ConfigType.AM`:
-  - `Jc` / `Jmin` / `Jmax` — default 4 / 40 / 70, with presets
-    (light / medium / heavy / custom);
-  - `S1 = 0`, `S2 = 0`, `H1..H4 = 1 2 3 4` — **locked**: Cloudflare's end is
-    stock WireGuard, so only client-side junk works;
-  - `I1` — one of the real captured WARP QUIC Initial packets (from
-    Skiro1/warp-awg-gen, as in the site's `vendor/awg-payloads.js`);
-  - `I2..I5` — each 1–3 random byte blocks of 16–63 bytes;
-  - I1–I5 picked once per registration.
-- **Both:** two tunnels from one registration.
-- WG Tunnel's parser (wgtunnel/core) already reads and writes Jc/Jmin/Jmax,
-  S1–S4, H1–H4 and I1–I5, so both import through upstream's normal path.
+**IPv6:** with `::/0` in Allowed IPs, IPv6 goes through WARP too, so IP-check
+sites show a Cloudflare WARP IPv6 address (`2a09:bac5:…`). That's expected.
 
-After generating: **Import**, **Export .conf**, **QR**, **→ Clash** (add as a
-`wireguard` node with `amnezia-wg-option` to a chosen Clash profile).
+### AmneziaWG
 
-### Markers, slots and in-place regeneration
+- `S1 = 0`, `S2 = 0`, `H1..H4 = 1 2 3 4`, locked: Cloudflare's end is stock
+  WireGuard, so only client-side junk works.
+- `I1`: one of the three captured WARP QUIC Initial packets
+  (`assets/warp/awg-payloads.txt`, same as the site); `I2..I5`: each 1–3
+  random byte blocks of 16–63 bytes. Picked once per registration.
+
+### Markers, slots and in-place replacement
 
 ```ini
 [Interface]
 # WGT-Generator = warp
 # WGT-Slot = warp
 # WGT-Variant = awg
-# WGT-Expires = 2026-12-01T00:00:00Z
+# WGT-Expires = 2027-01-30T10:00:00Z
 PrivateKey = ...
 ```
 
-- Comments go **inside `[Interface]`**: upstream reads the first comment above
-  it as the tunnel name, and keeps `[Interface]` comments on save.
-- `ForkDatabase.tunnel_meta` is the source of truth; comments carry the
+- Comments go **inside `[Interface]`** (upstream keeps them on save). The site
+  writes the same markers.
+- `ForkDatabase.tunnel_meta` is the source of truth; the comments carry the
   marker through export/import.
-- **Slot + variant** (`wg` / `awg`) identifies one tunnel. Default slot is
-  `warp`; the generator's Slot field allows others (e.g. `warp-phone`).
-- **Regenerate replaces in place:** new keys, registration and expiry are
-  written into the same tunnel ID, keeping name, position, group and member
-  order, auto-tunnel rules, split tunnelling, and tile/shortcut targets.
-  "Both" replaces both variants. If no tunnel matches, one is created.
-- If the tunnel is connected, it reconnects on the new keys.
-- After a successful replace, the old registration is deleted with Cloudflare
-  (option, default on).
-- Importing a file whose slot exists asks **Replace existing** or **Import as
-  separate** (gets a new slot, e.g. `warp-2`) — never a silent overwrite.
-- Hand-editing keeps the tag; **Detach from generator** removes it so
-  regenerate no longer touches that tunnel.
-- The site's generator should write the same marker comments.
-
-The button reads **Generate** for an empty slot and **Regenerate** when the
-slot has tunnels; the screen lists the tunnels in the selected slot.
+- **Slot + variant** (`wg` / `awg`) identifies one tunnel. Saving into a slot
+  that has that variant replaces it in place (same tunnel ID: name, position,
+  group, auto-tunnel rules, split tunnelling, shortcuts stay), reconnects it
+  if running, and deletes the old registration with Cloudflare. Otherwise a
+  tunnel is created.
+- Importing a file whose slot is taken asks **Replace existing** or **Import
+  as separate** (new slot, e.g. `warp-2`). **Detach** removes the tag.
 
 ### Expiry
 
-- Choices: 1 / 7 / 30 / 90 days, custom date, or never. Effective expiry is
-  the earlier of that and Cloudflare's `account.ttl` (when set).
-- Not editable afterwards, and no "extend": the date exists only in the app.
-  The only action on an expired tunnel is **Regenerate**.
-
-Enforcement:
-
-1. `MultiEngineTunnelProvider.startTunnel()` refuses expired tunnels (covers
-   manual, tile, shortcut, group and auto-tunnel starts).
-2. A WorkManager job at `expires_at` stops the tunnel if running; the check
-   also runs on app start, boot and clock/timezone change.
-3. Auto-tunnel and groups skip expired tunnels.
-4. Notifications 24 h before expiry and at expiry. With lockdown on, traffic
-   stays blocked after the stop; the notification says so.
-5. List badge ("expires 5d" / "expired").
-6. Re-importing a file whose `WGT-Expires` is past imports it as expired.
-7. Optional **Revoke registration on expiry**: delete the registration with
-   Cloudflare when the expiry job fires, so the keys stop working everywhere.
-
-Limits: without revocation, expiry only stops this app. The WARP API is
-unofficial, so the client sits behind a small interface.
+- **Fixed, not a choice:** 90 days after Cloudflare created the registration
+  (or Cloudflare's account TTL, when it sets an earlier one).
+- Expired tunnels can't start (any start path, auto-tunnel skips them); a
+  WorkManager job stops a running one at expiry and notifies 24 h before and
+  at expiry (lockdown-aware); list badge "expires 5d" / "expired". The only
+  fix is generating a new one into the slot.
 
 ### Implementation status
 
@@ -534,9 +517,9 @@ Built in step 2 (`quartz/android/warp`, `quartz/android/core`):
   `vendor/awg-payloads.js`). If that file is ever empty the app builds a real
   QUIC v1 Initial instead (`QuicInitial`, checked against RFC 9001's vectors).
   Like the site, an AmneziaWG config too long for a QR code says so.
-- The site writes the same `# WGT-…` markers (advanced options **Slot** and
-  **Expires**), so its configs import into a slot here.
-- `CloudflareWarpApi`: also WARP+ licence and delete; `client_id` is kept for
+- The site writes the same `# WGT-…` markers (advanced option **Slot**,
+  fixed 90-day `WGT-Expires`), so its configs import into a slot here.
+- `CloudflareWarpApi`: also delete; `client_id` is kept for
   Clash's `reserved`. Keys come from wgtunnel/core's `Key` (MIT). Cloudflare's
   unset `account.ttl` (`0001-01-01…`) is ignored.
 - `WarpConfigBuilder` / `WarpMarkers`: unit tests check upstream's parser
@@ -549,15 +532,13 @@ Built in step 2 (`quartz/android/warp`, `quartz/android/core`):
   `QuartzDialogs` asks **Replace existing** (the import's config goes into the
   existing tunnel, the import is removed) or **Import as separate** (next free
   slot, e.g. `warp-2`). Dismissing asks again on the next app start.
-- **→ Clash:** exports a `proxies:` YAML with one mihomo `wireguard` proxy
-  (`reserved` from `client_id`, `amnezia-wg-option` with I1–I5). Adding it to
-  an existing Clash profile comes with the Clash engine (step 3).
-- Expiry: `ExpiryGuardTunnelProvider` (Koin override of `TunnelProvider`)
-  refuses expired starts; auto-tunnel never sees expired tunnels as candidates
+- `ClashExport` (a WARP config as a mihomo `wireguard` proxy, `reserved` from
+  `client_id`) is kept for adding WARP to a Clash profile later; the screen
+  has no Clash button, since the site doesn't.
+- Expiry: `MultiEngineTunnelProvider` refuses expired starts; auto-tunnel never sees expired tunnels as candidates
   (`QuartzAutoTunnel`); `WarpExpiry` keeps one WorkManager job for the next
   warning/expiry (WorkManager handles reboot and clock changes; a check also
-  runs on app start), stops the tunnel, notifies (lockdown-aware), optionally
-  revokes. Badges via `quartzTunnelDescription`. Groups skipping expired
+  runs on app start), stops the tunnel, notifies (lockdown-aware). Badges via `quartzTunnelDescription`. Groups skipping expired
   members comes with groups (step 5).
 - Backups: `tunnel_meta` goes into upstream's backup zip as
   `quartz/tunnel_meta.json` (`.aes` with the backup's password). Restoring a
@@ -700,21 +681,19 @@ Built in step 2 (`quartz/android/warp`, `quartz/android/core`):
 ┌───────────────────────────┐   ┌─────────────────────────────────────┐
 │ Settings                  │   │ ← WARP generator                    │
 ├───────────────────────────┤   ├─────────────────────────────────────┤
-│ Tunnel                    │   │ Slot     [ warp ▾ ] (replaces)      │
-│  Backend mode    VPN ›    │   │ Type     ( ) WG  ( ) AWG  (•) Both  │
-│  DNS settings      ›      │   │ Expiry   [ 30 days ▾ ]              │
-│  Tunnel globals    ›      │   │ ☑ Delete old registration on regen  │
-│  ☁ WARP generator  ›  NEW │   │ ☐ Revoke registration on expiry     │
-│  Tunnel recovery   ›      │   │ Endpoint [ Default ▾ ]              │
-│  Tunnel monitoring ›      │   │ ▸ Advanced (MTU, DNS, keepalive,    │
-│  Connection info   ›  NEW │   │   Jc/Jmin/Jmax preset)              │
-│  Android integrations ›   │   │ WARP+ key [ optional              ] │
-│ General                   │   │ Group    [ none ▾ ]                 │
-│  Appearance        ›      │   │ ─ In this slot ──────────────────── │
-│  Security          ›      │   │  WARP         WG  · exp 28 Nov      │
-│  …                        │   │  WARP (obfs)  AWG · exp 28 Nov · ●  │
-└───────────────────────────┘   │          [ ⟳ Regenerate ]           │
-                                └─────────────────────────────────────┘
+│ Tunnel                    │   │ [ WireGuard ][ AmneziaWG ]          │
+│  Backend mode    VPN ›    │   │ A standard config for the official  │
+│  DNS settings      ›      │   │ WireGuard apps.                     │
+│  Tunnel globals    ›      │   │ ▸ Advanced options (endpoint, DNS,  │
+│  ☁ WARP generator  ›  NEW │   │   MTU, allowed IPs, keepalive,      │
+│  Tunnel recovery   ›      │   │   device type, locale, Jc/Jmin/Jmax,│
+│  Tunnel monitoring ›      │   │   slot)                             │
+│  Android integrations ›   │   │ [ ⟳ Generate WARP config ]          │
+│ General                   │   │ Account · type · expires 30 Jan     │
+│  Appearance        ›      │   │ [QR]  config text                   │
+│  Security          ›      │   │ [Copy] [Download]                   │
+│  …                        │   │ [ Add to tunnels (slot warp) ]      │
+└───────────────────────────┘   └─────────────────────────────────────┘
 ```
 
 ### Expanded connection info

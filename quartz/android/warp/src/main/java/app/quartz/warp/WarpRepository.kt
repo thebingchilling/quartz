@@ -3,6 +3,7 @@ package app.quartz.warp
 import android.content.Context
 import app.quartz.core.data.TunnelMeta
 import app.quartz.core.data.TunnelMetaDao
+import app.quartz.warp.awg.AwgParams
 import app.quartz.warp.awg.AwgPayloads
 import com.zaneschepke.wireguardautotunnel.core.orchestration.TunnelCoordinator
 import com.zaneschepke.wireguardautotunnel.core.tunnel.TunnelProvider
@@ -20,13 +21,29 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /** Configs made from one registration, not saved yet. */
+/**
+ * One registration, as the site keeps it for a visit: changing an option rebuilds the config from
+ * it (no new device); only "Register a new device" makes another. I1..I5 are picked once per
+ * registration, so switching between WireGuard and AmneziaWG doesn't reshuffle them.
+ */
 data class GeneratedWarp(
     val registration: WarpRegistration,
-    val options: WarpOptions,
-    val endpoint: String,
-    val expiresAt: Long?,
-    val configs: Map<WarpVariant, String>,
-)
+    val awg: AwgParams,
+    val expiresAt: Long,
+) {
+    fun endpoint(options: WarpOptions) =
+        WarpConfigBuilder.resolveEndpoint(options.endpoint, registration)
+
+    fun config(options: WarpOptions): String =
+        WarpConfigBuilder.build(
+            registration,
+            options.variant,
+            options,
+            endpoint(options),
+            awg.takeIf { options.variant == WarpVariant.AWG },
+            expiresAt,
+        )
+}
 
 /** A saved tunnel that belongs to a WARP slot. */
 data class SlotTunnel(val tunnel: TunnelConfig, val meta: TunnelMeta) {
@@ -80,97 +97,71 @@ class WarpRepository(
 
     suspend fun generate(options: WarpOptions): GeneratedWarp =
         withContext(ioDispatcher) {
-            val registration = api.register(options.license)
-            val expiresAt = WarpConfigBuilder.effectiveExpiry(options.expiresAt, registration.ttlAt)
-            val endpoint = WarpConfigBuilder.resolveEndpoint(options.endpoint, registration)
-            // I1..I5 are picked once per registration, so "Both" shares them.
-            val awg =
-                if (WarpVariant.AWG in options.output.variants) {
-                    AwgPayloads.pick(
-                        capturedPayloads,
-                        options.mimicHost?.takeIf { it.isNotBlank() }
-                            ?: WarpOptions.MIMIC_HOSTS.random(),
-                    )
-                } else null
-            val configs =
-                options.output.variants.associateWith { variant ->
-                    WarpConfigBuilder.build(
-                        registration,
-                        variant,
-                        options,
-                        endpoint,
-                        awg,
-                        expiresAt,
-                    )
-                }
-            GeneratedWarp(registration, options, endpoint, expiresAt, configs)
+            val registration = api.register(options.deviceType, options.locale)
+            val awg = AwgPayloads.pick(capturedPayloads, WarpOptions.MIMIC_HOSTS.random())
+            GeneratedWarp(registration, awg, WarpConfigBuilder.expiry(registration))
         }
 
     /**
-     * Saves [generated] into its slot: a variant that already has a tunnel there is replaced in
-     * place (same ID, so name, position, group, auto-tunnel rules, split tunnelling and shortcuts
-     * stay); otherwise a tunnel is created. Reconnects if a replaced tunnel is running.
+     * Saves the config [options] makes from [generated] into its slot: if the slot already has a
+     * tunnel of that variant it's replaced in place (same ID, so name, position, group, auto-tunnel
+     * rules, split tunnelling and shortcuts stay) and its old registration is deleted with
+     * Cloudflare; otherwise a tunnel is created. Reconnects if the replaced tunnel is running.
      */
-    suspend fun save(generated: GeneratedWarp): SaveResult {
-        val options = generated.options
+    suspend fun save(generated: GeneratedWarp, options: WarpOptions): SaveResult {
         val registration = generated.registration
-        val staleRegistrations = mutableListOf<TunnelMeta>()
-        val ids = mutableListOf<Int>()
-        var replaced = 0
+        val config = generated.config(options)
+        var stale: TunnelMeta? = null
+        val tunnelId: Int
+        val replaced: Boolean
         mutex.withLock {
             val tunnels = tunnelRepository.getAll().associateBy { it.id }
-            val slotMetas = metaDao.getBySlot(options.slot).filter { it.tunnelId in tunnels }
-            for ((variant, config) in generated.configs) {
-                val existing = slotMetas.firstOrNull { it.warpVariant == variant.tag }
-                val tunnelId =
-                    if (existing != null) {
-                        tunnelRepository.save(
-                            tunnels.getValue(existing.tunnelId).copy(quickConfig = config)
-                        )
-                        if (existing.warpRegId != null && existing.warpRegId != registration.id)
-                            staleRegistrations += existing
-                        replaced++
-                        existing.tunnelId
-                    } else {
-                        val names = tunnelRepository.getAll().map { it.name }.toSet()
-                        val name =
-                            uniqueName(WarpConfigBuilder.tunnelName(options.slot, variant), names)
-                        tunnelRepository.save(
-                            TunnelConfig(
-                                name = name,
-                                quickConfig = config,
-                                groupId = options.groupId,
-                            )
-                        )
-                        tunnelRepository.findByTunnelName(name)?.id
-                            ?: error("Saved tunnel $name not found")
-                    }
-                metaDao.upsert(
-                    TunnelMeta(
-                        tunnelId = tunnelId,
-                        source = TunnelMeta.SOURCE_WARP,
-                        warpSlot = options.slot,
-                        warpVariant = variant.tag,
-                        expiresAt = generated.expiresAt,
-                        warpRegId = registration.id,
-                        warpToken = registration.token,
-                        warpApiVersion = registration.apiVersion,
-                        revokeOnExpiry = options.revokeOnExpiry,
+            val existing =
+                metaDao.getBySlot(options.slot).firstOrNull {
+                    it.tunnelId in tunnels && it.warpVariant == options.variant.tag
+                }
+            replaced = existing != null
+            tunnelId =
+                if (existing != null) {
+                    tunnelRepository.save(
+                        tunnels.getValue(existing.tunnelId).copy(quickConfig = config)
                     )
+                    if (existing.warpRegId != null && existing.warpRegId != registration.id)
+                        stale = existing
+                    existing.tunnelId
+                } else {
+                    val names = tunnels.values.map { it.name }.toSet()
+                    val name =
+                        uniqueName(
+                            WarpConfigBuilder.tunnelName(options.slot, options.variant),
+                            names,
+                        )
+                    tunnelRepository.save(TunnelConfig(name = name, quickConfig = config))
+                    tunnelRepository.findByTunnelName(name)?.id
+                        ?: error("Saved tunnel $name not found")
+                }
+            metaDao.upsert(
+                TunnelMeta(
+                    tunnelId = tunnelId,
+                    source = TunnelMeta.SOURCE_WARP,
+                    warpSlot = options.slot,
+                    warpVariant = options.variant.tag,
+                    expiresAt = generated.expiresAt,
+                    warpRegId = registration.id,
+                    warpToken = registration.token,
+                    warpApiVersion = registration.apiVersion,
                 )
-                ids += tunnelId
-            }
+            )
         }
-
-        if (ids.any { it in tunnelProvider.backendStatus.value.activeTunnels }) {
+        if (tunnelId in tunnelProvider.backendStatus.value.activeTunnels) {
             tunnelCoordinator.value.restartActiveTunnels()
         }
-        if (options.deleteOldRegistration) {
-            staleRegistrations
-                .distinctBy { it.warpRegId }
-                .forEach { deleteRegistrationIfUnused(it) }
-        }
-        return SaveResult(ids, replaced = replaced, created = ids.size - replaced)
+        stale?.let { deleteRegistrationIfUnused(it) }
+        return SaveResult(
+            listOf(tunnelId),
+            replaced = if (replaced) 1 else 0,
+            created = if (replaced) 0 else 1,
+        )
     }
 
     /** Removes the generator tag: regenerate no longer touches this tunnel. */

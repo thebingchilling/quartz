@@ -21,6 +21,9 @@ data class WarpRegistration(
      * `config.client_id`: three bytes WARP expects as WireGuard's reserved field (used by Clash).
      */
     val clientId: String? = null,
+    val license: String? = null,
+    /** When Cloudflare created the registration (epoch millis). */
+    val createdAt: Long? = null,
 )
 
 /**
@@ -86,9 +89,16 @@ data class WarpMarkers(
 
 object WarpConfigBuilder {
 
-    /** Effective expiry: the earlier of the user's choice and Cloudflare's TTL. */
-    fun effectiveExpiry(chosen: Long?, ttlAt: Long?): Long? =
-        listOfNotNull(chosen, ttlAt).minOrNull()
+    /**
+     * Expiry: [WarpOptions.EXPIRY_DAYS] after Cloudflare created the registration (or now), or
+     * Cloudflare's own TTL when it sets an earlier one. Not a choice.
+     */
+    fun expiry(registration: WarpRegistration, now: Long = System.currentTimeMillis()): Long {
+        val fixed =
+            (registration.createdAt ?: now) +
+                java.util.concurrent.TimeUnit.DAYS.toMillis(WarpOptions.EXPIRY_DAYS)
+        return listOfNotNull(fixed, registration.ttlAt).min()
+    }
 
     fun build(
         registration: WarpRegistration,
@@ -104,7 +114,7 @@ object WarpConfigBuilder {
         val addresses =
             listOfNotNull("${registration.addressV4}/32", registration.addressV6?.let { "$it/128" })
         appendLine("Address = ${addresses.joinToString(", ")}")
-        if (options.dns.isNotBlank()) appendLine("DNS = ${options.dns.trim()}")
+        appendLine("DNS = ${options.dns.trim().ifEmpty { WarpOptions.EMPTY_DNS_FALLBACK }}")
         appendLine("MTU = ${options.mtu}")
         if (variant == WarpVariant.AWG) {
             requireNotNull(awg) { "AmneziaWG needs I1..I5" }
@@ -136,7 +146,7 @@ object WarpConfigBuilder {
     fun resolveEndpoint(choice: EndpointChoice, registration: WarpRegistration): String =
         when (choice) {
             EndpointChoice.Default -> registration.endpointHost
-            EndpointChoice.Random -> WarpEndpoints.random()
+            is EndpointChoice.Random -> choice.endpoint.trim()
             is EndpointChoice.Custom -> choice.endpoint.trim()
         }
 

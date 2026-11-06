@@ -11,23 +11,10 @@ enum class WarpVariant(val tag: String) {
     }
 }
 
-enum class WarpOutput(val variants: List<WarpVariant>) {
-    WIREGUARD(listOf(WarpVariant.WG)),
-    AMNEZIA(listOf(WarpVariant.AWG)),
-    BOTH(listOf(WarpVariant.WG, WarpVariant.AWG)),
-}
-
 /**
  * AmneziaWG junk packets. Only client-side junk works against WARP: Cloudflare's end is stock
  * WireGuard, so S1/S2 and H1..H4 are locked (see [WarpConfigBuilder]).
  */
-enum class JunkPreset(val jc: Int, val jMin: Int, val jMax: Int) {
-    LIGHT(2, 20, 50),
-    MEDIUM(4, 40, 70),
-    HEAVY(8, 50, 150),
-    CUSTOM(4, 40, 70),
-}
-
 data class Junk(val jc: Int, val jMin: Int, val jMax: Int) {
     val isValid: Boolean
         get() = jc in 0..128 && jMin in 0..1280 && jMax in 0..1280
@@ -36,7 +23,7 @@ data class Junk(val jc: Int, val jMin: Int, val jMax: Int) {
     fun ordered() = Junk(jc, minOf(jMin, jMax), maxOf(jMin, jMax))
 
     companion object {
-        val DEFAULT = Junk(JunkPreset.MEDIUM.jc, JunkPreset.MEDIUM.jMin, JunkPreset.MEDIUM.jMax)
+        val DEFAULT = Junk(4, 40, 70)
     }
 }
 
@@ -44,45 +31,45 @@ sealed interface EndpointChoice {
     /** The endpoint Cloudflare returns at registration. */
     data object Default : EndpointChoice
 
-    /** A random anycast IP and port from [WarpEndpoints], picked per registration. */
-    data object Random : EndpointChoice
+    /** A random anycast IP and port from [WarpEndpoints] (the screen shows it and can re-roll). */
+    data class Random(val endpoint: String) : EndpointChoice
 
     data class Custom(val endpoint: String) : EndpointChoice
 }
 
-enum class ExpiryChoice(val days: Int?) {
-    DAY_1(1),
-    DAYS_7(7),
-    DAYS_30(30),
-    DAYS_90(90),
-    CUSTOM(null),
-    NEVER(null),
-}
-
+/**
+ * The generator's options: the same fields as the site's configurator (thebingchilling/site
+ * tools/warp), plus the Quartz slot.
+ */
 data class WarpOptions(
     val slot: String = DEFAULT_SLOT,
-    val output: WarpOutput = WarpOutput.AMNEZIA,
+    val variant: WarpVariant = WarpVariant.WG,
     val junk: Junk = Junk.DEFAULT,
     val endpoint: EndpointChoice = EndpointChoice.Default,
     val mtu: Int = DEFAULT_MTU,
     val dns: String = DEFAULT_DNS,
     val allowedIps: String = DEFAULT_ALLOWED_IPS,
     val keepalive: Int? = null,
-    val license: String? = null,
-    /** Host the I1 QUIC Initial pretends to connect to; null picks one of [MIMIC_HOSTS]. */
-    val mimicHost: String? = null,
-    /** Epoch millis chosen by the user; the effective expiry is capped by Cloudflare's TTL. */
-    val expiresAt: Long? = null,
-    val groupId: Int? = null,
-    val deleteOldRegistration: Boolean = true,
-    val revokeOnExpiry: Boolean = false,
+    val deviceType: String = DEFAULT_DEVICE_TYPE,
+    val locale: String = DEFAULT_LOCALE,
 ) {
     companion object {
         const val DEFAULT_SLOT = "warp"
         const val DEFAULT_MTU = 1280
         const val DEFAULT_DNS = "1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001"
+        /** The site's fallback when the DNS field is left empty. */
+        const val EMPTY_DNS_FALLBACK = "1.1.1.1, 1.0.0.1"
         const val DEFAULT_ALLOWED_IPS = "0.0.0.0/0, ::/0"
-        const val DEFAULT_KEEPALIVE = 0
+        const val DEFAULT_DEVICE_TYPE = "Linux"
+        const val DEFAULT_LOCALE = "en_US"
+
+        /** Cloudflare's free registrations last 90 days: the expiry isn't a choice. */
+        const val EXPIRY_DAYS = 90L
+
+        /**
+         * Hosts a generated I1 QUIC Initial pretends to reach, only when no captured one is
+         * bundled.
+         */
         val MIMIC_HOSTS =
             listOf(
                 "www.google.com",
