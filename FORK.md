@@ -99,11 +99,10 @@ GitHub Actions minutes are not the limit; Actions **storage** is (artifacts
 and caches of this private repository count towards it). Code agents and
 people working on this repo follow this:
 
-- **Minutes are fine to use.** Push when work is ready, start or re-run
-  workflows by hand when useful; `[skip ci]` is only for pushes that
-  shouldn't release (e.g. half-done work saved to `main`). Every push that
-  changes `quartz/**` builds a dual release; a newer push cancels an
-  unfinished one.
+- **Minutes are fine to use; never hold a build back.** Push when work is
+  ready, start or re-run workflows by hand when useful, and don't use
+  `[skip ci]`: every push that changes `quartz/**` builds a dual release (a
+  newer push cancels an unfinished one).
 - **One run per workflow:** `quartz-cleanup` runs after every successful run
   and deletes every other run of that workflow (older, failed, cancelled),
   with its artifacts and logs, and keeps only the newest cache for each set of
@@ -114,8 +113,9 @@ people working on this repo follow this:
   per set of paths (the mihomo `.so` cache is keyed by submodule commit, so
   old ones are pruned), and nothing large is uploaded that a release already
   holds.
-- **Don't tick "update" unless the in-app "Check upstream versions" (or the
-  owner) says an upstream is newer:** it merges upstream and opens bump PRs.
+- **The only manual step is updating upstream:** a `quartz-release` run with
+  **update** ticked, started by the owner or an agent (when the in-app "Check
+  upstream versions" says an upstream is newer). It never runs on its own.
 - **No schedules:** `quartz-workflows`' weekly safety net is off (its push
   trigger already catches workflows an upstream merge adds); `quartz-release`
   has none. `pr.yml` (upstream's format check) runs on pull
@@ -125,14 +125,13 @@ people working on this repo follow this:
 
 - No nightlies, no schedule: `quartz-release` runs on **pushes to `main`
   that change `quartz/**`** (Quartz's own app files) and when started by
-  hand. Docs, workflow files and upstream folders don't start it; a commit
-  message with `[skip ci]` skips it; a newer push cancels an unfinished
-  push build. **Every run is a dual release:** one GitHub release with the
+  hand. Docs, workflow files and upstream folders don't start it; a newer
+  push cancels an unfinished push build. **Every run is a dual release:** one GitHub release with the
   Android APKs and the Windows installer, built from the same commit and
   named after both bases, e.g. `quartz-5.8.2-desktop-2.4.1` (`-2`, `-3`, …
   for later builds on the same bases).
-- **Updating upstream resources is opt-in:** only a manual run with
-  **update** ticked merges new WG Tunnel Android/Desktop releases and opens
+- **Updating upstream resources is manual only** (owner or agent): only a
+  run with **update** ticked merges new WG Tunnel Android/Desktop releases and opens
   engine bump PRs. Without it the run just builds what's on `main`.
 - **In-app check:** Info tab → **Check upstream versions** compares this
   build's bases (baked into `BuildConfig` by `quartz.gradle`: WG Tunnel
