@@ -273,7 +273,7 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleFdroidDebug --stacktrace
+          ./gradlew :app:testFdroidDebugUnitTest :app:assembleFdroidDebug --stacktrace
           mkdir -p dist
           for f in app/build/outputs/apk/fdroid/debug/*.apk; do
             cp "$f" "dist/$(basename "$f" | sed 's/^wgtunnel-/quartz-/')"
