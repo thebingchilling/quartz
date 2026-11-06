@@ -93,6 +93,14 @@ change and upstream engine history stays out of this repo. Clone with
   requests" must be enabled in the repo's Actions settings.
 - Release versions record all three upstreams, e.g. `4.2.1+ovpn3-3.10_mihomo-1.19.x`.
 
+### Builds happen in GitHub Actions only (standing rule)
+
+Code agents don't build, test or package locally in their session: no
+Gradle, Go or NDK builds, no local APKs. Make the change, push it to
+`main`, and let `quartz-release` build, test and publish it; check that
+run's result and logs, and fix forward with another push if it fails. Test
+APKs come from the release, not from the session.
+
 ### Actions storage (standing rule)
 
 GitHub Actions minutes are not the limit; Actions **storage** is (artifacts
