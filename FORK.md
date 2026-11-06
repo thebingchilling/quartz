@@ -116,10 +116,13 @@ people working on this repo follow this:
 - **The only manual step is updating upstream:** a `quartz-release` run with
   **update** ticked, started by the owner or an agent (when the in-app "Check
   upstream versions" says an upstream is newer). It never runs on its own.
-- **No schedules:** `quartz-workflows`' weekly safety net is off (its push
-  trigger already catches workflows an upstream merge adds); `quartz-release`
-  has none. `pr.yml` (upstream's format check) runs on pull
-  requests, so avoid opening PRs here; work goes straight to `main`.
+- **Nothing ever runs on a schedule.** Builds start only when a push changes
+  the apps (`quartz/**` → `quartz-release`); `quartz-workflows` runs on
+  pushes that change `.github/workflows` and `quartz-cleanup` after those
+  runs. Upstream's scheduled workflows (`nightly`, `crowdin-contributors`)
+  stay disabled by `quartz-workflows`; never add a `schedule:` trigger.
+  `pr.yml` (upstream's format check) runs on pull requests, so avoid opening
+  PRs here; work goes straight to `main`.
 
 ### Releases
 
