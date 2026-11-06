@@ -56,7 +56,8 @@ data class WarpOptions(
     companion object {
         const val DEFAULT_SLOT = "warp"
         const val DEFAULT_MTU = 1280
-        const val DEFAULT_DNS = "1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001"
+        /** IPv4 by default (FORK.md §9): no IPv6 DNS, since the tunnel has no IPv6 address. */
+        const val DEFAULT_DNS = "1.1.1.1, 1.0.0.1"
         /** The site's fallback when the DNS field is left empty. */
         const val EMPTY_DNS_FALLBACK = "1.1.1.1, 1.0.0.1"
         const val DEFAULT_ALLOWED_IPS = "0.0.0.0/0, ::/0"

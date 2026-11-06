@@ -111,9 +111,10 @@ object WarpConfigBuilder {
         appendLine("[Interface]")
         WarpMarkers(options.slot, variant, expiresAt).lines().forEach(::appendLine)
         appendLine("PrivateKey = ${registration.privateKey}")
-        val addresses =
-            listOfNotNull("${registration.addressV4}/32", registration.addressV6?.let { "$it/128" })
-        appendLine("Address = ${addresses.joinToString(", ")}")
+        // IPv4 only. AllowedIPs still routes ::/0 into the tunnel, so IPv6 is blocked rather
+        // than leaking outside it, and apps fall back to IPv4 at once: the exit is WARP's IPv4,
+        // which geolocates to the user's region (WARP's IPv6 range often doesn't).
+        appendLine("Address = ${registration.addressV4}/32")
         appendLine("DNS = ${options.dns.trim().ifEmpty { WarpOptions.EMPTY_DNS_FALLBACK }}")
         appendLine("MTU = ${options.mtu}")
         if (variant == WarpVariant.AWG) {

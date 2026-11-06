@@ -160,9 +160,10 @@ class WarpConfigBuilderTest {
     @Test
     fun defaultsMatchTheSite() {
         val text = build(WarpVariant.WG)
-        assertTrue(
-            text.contains("DNS = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001\n")
-        )
+        assertTrue(text.contains("DNS = 1.1.1.1, 1.0.0.1\n"))
+        // IPv4 by default; ::/0 stays routed so IPv6 is blocked, not leaked
+        assertTrue(text.contains("Address = 172.16.0.2/32\n"))
+        assertTrue(text.contains("AllowedIPs = 0.0.0.0/0, ::/0\n"))
         assertTrue("keepalive 0 writes no line", !text.contains("PersistentKeepalive"))
         assertEquals(24, WarpEndpoints.IPS.size)
         assertEquals(50, WarpEndpoints.PORTS.size)

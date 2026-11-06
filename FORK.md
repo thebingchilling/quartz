@@ -216,7 +216,9 @@ separately.
   (Go on PATH, NDK pinned as `quartzNdkVersion`), skipped while the submodule
   commit and wrapper are unchanged; `-PprebuiltEngines` skips it. CI installs
   Go and the NDK and caches the `.so` files by the same key. Native libraries
-  are compressed in the APK (`useLegacyPackaging`): ~71 MB per split APK.
+  are compressed in the APK (`useLegacyPackaging`, the strongest the Android
+  build offers), and Android x86/x86_64 libraries are left out (phones are
+  ARM).
 - `MihomoEngine` (Koin single): `start(profile, tunFd, protector)` returns the
   controller address and secret for the Clash UI; `validate(profile)` checks a
   profile without running it (used by the importer).
@@ -466,14 +468,17 @@ slot**. Don't add options the site doesn't have; change both together.
 
 **Advanced options** (as on the site): endpoint (default / random from the
 24 anycast IPs × 50 ports, with re-roll / custom; editing a random pick makes
-it custom), DNS (default `1.1.1.1, 1.0.0.1` + IPv6 pair; empty → `1.1.1.1,
-1.0.0.1`), MTU 1280, Allowed IPs `0.0.0.0/0, ::/0`, keepalive 0 (= no line),
+it custom), DNS (`1.1.1.1, 1.0.0.1`; empty → the same), MTU 1280, Allowed IPs `0.0.0.0/0, ::/0`, keepalive 0 (= no line),
 device type `Linux`, locale `en_US`, and for AmneziaWG Jc/Jmin/Jmax (4 / 40 /
 70, swapped if entered the wrong way round). Blank or invalid fields fall
 back to the default, never an error.
 
-**IPv6:** with `::/0` in Allowed IPs, IPv6 goes through WARP too, so IP-check
-sites show a Cloudflare WARP IPv6 address (`2a09:bac5:…`). That's expected.
+**IPv4 by default, IPv6 blocked:** the config carries only WARP's IPv4
+address and IPv4 DNS, while Allowed IPs keeps `::/0`, so IPv6 traffic goes
+into the tunnel and fails at once (apps fall back to IPv4) instead of
+leaking around it. The exit is WARP's IPv4, which geolocates to the user's
+region; WARP's IPv6 range (`2a09:bac5:…`) is often placed in another
+country by IP-check sites. Same on the site.
 
 ### AmneziaWG
 

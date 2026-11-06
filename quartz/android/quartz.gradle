@@ -173,6 +173,9 @@ tasks.withType(Test).configureEach {
 android {
     sourceSets.main.jniLibs.directories.add(mihomoJniLibs.path)
     packaging.jniLibs.excludes.add("**/libmihomo.stamp")
+    // No Android x86 builds: phones are ARM. Drops the x86/x86_64 libraries dependencies bring
+    // along (mostly in the universal APK).
+    packaging.jniLibs.excludes.addAll(["lib/x86/**", "lib/x86_64/**"])
     // Compress native libraries in the APK: libmihomo.so is ~60 MB per ABI uncompressed.
     // Android extracts them at install; a much smaller download matters more for sideloading.
     packaging.jniLibs.useLegacyPackaging = true
