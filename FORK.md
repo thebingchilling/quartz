@@ -50,7 +50,7 @@ upstream merge that conflicts, an engine bump). Upstream Android's branch is
   .github/workflows/
     quartz-release.yml          ← push to quartz/** or manual → build both apps, one release; "update" input merges upstream
     quartz-workflows.yml        ← keeps every upstream workflow except pr.yml disabled
-    quartz-cleanup.yml          ← after a successful run, deletes that workflow's earlier runs (artifacts, logs) and stale caches; by hand: purges the repo
+    quartz-cleanup.yml          ← after a successful run, deletes every other run of that workflow (artifacts, logs) and stale caches; by hand: purges the repo
 ```
 
 **How fork code is built:** `quartz/android/<name>/src/{main,test}` are not
@@ -93,34 +93,33 @@ change and upstream engine history stays out of this repo. Clone with
   requests" must be enabled in the repo's Actions settings.
 - Release versions record all three upstreams, e.g. `4.2.1+ovpn3-3.10_mihomo-1.19.x`.
 
-### Use Actions minutes sparingly (standing rule)
+### Actions storage (standing rule)
 
-GitHub Actions minutes are limited, so every workflow run has to be worth
-it. Code agents and people working on this repo follow this:
+GitHub Actions minutes are not the limit; Actions **storage** is (artifacts
+and caches of this private repository count towards it). Code agents and
+people working on this repo follow this:
 
-- **Build and test locally, not in CI.** `./gradlew :app:testFdroidDebugUnitTest
-  :app:assembleFdroidDebug` (plus `:app:buildMihomoHost` for the engine
-  tests) is the check before every push. Share a test APK straight from the
-  local build instead of running a release to get one.
-- **Every push that changes `quartz/**` builds a release** (both apps, ~1 h
-  of runner time with Windows), so batch work: commit as often as you like
-  locally, push `quartz/` changes when a batch is ready. A push meant only
-  to save work carries `[skip ci]`.
-- **Never start a workflow by hand without the owner asking for it.** No
-  re-runs, no "just to check" runs.
+- **Minutes are fine to use.** Push when work is ready, start or re-run
+  workflows by hand when useful; `[skip ci]` is only for pushes that
+  shouldn't release (e.g. half-done work saved to `main`). Every push that
+  changes `quartz/**` builds a dual release; a newer push cancels an
+  unfinished one.
+- **One run per workflow:** `quartz-cleanup` runs after every successful run
+  and deletes every other run of that workflow (older, failed, cancelled),
+  with its artifacts and logs, and keeps only the newest cache for each set of
+  paths. Run by hand, it cuts every workflow down to its newest successful
+  run. Don't work around it.
+- **Keep storage small:** artifacts get a short `retention-days` (3 or less
+  for builds; the APKs and installer live on the release), caches use one key
+  per set of paths (the mihomo `.so` cache is keyed by submodule commit, so
+  old ones are pruned), and nothing large is uploaded that a release already
+  holds.
 - **Don't tick "update" unless the in-app "Check upstream versions" (or the
-  owner) says an upstream is newer:** it adds merge and bump work to the run.
-- **Commits that touch `.github/workflows` carry `[skip ci]`** in their
-  message, so the push doesn't trigger `quartz-workflows`.
-- **Keep runs cheap:** the mihomo `.so` files are cached by submodule commit,
-  Gradle and Go caches stay on, the release builds only the `fdroid` debug
-  flavor. The Windows job is the most expensive one (Windows runners use
-  minutes faster): don't change it in ways that make it rebuild more.
+  owner) says an upstream is newer:** it merges upstream and opens bump PRs.
 - **No schedules:** `quartz-workflows`' weekly safety net is off (its push
   trigger already catches workflows an upstream merge adds); `quartz-release`
   has none. `pr.yml` (upstream's format check) runs on pull
   requests, so avoid opening PRs here; work goes straight to `main`.
-- Pushes that don't touch `.github/workflows` start nothing.
 
 ### Releases
 

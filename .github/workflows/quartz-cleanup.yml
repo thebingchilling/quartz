@@ -1,13 +1,13 @@
 name: quartz-cleanup
 
-# Actions storage is limited. Once a run succeeds, every earlier run of the same workflow is
-# deleted, and their artifacts and logs go with them. Caches are pruned too: only the most
-# recently used cache for each set of paths is kept. This workflow also deletes its own
-# earlier runs.
+# Actions storage is limited, so each workflow keeps exactly one run: its newest successful
+# one. Once a run succeeds, every other finished run of that workflow is deleted (older ones,
+# failed and cancelled ones), and their artifacts and logs go with them. Caches are pruned
+# too: only the most recently used cache for each set of paths is kept. This workflow also
+# deletes its own earlier runs.
 #
-# Run it by hand (Actions > quartz-cleanup > Run workflow) to purge the whole
-# repository. For every workflow it keeps only the newest successful run (or the newest run,
-# if none succeeded) and anything newer than that.
+# Run it by hand to purge the whole repository the same way: every workflow is cut down to
+# its newest successful run (workflows that never succeeded lose all their runs).
 on:
   workflow_run:
     workflows: ["quartz-release", "quartz-workflows", "on-pr"]
@@ -37,13 +37,12 @@ jobs:
           set -euo pipefail
           deleted=0
 
-          # deletes every finished run of workflow $1 created before run $2 (and not $2 itself)
+          # deletes every finished run of workflow $1 except run $2 (0: deletes them all)
           prune() {
-            local wf=$1 keep=$2 before ids id
-            before=$(gh api "repos/$GH_REPO/actions/runs/$keep" --jq .created_at)
+            local wf=$1 keep=$2 ids id
             mapfile -t ids < <(gh api --paginate \
               "repos/$GH_REPO/actions/workflows/$wf/runs?status=completed&per_page=100" \
-              --jq ".workflow_runs[] | select(.id != $keep and .created_at < \"$before\") | .id")
+              --jq ".workflow_runs[] | select(.id != $keep) | .id")
             for id in "${ids[@]}"; do
               [ -n "$id" ] || continue
               if gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" --silent ||
@@ -55,30 +54,27 @@ jobs:
             done
           }
 
-          # the newest successful run of workflow $1, else its newest finished run
+          # the newest successful run of workflow $1, or 0 if it never succeeded
           newest() {
-            local id
-            id=$(gh api "repos/$GH_REPO/actions/workflows/$1/runs?status=success&per_page=1" \
-              --jq '.workflow_runs[0].id // empty')
-            [ -n "$id" ] || id=$(gh api "repos/$GH_REPO/actions/workflows/$1/runs?status=completed&per_page=1" \
-              --jq '.workflow_runs[0].id // empty')
-            echo "$id"
+            gh api "repos/$GH_REPO/actions/workflows/$1/runs?status=success&per_page=1" \
+              --jq '.workflow_runs[0].id // 0'
           }
 
           self=$(gh api "repos/$GH_REPO/actions/runs/$GITHUB_RUN_ID" --jq .workflow_id)
 
           if [ "$EVENT" = workflow_run ]; then
-            prune "$DONE_WORKFLOW" "$DONE_RUN"
+            keep=$(newest "$DONE_WORKFLOW")
+            [ "$keep" != 0 ] || keep=$DONE_RUN
+            prune "$DONE_WORKFLOW" "$keep"
           else
             mapfile -t workflows < <(gh api --paginate "repos/$GH_REPO/actions/workflows?per_page=100" \
               --jq '.workflows[].id')
             for wf in "${workflows[@]}"; do
               [ "$wf" != "$self" ] || continue
-              keep=$(newest "$wf")
-              [ -z "$keep" ] || prune "$wf" "$keep"
+              prune "$wf" "$(newest "$wf")"
             done
           fi
-          prune "$self" "$GITHUB_RUN_ID"   # this workflow's own earlier runs
+          prune "$self" "$GITHUB_RUN_ID"   # this workflow's own earlier runs (this one is still running)
           echo "Deleted $deleted runs (with their artifacts and logs)"
 
           # caches: keep the most recently used one for each set of paths (same "version")
