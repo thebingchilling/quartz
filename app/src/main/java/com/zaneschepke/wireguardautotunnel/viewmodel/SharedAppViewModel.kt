@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.quartz.importer.hook.QuartzImport
 import com.dokar.sonner.ToastType
 import com.wgtunnel.parser.Config
 import com.wgtunnel.parser.ConfigParseException
@@ -630,6 +631,11 @@ class SharedAppViewModel(
     }
 
     fun importTunnelConfigs(configs: Map<QuickConfig, TunnelName>) = intent {
+        // [fork] Quartz takes Clash/OpenVPN/links/subscriptions; WireGuard continues below
+        val configs =
+            QuartzImport.claim(configs).ifEmpty {
+                return@intent
+            }
         try {
             val ui = tunnelsUiState.value
             val tunnelConfigs =
@@ -671,6 +677,7 @@ class SharedAppViewModel(
 
     fun importFromUrl(url: String) = intent {
         reduce { state.copy(pendingWgImportUrl = null) }
+        if (QuartzImport.claimUrl(url)) return@intent // [fork] Clash subscription
         try {
             httpClient.prepareGet(url).execute { response ->
                 if (response.status.value !in 200..299) {

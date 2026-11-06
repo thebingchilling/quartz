@@ -100,9 +100,7 @@ class WarpConfigBuilderTest {
     @Test
     fun formFallsBackLikeTheSite() {
         val options =
-            app.quartz.warp.ui
-                .WarpForm(mtu = "", keepalive = "", jc = "x", slot = "Not Valid!", dns = "")
-                .toOptions()
+            app.quartz.warp.ui.WarpForm(mtu = "", keepalive = "", jc = "x", dns = "").toOptions()
         assertEquals(1280, options.mtu)
         assertNull(options.keepalive)
         assertEquals(4, options.junk.jc)
@@ -121,11 +119,11 @@ class WarpConfigBuilderTest {
 
     @Test
     fun slotsAndNames() {
-        val taken = setOf("warp", "warp-2")
-        assertEquals("warp-3", WarpRepository.nextFreeSlot("warp", taken::contains))
-        assertEquals("warp-3", WarpRepository.nextFreeSlot("warp-2", taken::contains))
         assertEquals("WARP (1)", WarpRepository.uniqueName("WARP", setOf("WARP")))
-        assertEquals("WARP AWG (phone)", WarpConfigBuilder.tunnelName("phone", WarpVariant.AWG))
+        assertEquals(
+            "WARP AWG",
+            WarpConfigBuilder.tunnelName(WarpOptions.DEFAULT_SLOT, WarpVariant.AWG),
+        )
     }
 
     @Test

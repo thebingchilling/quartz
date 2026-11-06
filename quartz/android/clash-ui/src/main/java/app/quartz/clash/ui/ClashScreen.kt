@@ -42,8 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.quartz.engine.mihomo.MihomoMode
 import app.quartz.engine.mihomo.MihomoProxy
-import app.quartz.importer.ui.formatDate
-import app.quartz.importer.ui.gib
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.ui.LocalNavController
 import com.zaneschepke.wireguardautotunnel.ui.common.button.SurfaceRow
@@ -339,3 +337,9 @@ private fun <T> Chips(options: List<T>, selected: T?, label: (T) -> String, onSe
         }
     }
 }
+
+private fun gib(bytes: Long) = "%.1f GB".format(bytes / 1_073_741_824.0)
+
+private fun formatDate(millis: Long): String =
+    java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+        .format(java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()))

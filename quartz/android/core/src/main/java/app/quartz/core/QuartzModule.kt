@@ -9,7 +9,6 @@ import app.quartz.bridge.Subscriptions
 import app.quartz.clash.ui.ClashViewModel
 import app.quartz.core.data.ForkDatabase
 import app.quartz.engine.mihomo.MihomoEngine
-import app.quartz.importer.ui.ImportViewModel
 import app.quartz.warp.CloudflareWarpApi
 import app.quartz.warp.WarpApi
 import app.quartz.warp.WarpExpiry
@@ -62,7 +61,6 @@ val quartzModule = module {
     single { ClashProfiles(androidContext(), get(), get(), get(named(Dispatcher.IO))) }
     single { Subscriptions(get(), get(), get(), get(named(Dispatcher.IO))) }
     workerOf(::SubscriptionWorker)
-    viewModelOf(::ImportViewModel)
     viewModel { (tunnelId: Int) ->
         ClashViewModel(tunnelId, get(), get(), get(), get(), get(), get(), get())
     }

@@ -344,11 +344,21 @@ via Wi-Fi “Home” · Spark NZ
 
 ## 7. Import — `quartz/android/importer`
 
-One **Import** entry detects what it was given.
+**Upstream's own add paths take everything; there's no separate Import
+screen.** The ＋ sheet is stock (file, QR, clipboard, URL, create).
+`QuartzImport` hooks in at two points in upstream's `SharedAppViewModel`:
+`importTunnelConfigs` (which file, clipboard and QR all reach) hands each
+config to `QuartzImport.claim` first, and `importFromUrl` asks
+`QuartzImport.claimUrl`. Quartz saves Clash profiles, share links,
+subscriptions and sing-box configs as Clash tunnels (Simple template;
+subscriptions auto-update every 24 h or the provider's interval), answers
+OpenVPN with "not supported yet", and hands WireGuard back to upstream's
+import unchanged (a lone `wireguard://` link is converted to a WireGuard
+config first). Upstream's file reader accepts any file (not only `.conf` /
+`.zip`), read as text.
 
-**Sources:** file picker (`.yaml` `.yml` `.txt` `.conf` `.ovpn` `.json`, any
-name), Open with / Share to the app, clipboard, QR code, typed URL, deep
-links (`clash://install-config?url=…`, `clashmeta://…`).
+**Detected:** file (any extension), clipboard, QR code, typed URL, deep
+links (`clash://install-config?url=…`, `clashmeta://…`) pasted as text.
 
 | Content | Result |
 |---|---|
@@ -429,8 +439,10 @@ start, stop and "set TUN fd".
 
 A Kotlin port of the generator at `thebingchilling/site` (`tools/warp`), so
 both produce identical, interchangeable configs. No engine work is needed: the
-output is a normal WireGuard or AmneziaWG tunnel. Entry: Settings → Tunnel →
-**WARP generator**, and **Generate WARP** in the ＋ sheet.
+output is a normal WireGuard or AmneziaWG tunnel. Entry: the **Info** tab →
+**WARP generator**. It's styled like the rest of the app (the app's own rows
+and selection buttons, no cards), shows the config as plain text, and has no
+QR code.
 
 **Rule: the app follows the site's configurator.** Same choice (WireGuard or
 AmneziaWG, one at a time), same advanced options, same defaults and
@@ -486,13 +498,15 @@ PrivateKey = ...
   writes the same markers.
 - `ForkDatabase.tunnel_meta` is the source of truth; the comments carry the
   marker through export/import.
-- **Slot + variant** (`wg` / `awg`) identifies one tunnel. Saving into a slot
-  that has that variant replaces it in place (same tunnel ID: name, position,
-  group, auto-tunnel rules, split tunnelling, shortcuts stay), reconnects it
-  if running, and deletes the old registration with Cloudflare. Otherwise a
-  tunnel is created.
-- Importing a file whose slot is taken asks **Replace existing** or **Import
-  as separate** (new slot, e.g. `warp-2`). **Detach** removes the tag.
+- **One WARP and one WARP AWG tunnel, no slot choice.** `WGT-Slot` is always
+  `warp`. Saving a new config replaces the tunnel of that kind in place (same
+  tunnel ID: name, position, group, auto-tunnel rules, split tunnelling,
+  shortcuts stay), reconnects it if running, and deletes the old
+  registration with Cloudflare; the first one is created as "WARP" / "WARP
+  AWG".
+- Importing a marked file (from the site, a backup or another device) does
+  the same, with no question: it replaces the existing tunnel of its kind,
+  and the imported row is removed.
 
 ### Expiry
 
@@ -525,13 +539,9 @@ Built in step 2 (`quartz/android/warp`, `quartz/android/core`):
 - `WarpConfigBuilder` / `WarpMarkers`: unit tests check upstream's parser
   reads both variants and keeps the markers through `parseQuickString` →
   `asQuickString`.
-- `WarpRepository`: slot + variant replace-in-place, new tunnels by upstream's
-  naming scheme, old registration deleted after replace, reconnect when a
-  replaced tunnel is running, detach. Imported files with markers are adopted
-  by `QuartzSync` into their slot when it's free; when it's taken,
-  `QuartzDialogs` asks **Replace existing** (the import's config goes into the
-  existing tunnel, the import is removed) or **Import as separate** (next free
-  slot, e.g. `warp-2`). Dismissing asks again on the next app start.
+- `WarpRepository`: one tunnel per kind, replaced in place (old registration
+  deleted, reconnect if running); `QuartzSync` adopts imported marked files
+  the same way.
 - `ClashExport` (a WARP config as a mihomo `wireguard` proxy, `reserved` from
   `client_id`) is kept for adding WARP to a Clash profile later; the screen
   has no Clash button, since the site doesn't.
@@ -644,48 +654,32 @@ Built in step 2 (`quartz/android/warp`, `quartz/android/core`):
 ### ＋ sheet and long-press menu
 
 ```
- Add tunnel ─────────────────────────┐   Long-press "Tokyo" ───────┐
- 📥 Import (file, link, sub, QR…)    │   ✎ Edit                    │
- 📋 Paste from clipboard             │   ⧉ Duplicate               │
- 📷 Scan QR code                     │   ▣ Move to group…          │
- ☁ Generate WARP                     │   ⚡ Test delay             │
- ✎ Create WireGuard from scratch     │   ⤴ Export                  │
+ Add tunnel (stock) ─────────────────┐   Long-press "Tokyo" ───────┐
+ 📂 Add from file (any config)       │   ✎ Edit                    │
+ 📷 Add from QR code                 │   ⧉ Duplicate               │
+ 📋 Add from clipboard               │   ▣ Move to group…          │
+ 🔗 Add from URL (incl. subscription)│   ⚡ Test delay             │
+ ✎ Create from scratch               │   ⤴ Export                  │
 ─────────────────────────────────────┘   🗑 Delete                  │
                                         ─────────────────────────────┘
 ```
 
 ### Import preview
 
-```
-┌─────────────────────────────────────────────┐
-│ ← Import                                    │
-├─────────────────────────────────────────────┤
-│ Detected: Subscription · base64 · 38 nodes  │
-│ Provider: ExampleVPN  · 41 / 100 GB         │
-│           expires 12 Dec 2026               │
-│ ─────────────────────────────────────────── │
-│ Name        [ ExampleVPN                  ] │
-│ Template    [ Rule-based ▾ ]                │
-│ Auto-update [ every 12 h ▾ ]  ☐ Wi-Fi only  │
-│ User-Agent  [ clash.meta ▾ ]                │
-│ Group       [ none ▾ ]                      │
-│ ─────────────────────────────────────────── │
-│ 36 converted · 2 skipped (unsupported) ▸    │
-│                 [ Add ]                     │
-└─────────────────────────────────────────────┘
-```
+Not built: imports go straight in through the stock add paths (see §7), with a
+snackbar naming what was added.
 
-### Settings and WARP generator
+### WARP generator (Info tab)
 
 ```
 ┌───────────────────────────┐   ┌─────────────────────────────────────┐
-│ Settings                  │   │ ← WARP generator                    │
+│ Info                      │   │ ← WARP generator                    │
 ├───────────────────────────┤   ├─────────────────────────────────────┤
 │ Tunnel                    │   │ [ WireGuard ][ AmneziaWG ]          │
 │  Backend mode    VPN ›    │   │ A standard config for the official  │
 │  DNS settings      ›      │   │ WireGuard apps.                     │
 │  Tunnel globals    ›      │   │ ▸ Advanced options (endpoint, DNS,  │
-│  ☁ WARP generator  ›  NEW │   │   MTU, allowed IPs, keepalive,      │
+│  ☁ WARP generator  ›      │   │   MTU, allowed IPs, keepalive,      │
 │  Tunnel recovery   ›      │   │   device type, locale, Jc/Jmin/Jmax,│
 │  Tunnel monitoring ›      │   │   slot)                             │
 │  Android integrations ›   │   │ [ ⟳ Generate WARP config ]          │
@@ -731,18 +725,18 @@ conflicts.
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
 | `service/autotunnel/AutoTunnelService.kt` | Tunnel flow wrapped in `QuartzAutoTunnel.candidates(…)` (skips expired, done); group targets later | WARP expiry, groups |
 | `data/backup/BackupArchive.kt`, `DatabaseBackup.kt` | Optional `quartz/…` zip entries (encrypted like the database); `QuartzBackup.export()` / `restore()` calls | Fork data in backups |
-| `ui/navigation/Route.kt` | `Route.Warp` (+ its `Tab` mapping); more routes later | Clash, WARP, import, groups |
+| `ui/navigation/Route.kt` | `Route.Warp` (Info tab), `Route.Clash(id)` (+ `Tab` mapping) | WARP, Clash screens |
 | `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route | Exhaustive `when` over `Route` |
-| `MainActivity.kt` | `entry<Route.Warp> { WarpScreen() }`; `QuartzDialogs()` under the theme (hidden while the PIN lock shows) | Nav graph; WARP import prompt |
-| `ui/screens/settings/SettingsScreen.kt` | "WARP generator" row (done); "Connection info" later | Settings |
-| `ui/screens/tunnels/components/TunnelImportSheet.kt` | "Generate WARP" entry (done); detecting Import replaces the others later | Import |
+| `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>` | Nav graph |
+| `viewmodel/SharedAppViewModel.kt` | `importTunnelConfigs`: `QuartzImport.claim(…)` first; `importFromUrl`: `QuartzImport.claimUrl(url)` first (2 lines) | Stock add paths take Clash/OpenVPN/links/subscriptions |
+| `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused | Files of any type |
 | `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |
 | `.gitmodules` (engines) | `quartz/android/engines/mihomo` submodule entry (its name is still `engines/mihomo`) | mihomo engine |
 | `.gitmodules` | Entry for `desktop/daemon/winsw` (copied from `desktop/.gitmodules`; git only reads the root file). Update it if desktop changes that submodule's URL. | Desktop build |
-| `app/.../MainActivity.kt` | `Route.Support` shows `quartz/ui/QuartzInfoScreen` instead of `SupportScreen` (import + one line) | Info tab: only About and Updates; Updates opens this repo's releases |
+| `app/.../MainActivity.kt` | `Route.Support` shows `quartz/ui/QuartzInfoScreen` instead of `SupportScreen` (import + one line) | Info tab: About, Updates (this repo's releases), upstream version check, WARP generator |
 | `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |
 | `desktop/composeApp/build.gradle.kts` | `appFsName`/`appDisplayName` = quartz/Quartz, vendor, description; `publish.github` → thebingchilling/quartz | Rebrand, updater |
 | `desktop/composeApp/src/jvmMain/composeResources/values/strings.xml` | `app_name`, `tray_open` → Quartz | Window title, tray |

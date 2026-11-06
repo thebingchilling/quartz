@@ -32,7 +32,7 @@ enum class EndpointMode {
     CUSTOM,
 }
 
-/** The site configurator's fields, kept as text while editing, plus the Quartz slot. */
+/** The site configurator's fields, kept as text while editing. */
 data class WarpForm(
     val variant: WarpVariant = WarpVariant.WG,
     val endpointMode: EndpointMode = EndpointMode.DEFAULT,
@@ -46,14 +46,10 @@ data class WarpForm(
     val jc: String = Junk.DEFAULT.jc.toString(),
     val jMin: String = Junk.DEFAULT.jMin.toString(),
     val jMax: String = Junk.DEFAULT.jMax.toString(),
-    val slot: String = WarpOptions.DEFAULT_SLOT,
 ) {
     /** Like the site: blank or invalid fields fall back to their defaults, never an error. */
     fun toOptions() =
         WarpOptions(
-            slot =
-                slot.trim().lowercase().takeIf(WarpOptions::isValidSlot)
-                    ?: WarpOptions.DEFAULT_SLOT,
             variant = variant,
             junk = Junk(int(jc, 4), int(jMin, 40), int(jMax, 70)),
             endpoint =
@@ -119,7 +115,8 @@ class WarpViewModel(
         it.copy(
             endpoint = value,
             endpointMode =
-                if (it.endpointMode == EndpointMode.RANDOM) EndpointMode.CUSTOM else it.endpointMode,
+                if (it.endpointMode == EndpointMode.RANDOM) EndpointMode.CUSTOM
+                else it.endpointMode,
         )
     }
 
@@ -143,12 +140,13 @@ class WarpViewModel(
         _state.update { it.copy(busy = true) }
         viewModelScope.launch {
             runCatching { repository.save(generated, options) }
-                .onSuccess { result ->
+                .onSuccess {
                     _state.update { it.copy(busy = false) }
                     val message =
-                        if (result.replaced > 0)
-                            StringValue.StringResource(R.string.quartz_warp_replaced, options.slot)
-                        else StringValue.StringResource(R.string.quartz_warp_imported, options.slot)
+                        StringValue.StringResource(
+                            R.string.quartz_warp_saved_as,
+                            tunnelName(options),
+                        )
                     globalEffectRepository.post(
                         GlobalSideEffect.Snackbar(message, ToastType.Success)
                     )
@@ -181,12 +179,7 @@ class WarpViewModel(
         }
     }
 
-    fun detach(tunnelId: Int) = viewModelScope.launch { repository.detach(tunnelId) }
-
     companion object {
-        /** Byte-mode capacity of a version 40 QR code at error correction L, the site's lowest. */
-        const val QR_MAX_BYTES = 2953
-
         fun tunnelName(options: WarpOptions) =
             WarpConfigBuilder.tunnelName(options.slot, options.variant)
     }

@@ -4,13 +4,19 @@
 <resources>
     <string name="quartz_warp_generator">WARP generator</string>
     <string name="quartz_warp_generator_desc">Free Cloudflare WARP configs, standard or AmneziaWG</string>
-    <string name="quartz_generate_warp">Generate WARP</string>
 
     <string name="quartz_warp_wg">WireGuard</string>
     <string name="quartz_warp_awg">AmneziaWG</string>
     <string name="quartz_warp_hint_wg">A standard config for the official WireGuard apps.</string>
     <string name="quartz_warp_hint_awg">Adds junk packets and a real WARP QUIC packet before the handshake, to get past DPI blocking. Needs AmneziaWG support (Quartz has it); the regular WireGuard app won\'t import it.</string>
 
+    <string name="quartz_warp_type">Type</string>
+    <string name="quartz_warp_config">Config</string>
+    <string name="quartz_warp_generate_desc">Registers a free WARP device with Cloudflare. Valid for 90 days.</string>
+    <string name="quartz_warp_save">Save to tunnels</string>
+    <string name="quartz_warp_save_new">Adds it as %1$s</string>
+    <string name="quartz_warp_save_replaces">Replaces %1$s (keeps its name, group and rules)</string>
+    <string name="quartz_warp_saved_as">Saved as %1$s</string>
     <string name="quartz_warp_advanced">Advanced options</string>
     <string name="quartz_warp_endpoint">Endpoint</string>
     <string name="quartz_warp_endpoint_default">Default</string>
@@ -27,8 +33,6 @@
     <string name="quartz_warp_jc">Junk packets (Jc)</string>
     <string name="quartz_warp_jmin">Junk min size (Jmin)</string>
     <string name="quartz_warp_jmax">Junk max size (Jmax)</string>
-    <string name="quartz_warp_slot">Slot (Quartz)</string>
-    <string name="quartz_warp_slot_desc">Saving into a slot that already has this kind of tunnel replaces it in place: same name, group and rules.</string>
 
     <string name="quartz_warp_generate">Generate WARP config</string>
     <string name="quartz_warp_register_new">Register a new device</string>
@@ -37,23 +41,9 @@
     <string name="quartz_warp_license_key">Licence: %1$s</string>
     <string name="quartz_warp_created">Created: %1$s</string>
     <string name="quartz_warp_expires_on">Expires %1$s</string>
-    <string name="quartz_warp_qr">Config QR code</string>
-    <string name="quartz_warp_scan_wg">Scan with the WireGuard mobile app</string>
-    <string name="quartz_warp_scan_awg">Scan with the AmneziaVPN app</string>
-    <string name="quartz_warp_qr_too_long">Too long for a QR code — copy or download the config instead.</string>
     <string name="quartz_warp_copy">Copy</string>
     <string name="quartz_warp_download">Download</string>
-    <string name="quartz_warp_save_to_slot">Add to tunnels (slot %1$s)</string>
-    <string name="quartz_warp_replace_in_slot">Replace in slot %1$s</string>
-    <string name="quartz_warp_imported">Added to slot %1$s</string>
-    <string name="quartz_warp_replaced">Replaced in slot %1$s</string>
-    <string name="quartz_warp_saved">Saved WARP tunnels</string>
-    <string name="quartz_warp_detach">Detach</string>
-
-    <string name="quartz_warp_import_conflict_title">WARP slot already in use</string>
-    <string name="quartz_warp_import_conflict_body">“%1$s” was made for slot “%2$s”, which already has “%3$s”. Replace that tunnel (it keeps its name, group and rules), or keep the import as its own tunnel in a new slot?</string>
-    <string name="quartz_warp_replace_existing">Replace existing</string>
-    <string name="quartz_warp_import_separately">Import as separate</string>
+    <string name="quartz_warp_saved">Your WARP tunnels</string>
 
     <string name="quartz_expired">Expired</string>
     <plurals name="quartz_expires_days">

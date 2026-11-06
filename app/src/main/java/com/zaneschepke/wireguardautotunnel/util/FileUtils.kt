@@ -16,7 +16,6 @@ import com.zaneschepke.wireguardautotunnel.util.extensions.getInputStreamFromUri
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.ZipEntry
@@ -289,7 +288,11 @@ class FileUtils(private val context: Context, private val ioDispatcher: Coroutin
                             configs
                         }
                     }
-                    else -> throw FileNotFoundException("Unsupported file extension: $extension")
+                    // [fork] any other file is read as text; Quartz's import decides what it is
+                    else ->
+                        inputStream.use {
+                            mapOf(it.bufferedReader().readText() to getNameFromFileName(fileName))
+                        }
                 }
             }
                 .onFailure { error -> Timber.e(error, "Error reading configs from URI: $uri") }

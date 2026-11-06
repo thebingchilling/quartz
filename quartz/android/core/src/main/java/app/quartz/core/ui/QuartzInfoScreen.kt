@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Launch
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material3.Icon
@@ -27,10 +28,12 @@ import com.zaneschepke.wireguardautotunnel.BuildConfig
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.domain.sideeffect.GlobalSideEffect
 import com.zaneschepke.wireguardautotunnel.ui.LocalIsAndroidTV
+import com.zaneschepke.wireguardautotunnel.ui.LocalNavController
 import com.zaneschepke.wireguardautotunnel.ui.common.button.SurfaceRow
 import com.zaneschepke.wireguardautotunnel.ui.common.functions.rememberClipboardHelper
 import com.zaneschepke.wireguardautotunnel.ui.common.label.GroupLabel
 import com.zaneschepke.wireguardautotunnel.ui.common.text.DescriptionText
+import com.zaneschepke.wireguardautotunnel.ui.navigation.Route
 import com.zaneschepke.wireguardautotunnel.util.StringValue
 import com.zaneschepke.wireguardautotunnel.util.extensions.openWebUrl
 import com.zaneschepke.wireguardautotunnel.viewmodel.SupportViewModel
@@ -39,7 +42,8 @@ import org.koin.androidx.compose.koinViewModel
 
 private const val QUARTZ_RELEASES_URL = "https://github.com/thebingchilling/quartz/releases"
 
-// Replaces upstream's SupportScreen on the info tab: only About and Updates. Updates open
+// Replaces upstream's SupportScreen on the info tab: About, Updates, upstream versions and the
+// WARP generator. Updates open
 // Quartz's releases page; upstream's in-app updater checks wgtunnel/android.
 @Composable
 fun QuartzInfoScreen(viewModel: SupportViewModel = koinViewModel()) {
@@ -47,6 +51,7 @@ fun QuartzInfoScreen(viewModel: SupportViewModel = koinViewModel()) {
     val isTv = LocalIsAndroidTV.current
     val scope = rememberCoroutineScope()
     val clipboardManager = rememberClipboardHelper()
+    val navController = LocalNavController.current
 
     val version = remember {
         "v${BuildConfig.VERSION_NAME + if (BuildConfig.DEBUG) "-debug" else ""}"
@@ -99,6 +104,14 @@ fun QuartzInfoScreen(viewModel: SupportViewModel = koinViewModel()) {
                 },
             )
             UpstreamVersionsRow()
+            SurfaceRow(
+                leading = { Icon(Icons.Outlined.Cloud, contentDescription = null) },
+                title = stringResource(R.string.quartz_warp_generator),
+                description = {
+                    DescriptionText(stringResource(R.string.quartz_warp_generator_desc))
+                },
+                onClick = { navController.push(Route.Warp) },
+            )
         }
     }
 }

@@ -24,11 +24,15 @@ import (
 	C2 "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
+	"github.com/metacubex/mihomo/hub/route"
 )
 
 var mu sync.Mutex
 
 func init() {
+	// Built with the cmfa tag (mihomo's mode for running inside an Android app), which also turns
+	// on "embed mode": that hides PATCH /configs, which the Clash screen uses to switch mode.
+	route.SetEmbedMode(false)
 	dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
 		var protectErr error
 		err := conn.Control(func(fd uintptr) {

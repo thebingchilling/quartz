@@ -11,9 +11,6 @@ import com.zaneschepke.wireguardautotunnel.domain.model.TunnelConfig
 import com.zaneschepke.wireguardautotunnel.domain.repository.TunnelRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -50,14 +47,6 @@ data class SlotTunnel(val tunnel: TunnelConfig, val meta: TunnelMeta) {
     val variant: WarpVariant?
         get() = WarpVariant.fromTag(meta.warpVariant)
 }
-
-data class ImportConflict(
-    val importedId: Int,
-    val importedName: String,
-    val existingId: Int,
-    val existingName: String,
-    val slot: String,
-)
 
 data class SaveResult(val tunnelIds: List<Int>, val replaced: Int, val created: Int)
 
@@ -116,9 +105,12 @@ class WarpRepository(
         val replaced: Boolean
         mutex.withLock {
             val tunnels = tunnelRepository.getAll().associateBy { it.id }
+            // One tunnel per kind: whatever slot an older Quartz saved it under.
             val existing =
-                metaDao.getBySlot(options.slot).firstOrNull {
-                    it.tunnelId in tunnels && it.warpVariant == options.variant.tag
+                metaDao.getAll().firstOrNull {
+                    it.source == TunnelMeta.SOURCE_WARP &&
+                        it.tunnelId in tunnels &&
+                        it.warpVariant == options.variant.tag
                 }
             replaced = existing != null
             tunnelId =
@@ -164,14 +156,6 @@ class WarpRepository(
         )
     }
 
-    /** Removes the generator tag: regenerate no longer touches this tunnel. */
-    suspend fun detach(tunnelId: Int) = mutex.withLock {
-        tunnelRepository.getById(tunnelId)?.let { tunnel ->
-            tunnelRepository.save(tunnel.copy(quickConfig = WarpMarkers.strip(tunnel.quickConfig)))
-        }
-        metaDao.delete(tunnelId)
-    }
-
     /** Deletes [meta]'s registration with Cloudflare unless another tunnel still uses it. */
     suspend fun deleteRegistrationIfUnused(meta: TunnelMeta) {
         val regId = meta.warpRegId ?: return
@@ -206,108 +190,68 @@ class WarpRepository(
             .onFailure { Timber.w(it, "Could not revoke WARP registration") }
     }
 
-    /** Imported WARP files whose slot and variant are already taken, waiting for the user. */
-    val importConflicts: StateFlow<List<ImportConflict>>
-        get() = _importConflicts.asStateFlow()
-
-    private val _importConflicts = MutableStateFlow<List<ImportConflict>>(emptyList())
-
     /**
      * Keeps tunnel_meta in step with upstream's tunnels: drops rows whose tunnel is gone, and
      * adopts tunnels that carry WARP markers but have no row (an imported file, or a restored
-     * backup). An import whose slot and variant are free joins that slot; one whose slot is taken
-     * waits in [importConflicts] for **Replace existing** or **Import as separate** — never a
-     * silent overwrite.
+     * backup). There is one WARP and one WARP AWG tunnel: an import of a kind that already exists
+     * replaces it in place (its name, group and rules stay; the import's own row is removed),
+     * otherwise it becomes that kind's tunnel. No questions asked.
      */
-    suspend fun sync(tunnels: List<TunnelConfig>) = mutex.withLock {
-        val metas = metaDao.getAll().toMutableList()
-        val ids = tunnels.map { it.id }.toSet()
-        val orphans = metas.filter { it.tunnelId !in ids }
-        if (orphans.isNotEmpty()) {
-            metaDao.deleteAll(orphans.map { it.tunnelId })
-            metas.removeAll(orphans)
-        }
-        val byId = tunnels.associateBy { it.id }
-        val conflicts = mutableListOf<ImportConflict>()
-        val known = metas.map { it.tunnelId }.toSet()
-        for (tunnel in tunnels) {
-            if (tunnel.id in known) continue
-            val markers = WarpMarkers.parse(tunnel.quickConfig) ?: continue
-            val existing = metas.firstOrNull {
-                it.warpSlot == markers.slot && it.warpVariant == markers.variant.tag
-            }
-            if (existing != null) {
-                conflicts +=
-                    ImportConflict(
-                        importedId = tunnel.id,
-                        importedName = tunnel.name,
-                        existingId = existing.tunnelId,
-                        existingName = byId[existing.tunnelId]?.name.orEmpty(),
-                        slot = markers.slot,
-                    )
-                continue
-            }
-            val meta = adoptedMeta(tunnel.id, markers, markers.slot)
-            metaDao.upsert(meta)
-            metas += meta
-        }
-        _importConflicts.value = conflicts
-    }
-
-    /** Puts the imported config into the existing tunnel (same ID) and removes the import. */
-    suspend fun replaceExisting(conflict: ImportConflict) {
-        val running: Boolean
+    suspend fun sync(tunnels: List<TunnelConfig>) {
+        val stale = mutableListOf<TunnelMeta>()
+        var restart = false
         mutex.withLock {
-            val imported = tunnelRepository.getById(conflict.importedId) ?: return
-            val existing = tunnelRepository.getById(conflict.existingId) ?: return
-            val markers = WarpMarkers.parse(imported.quickConfig) ?: return
-            val old = metaDao.get(existing.id)
-            tunnelRepository.save(existing.copy(quickConfig = imported.quickConfig))
-            tunnelRepository.delete(imported)
-            metaDao.upsert(adoptedMeta(existing.id, markers, markers.slot))
-            // The file carries no registration token; the old one is no longer used here.
-            old?.let { deleteRegistrationIfUnused(it) }
-            _importConflicts.value =
-                _importConflicts.value.filterNot { it.importedId == imported.id }
-            running = existing.id in tunnelProvider.backendStatus.value.activeTunnels
-        }
-        if (running) tunnelCoordinator.value.restartActiveTunnels()
-    }
-
-    /** Keeps the import as its own tunnel in the next free slot (e.g. warp-2). */
-    suspend fun importSeparately(conflict: ImportConflict) = mutex.withLock {
-        val imported = tunnelRepository.getById(conflict.importedId) ?: return@withLock
-        val markers = WarpMarkers.parse(imported.quickConfig) ?: return@withLock
-        val metas = metaDao.getAll()
-        val slot =
-            nextFreeSlot(markers.slot) { candidate ->
-                metas.any { it.warpSlot == candidate && it.warpVariant == markers.variant.tag }
+            val metas = metaDao.getAll().toMutableList()
+            val ids = tunnels.map { it.id }.toSet()
+            val orphans = metas.filter { it.tunnelId !in ids }
+            if (orphans.isNotEmpty()) {
+                metaDao.deleteAll(orphans.map { it.tunnelId })
+                metas.removeAll(orphans)
             }
-        // Meta first, so the save below doesn't bring the conflict back.
-        metaDao.upsert(adoptedMeta(imported.id, markers, slot))
-        tunnelRepository.save(
-            imported.copy(
-                quickConfig = WarpMarkers.write(imported.quickConfig, markers.copy(slot = slot))
-            )
-        )
-        _importConflicts.value = _importConflicts.value.filterNot { it.importedId == imported.id }
+            val byId = tunnels.associateBy { it.id }
+            val known = metas.map { it.tunnelId }.toSet()
+            for (tunnel in tunnels) {
+                if (tunnel.id in known) continue
+                val parsed = WarpMarkers.parse(tunnel.quickConfig) ?: continue
+                val markers = parsed.copy(slot = WarpOptions.DEFAULT_SLOT)
+                val config =
+                    if (parsed.slot == markers.slot) tunnel.quickConfig
+                    else WarpMarkers.write(tunnel.quickConfig, markers)
+                val existing = metas.firstOrNull {
+                    it.warpVariant == markers.variant.tag && it.tunnelId in byId
+                }
+                if (existing != null) {
+                    tunnelRepository.save(
+                        byId.getValue(existing.tunnelId).copy(quickConfig = config)
+                    )
+                    tunnelRepository.delete(tunnel)
+                    metaDao.upsert(adoptedMeta(existing.tunnelId, markers))
+                    if (existing.warpRegId != null) stale += existing
+                    if (existing.tunnelId in tunnelProvider.backendStatus.value.activeTunnels)
+                        restart = true
+                } else {
+                    if (config != tunnel.quickConfig)
+                        tunnelRepository.save(tunnel.copy(quickConfig = config))
+                    val meta = adoptedMeta(tunnel.id, markers)
+                    metaDao.upsert(meta)
+                    metas += meta
+                }
+            }
+        }
+        if (restart) tunnelCoordinator.value.restartActiveTunnels()
+        stale.forEach { deleteRegistrationIfUnused(it) }
     }
 
-    private fun adoptedMeta(tunnelId: Int, markers: WarpMarkers, slot: String) =
+    private fun adoptedMeta(tunnelId: Int, markers: WarpMarkers) =
         TunnelMeta(
             tunnelId = tunnelId,
             source = TunnelMeta.SOURCE_WARP,
-            warpSlot = slot,
+            warpSlot = markers.slot,
             warpVariant = markers.variant.tag,
             expiresAt = markers.expiresAt,
         )
 
     companion object {
-        fun nextFreeSlot(slot: String, taken: (String) -> Boolean): String {
-            val base = slot.replace(Regex("-\\d+$"), "")
-            return generateSequence(2) { it + 1 }.map { "$base-$it" }.first { !taken(it) }
-        }
-
         /** Same scheme as upstream's import: "Name", "Name (1)", "Name (2)", … */
         fun uniqueName(name: String, existing: Set<String>): String =
             if (name !in existing) name

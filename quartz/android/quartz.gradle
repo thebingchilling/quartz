@@ -142,7 +142,7 @@ mihomoAbis.each { abi, target ->
             if (target.goarm) environment "GOARM", target.goarm
             environment "CC", new File(toolchain, target.clang).path
         }
-        commandLine "go", "build", "-trimpath", "-buildmode=c-shared", "-tags", "with_gvisor",
+        commandLine "go", "build", "-trimpath", "-buildmode=c-shared", "-tags", "with_gvisor,cmfa",
             "-ldflags", "-s -w -buildid= -X github.com/metacubex/mihomo/constant.Version=${-> mihomoVersion.get()}",
             "-o", new File(outDir, "libmihomo.so").path, "."
         doLast {
@@ -163,7 +163,7 @@ tasks.register("buildMihomoHost", Exec) {
     def os = System.getProperty("os.name").toLowerCase().contains("mac") ? "darwin" : "linux"
     environment "CGO_ENABLED", "1"
     environment "CGO_CFLAGS", "-I$javaHome/include -I$javaHome/include/$os"
-    commandLine "go", "build", "-buildmode=c-shared", "-tags", "with_gvisor", "-o", mihomoHostLib.path, "."
+    commandLine "go", "build", "-buildmode=c-shared", "-tags", "with_gvisor,cmfa", "-o", mihomoHostLib.path, "."
     doLast { new File(mihomoHostLib.parentFile, "libmihomo.h").delete() }
 }
 tasks.withType(Test).configureEach {
