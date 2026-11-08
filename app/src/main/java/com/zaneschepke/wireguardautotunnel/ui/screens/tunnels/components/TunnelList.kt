@@ -51,6 +51,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import app.quartz.clash.ui.QuartzClashPanel
 import app.quartz.core.ui.quartzTunnelDescription
 import app.quartz.core.ui.quartzTunnelRoute
 import com.wgtunnel.backend.state.ActiveTunnel
@@ -310,6 +311,8 @@ fun TunnelList(
                 )
             }
         }
+        // [fork-ui] the running Clash tunnel's groups, mode and delay tests
+        if (!uiState.isReorderMode) item(key = "quartz-clash") { QuartzClashPanel() }
     }
 }
 

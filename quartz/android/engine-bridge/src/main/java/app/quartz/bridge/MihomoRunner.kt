@@ -46,25 +46,41 @@ class MihomoRunner(private val context: Context) {
             request = Request(tunnelId, name, profile)
             result = pending
             _state.value = MihomoState.Starting(tunnelId)
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, MihomoCompanionService::class.java),
-            )
-            context.startService(
-                Intent(context, MihomoVpnService::class.java)
-                    .setAction(MihomoVpnService.ACTION_START)
-            )
+            // The companion goes foreground first, then starts MihomoVpnService itself.
+            runCatching {
+                    ContextCompat.startForegroundService(
+                        context,
+                        Intent(context, MihomoCompanionService::class.java)
+                            .setAction(MihomoCompanionService.ACTION_START_VPN),
+                    )
+                }
+                .onFailure { onServiceStartFailed(it) }
             runCatching { withTimeout(START_TIMEOUT) { pending.await() } }
                 .getOrElse { Result.failure(it) }
-                .onFailure { stopServices() }
+                .onFailure {
+                    if (_state.value !is MihomoState.Running) {
+                        _state.value = MihomoState.Failed(tunnelId, it.message ?: "Start failed")
+                    }
+                    // A start that finishes after the timeout mustn't leave mihomo running.
+                    runCatching {
+                        context.startService(
+                            Intent(context, MihomoVpnService::class.java)
+                                .setAction(MihomoVpnService.ACTION_STOP)
+                        )
+                    }
+                    stopServices()
+                }
         }
 
     suspend fun stop() = mutex.withLock {
         if (_state.value is MihomoState.Idle) return@withLock
-        context.startService(
-            Intent(context, MihomoVpnService::class.java).setAction(MihomoVpnService.ACTION_STOP)
-        )
-        runCatching {
+        val sent = runCatching {
+            context.startService(
+                Intent(context, MihomoVpnService::class.java)
+                    .setAction(MihomoVpnService.ACTION_STOP)
+            )
+        }
+        if (sent.isSuccess) runCatching {
             withTimeout(STOP_TIMEOUT) {
                 _state.first { it is MihomoState.Idle || it is MihomoState.Failed }
             }
@@ -91,13 +107,19 @@ class MihomoRunner(private val context: Context) {
         result?.complete(Result.failure(IllegalStateException(message)))
     }
 
+    internal fun onServiceStartFailed(error: Throwable) {
+        val tunnelId = (_state.value as? MihomoState.Starting)?.tunnelId ?: return
+        onFailed(tunnelId, error.message ?: "Couldn't start the VPN service")
+    }
+
     internal fun onStopped() {
         if (_state.value !is MihomoState.Failed) _state.value = MihomoState.Idle
         stopServices()
     }
 
     private companion object {
-        val START_TIMEOUT = 45.seconds
+        // First start of a profile with GEOIP/GEOSITE rules downloads the geodata.
+        val START_TIMEOUT = 90.seconds
         val STOP_TIMEOUT = 10.seconds
     }
 }

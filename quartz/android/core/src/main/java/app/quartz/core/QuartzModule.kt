@@ -6,6 +6,7 @@ import app.quartz.bridge.MihomoRunner
 import app.quartz.bridge.MultiEngineTunnelProvider
 import app.quartz.bridge.SubscriptionWorker
 import app.quartz.bridge.Subscriptions
+import app.quartz.clash.ui.ClashControlsViewModel
 import app.quartz.clash.ui.ClashViewModel
 import app.quartz.core.data.ForkDatabase
 import app.quartz.engine.mihomo.MihomoEngine
@@ -64,6 +65,7 @@ val quartzModule = module {
     viewModel { (tunnelId: Int) ->
         ClashViewModel(tunnelId, get(), get(), get(), get(), get(), get(), get())
     }
+    viewModel { ClashControlsViewModel(get(), get()) }
 
     single<WarpApi> { CloudflareWarpApi() }
     single {

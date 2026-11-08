@@ -39,6 +39,12 @@ class MihomoVpnService : VpnService() {
     private suspend fun start() = mutex.withLock {
         val request = runner.takeRequest() ?: return@withLock
         if (running) engine.stop()
+        running = false
+        // Parse first, before the TUN exists: parsing downloads missing geodata, which would hang
+        // with the TUN up and unread. It also fails a broken profile fast.
+        engine.validate(request.profile)?.let {
+            return@withLock fail(request.tunnelId, it)
+        }
         val tun =
             runCatching { buildTun(request.name) }.getOrNull()
                 ?: return@withLock fail(request.tunnelId, "VPN permission missing or revoked")
@@ -86,7 +92,8 @@ class MihomoVpnService : VpnService() {
     }
 
     override fun onDestroy() {
-        if (running) runBlocking { engine.stop() }
+        // mihomo can take a moment to shut down: never block the main thread on it (ANR).
+        if (running) Thread { runBlocking { engine.stop() } }.start()
         running = false
         runner.onStopped()
         scope.cancel()

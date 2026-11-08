@@ -14,6 +14,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 	"syscall"
@@ -49,9 +50,15 @@ func init() {
 
 // start runs the profile at configPath with the TUN at tunFd, serving the
 // REST API on controller (host:port) with secret. Returns "" or an error.
-func start(homeDir, configPath string, tunFd int, controller, secret string) string {
+func start(homeDir, configPath string, tunFd int, controller, secret string) (result string) {
 	mu.Lock()
 	defer mu.Unlock()
+	// A panic here would take the whole app down with it; report it as a start error instead.
+	defer func() {
+		if r := recover(); r != nil {
+			result = fmt.Sprint("mihomo: ", r)
+		}
+	}()
 	executor.Shutdown()
 
 	C2.SetHomeDir(homeDir)
@@ -119,7 +126,17 @@ func stop() {
 }
 
 // validate parses the profile at configPath without running it.
-func validate(homeDir, configPath string) string {
+// Parsing also fetches the geodata (GeoIP/GeoSite) the rules need when it isn't cached yet, so
+// MihomoVpnService calls this before it establishes the TUN: with the TUN up but nothing reading it
+// yet, those downloads (and their DNS lookups) would hang until the start timed out.
+func validate(homeDir, configPath string) (result string) {
+	mu.Lock()
+	defer mu.Unlock()
+	defer func() {
+		if r := recover(); r != nil {
+			result = fmt.Sprint("mihomo: ", r)
+		}
+	}()
 	C2.SetHomeDir(homeDir)
 	buf, err := os.ReadFile(configPath)
 	if err != nil {
@@ -150,7 +167,6 @@ func quartzMihomoValidate(homeDir, configPath *C.char) *C.char {
 
 //export quartzMihomoVersion
 func quartzMihomoVersion() *C.char { return C.CString(C2.Version) }
-
 
 // cString returns NULL for "", else a malloc'd copy the caller frees.
 func cString(s string) *C.char {

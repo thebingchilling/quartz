@@ -8,9 +8,6 @@ import app.quartz.bridge.MihomoState
 import app.quartz.bridge.Subscriptions
 import app.quartz.core.data.EngineProfile
 import app.quartz.core.data.EngineProfileDao
-import app.quartz.engine.mihomo.MihomoApi
-import app.quartz.engine.mihomo.MihomoMode
-import app.quartz.engine.mihomo.MihomoProxies
 import com.dokar.sonner.ToastType
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.core.orchestration.TunnelCoordinator
@@ -32,17 +29,13 @@ import kotlinx.coroutines.launch
 
 data class ClashUiState(
     val running: Boolean = false,
-    val proxies: MihomoProxies? = null,
-    val mode: MihomoMode = MihomoMode.RULE,
-    val expanded: Set<String> = emptySet(),
-    val testing: Set<String> = emptySet(),
-    val query: String = "",
-    val sortByDelay: Boolean = false,
     val updatingSubscription: Boolean = false,
-    val error: String? = null,
 )
 
-/** The Clash tunnel screen (FORK.md §8): groups, nodes, delays and mode of a running profile. */
+/**
+ * The Clash tunnel screen (FORK.md §8): subscription, settings and export. The live controls
+ * (groups, nodes, delays, mode) are on the Tunnels screen ([ClashControlsViewModel]).
+ */
 class ClashViewModel(
     private val tunnelId: Int,
     private val profiles: ClashProfiles,
@@ -55,7 +48,6 @@ class ClashViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(ClashUiState())
     val state: StateFlow<ClashUiState> = _state.asStateFlow()
-    private var api: MihomoApi? = null
 
     val name: StateFlow<String> =
         tunnelRepository.userTunnelsFlow
@@ -71,64 +63,11 @@ class ClashViewModel(
     init {
         viewModelScope.launch {
             runner.state
-                .map {
-                    (it as? MihomoState.Running)?.takeIf { r -> r.tunnelId == tunnelId }?.controller
-                }
+                .map { (it as? MihomoState.Running)?.tunnelId == tunnelId }
                 .distinctUntilChanged()
-                .collect { controller ->
-                    api = controller?.let { MihomoApi(it) }
-                    _state.update { it.copy(running = controller != null, proxies = null) }
-                    if (controller != null) refresh()
-                }
+                .collect { running -> _state.update { it.copy(running = running) } }
         }
     }
-
-    fun refresh() {
-        val api = api ?: return
-        viewModelScope.launch {
-            runCatching { api.proxies() to api.mode() }
-                .onSuccess { (proxies, mode) ->
-                    _state.update { it.copy(proxies = proxies, mode = mode, error = null) }
-                }
-                .onFailure { e -> _state.update { it.copy(error = e.message) } }
-        }
-    }
-
-    fun toggle(group: String) = _state.update {
-        it.copy(expanded = if (group in it.expanded) it.expanded - group else it.expanded + group)
-    }
-
-    fun select(group: String, proxy: String) {
-        val api = api ?: return
-        viewModelScope.launch {
-            runCatching { api.select(group, proxy) }
-                .onFailure { e -> _state.update { it.copy(error = e.message) } }
-            refresh()
-        }
-    }
-
-    fun testGroup(group: String) {
-        val api = api ?: return
-        _state.update { it.copy(testing = it.testing + group) }
-        viewModelScope.launch {
-            runCatching { api.groupDelay(group) }
-            _state.update { it.copy(testing = it.testing - group) }
-            refresh()
-        }
-    }
-
-    fun setMode(mode: MihomoMode) {
-        val api = api ?: return
-        viewModelScope.launch {
-            runCatching { api.setMode(mode) }
-                .onFailure { e -> _state.update { it.copy(error = e.message) } }
-            refresh()
-        }
-    }
-
-    fun setQuery(query: String) = _state.update { it.copy(query = query) }
-
-    fun toggleSort() = _state.update { it.copy(sortByDelay = !it.sortByDelay) }
 
     fun updateSubscription() {
         _state.update { it.copy(updatingSubscription = true) }

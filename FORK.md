@@ -425,10 +425,15 @@ and auto-updating subscriptions, saving Clash profiles as tunnels.
 
 ## 8. Clash (mihomo) UI — `quartz/android/clash-ui`
 
-- A Clash tunnel row has its own dropdown listing its proxy groups and nodes,
-  with delay per node and the mode switch (Rule / Global / Direct).
-- Subscription footer: last updated, traffic used/total, expiry, Update now.
-- Search and sort by delay (for subscriptions with 100+ nodes).
+- **On the Tunnels screen**, right under the tunnel list, while a Clash
+  tunnel runs: the mode switch (Rule / Global / Direct), **Test all** (one
+  URL test of every node in every group, 16 at a time, each node once,
+  results shown as they arrive), search and sort by delay, and every proxy
+  group as a drop-down of its nodes with their delays (tap a node to select
+  it in a Selector group). Nothing shows while no Clash tunnel runs.
+- Tapping a Clash tunnel opens its own screen for the rest: subscription
+  (last updated, traffic used/total, expiry, Update now, provider page),
+  tunnel settings and export.
 - Optional: live connections, logs, provider refresh, DNS choice.
 
 The UI talks to mihomo's `external-controller` REST API on localhost
@@ -442,8 +447,16 @@ start, stop and "set TUN fd".
   last delay, select, per-node and per-group URL tests, mode get/set,
   providers and provider update, version. Tested against a running host
   build of mihomo (no TUN: the wrapper treats a negative fd as "no TUN").
-- Next (needs step 4's running profiles): the Clash tunnel row's dropdown,
-  mode switch, search/sort and subscription footer.
+- Done: `QuartzClashPanel` + `ClashControlsViewModel` (Tunnels screen) and
+  `ClashScreen` + `ClashViewModel` (subscription, settings, export).
+- Start path: `MihomoRunner` starts `MihomoCompanionService` (foreground);
+  the companion then starts `MihomoVpnService`, so a start from the
+  background (tile, auto-tunnel) doesn't throw. The VPN service parses the
+  profile before it establishes the TUN (parsing downloads missing geodata,
+  which would hang behind an unread TUN), then hands the TUN fd to mihomo.
+  The JNI protector's old global ref is never freed (mihomo threads from the
+  last run may still use it), and a Go panic during start is returned as an
+  error instead of killing the app.
 
 ## 9. WARP generator — `quartz/android/warp`
 
@@ -743,7 +756,7 @@ conflicts.
 | `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>` | Nav graph |
 | `viewmodel/SharedAppViewModel.kt` | `importTunnelConfigs`: `QuartzImport.claim(…)` first; `importFromUrl`: `QuartzImport.claimUrl(url)` first (2 lines) | Stock add paths take Clash/OpenVPN/links/subscriptions |
 | `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused | Files of any type |
-| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
+| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); tunnel tap → `quartzTunnelRoute`; one `item { QuartzClashPanel() }` after the rows (Clash controls); engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |

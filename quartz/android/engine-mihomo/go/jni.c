@@ -46,10 +46,12 @@ static jstring to_jstring(JNIEnv *env, char *s) {
 JNIEXPORT jstring JNICALL
 Java_app_quartz_engine_mihomo_MihomoNative_start(JNIEnv *env, jclass cls, jstring home, jstring config,
                                                  jint fd, jstring controller, jstring secret, jobject p) {
-    if (protector != NULL) (*env)->DeleteGlobalRef(env, protector);
-    protector = (*env)->NewGlobalRef(env, p);
+    // The previous protector's global ref is deliberately never deleted: mihomo threads from the
+    // last run can still be inside quartz_protect() with it, and freeing it there crashed the app
+    // (a use-after-free in JNI). One small leaked ref per start is harmless.
     jclass pc = (*env)->GetObjectClass(env, p);
     protect_id = (*env)->GetMethodID(env, pc, "protect", "(I)Z");
+    protector = (*env)->NewGlobalRef(env, p);
     const char *h = (*env)->GetStringUTFChars(env, home, NULL);
     const char *c = (*env)->GetStringUTFChars(env, config, NULL);
     const char *ctl = (*env)->GetStringUTFChars(env, controller, NULL);
