@@ -363,6 +363,19 @@ via Wi-Fi “Home” · Spark NZ
   Connection info offers other providers (ipinfo.io, ip-api.com, Cloudflare
   trace — IP + country only) and an off switch.
 
+### Implementation status
+
+- Done (first part): under a connected tunnel, upstream's per-peer details
+  (endpoint, handshake, transfer per peer) are replaced by the exit: flag +
+  IP, "City, Region, Country", "ISP: …", in the same text style as the
+  status/uptime lines (`QuartzIpInfo`, one line in `TunnelStatisticsRow.kt`).
+  `IpLookup` (`quartz/android/core/…/ip`) asks ipwho.is, then ipapi.co, over
+  HTTPS through the tunnel (the app's own traffic uses it), once per
+  connection, retrying a few times right after connect; a Clash node switch
+  looks it up again. A failed lookup can be retried by tapping it.
+- Not yet: line 2 (your network), the tap-to-expand details, provider
+  choice and the off switch.
+
 ## 7. Import — `quartz/android/importer`
 
 **Upstream's own add paths take everything; there's no separate Import
@@ -791,6 +804,7 @@ conflicts.
 | `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>` | Nav graph |
 | `viewmodel/SharedAppViewModel.kt` | `importTunnelConfigs`: `QuartzImport.claim(…)` first; `importFromUrl`: `QuartzImport.claimUrl(url)` first (2 lines) | Stock add paths take Clash/OpenVPN/links/subscriptions |
 | `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused | Files of any type |
+| `ui/screens/tunnels/components/TunnelStatisticsRow.kt` | Per-peer sections replaced by `QuartzIpInfo(activeTunnel)` (1 line) | Connection info: exit IP, location, ISP |
 | `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); tunnel tap → `quartzTunnelRoute`; one `item { QuartzClashPanel() }` after the rows (Clash groups); normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`): hold to select, hold and drag to reorder; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |

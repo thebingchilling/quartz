@@ -11,4 +11,7 @@
     <string name="quartz_upstream_failed">%1$s (couldn\'t check)</string>
     <string name="quartz_upstream_how_to_update">To update, run quartz-release on GitHub with “update” ticked. It merges the new releases into main and publishes a new Quartz build.</string>
     <string name="quartz_upstream_update">Open GitHub</string>
+    <string name="quartz_ip_checking">Checking IP…</string>
+    <string name="quartz_ip_failed">Couldn\'t look up the IP. Tap to retry.</string>
+    <string name="quartz_ip_isp">ISP: %1$s</string>
 </resources>

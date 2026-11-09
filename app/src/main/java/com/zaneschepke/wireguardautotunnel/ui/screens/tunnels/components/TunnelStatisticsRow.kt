@@ -11,6 +11,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.quartz.core.ui.QuartzIpInfo
 import com.wgtunnel.backend.state.ActiveTunnel
 import com.zaneschepke.wireguardautotunnel.util.extensions.proxyStatusTexts
 import kotlin.time.Duration.Companion.seconds
@@ -30,7 +31,7 @@ fun TunnelStatisticsRow(activeTunnel: ActiveTunnel) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         TunnelOverviewSection(activeTunnel = activeTunnel, now = now)
 
-        activeTunnel.activeConfig?.peers?.forEach { peer -> PeerStatisticsSection(peer, now) }
+        QuartzIpInfo(activeTunnel) // [fork-ui] exit IP, location and ISP instead of peer details
 
         val proxyTexts = activeTunnel.proxyStatusTexts(context)
         if (proxyTexts.isNotEmpty()) {

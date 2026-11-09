@@ -9,6 +9,7 @@ import app.quartz.bridge.Subscriptions
 import app.quartz.clash.ui.ClashControlsViewModel
 import app.quartz.clash.ui.ClashDelays
 import app.quartz.clash.ui.ClashViewModel
+import app.quartz.core.ip.IpLookup
 import app.quartz.core.ui.QuartzTunnelOrder
 import app.quartz.core.data.ForkDatabase
 import app.quartz.engine.mihomo.MihomoEngine
@@ -68,7 +69,8 @@ val quartzModule = module {
         ClashViewModel(tunnelId, get(), get(), get(), get(), get(), get(), get())
     }
     single { ClashDelays(get(), get(named(Scope.APPLICATION))) }
-    viewModel { ClashControlsViewModel(get(), get()) }
+    viewModel { ClashControlsViewModel(get(), get(), get()) }
+    single { IpLookup(get(named(Scope.APPLICATION))) }
     single { QuartzTunnelOrder(get(), get()) }
 
     single<WarpApi> { CloudflareWarpApi() }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.quartz.bridge.MihomoRunner
 import app.quartz.bridge.MihomoState
+import app.quartz.core.ip.IpLookup
 import app.quartz.engine.mihomo.MihomoApi
 import app.quartz.engine.mihomo.MihomoMode
 import app.quartz.engine.mihomo.MihomoProxies
@@ -51,8 +52,11 @@ data class ClashControlsState(
  * The running Clash tunnel's proxy groups on the Tunnels screen (FORK.md §8): each group opens
  * to its nodes; sort by delay; list or grid.
  */
-class ClashControlsViewModel(private val runner: MihomoRunner, delays: ClashDelays) :
-    ViewModel() {
+class ClashControlsViewModel(
+    private val runner: MihomoRunner,
+    delays: ClashDelays,
+    private val ipLookup: IpLookup,
+) : ViewModel() {
     private val local = MutableStateFlow(ClashControlsState())
     private var api: MihomoApi? = null
 
@@ -104,6 +108,7 @@ class ClashControlsViewModel(private val runner: MihomoRunner, delays: ClashDela
         val api = api ?: return
         viewModelScope.launch {
             runCatching { api.select(group, proxy) }
+                .onSuccess { ipLookup.invalidate() } // the exit IP may have changed
             refresh()
         }
     }
