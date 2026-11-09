@@ -7,13 +7,13 @@
 
     <string name="quartz_warp_wg">WireGuard</string>
     <string name="quartz_warp_awg">AmneziaWG</string>
-    <string name="quartz_warp_hint_wg">A standard WARP config. Works in any WireGuard app.</string>
-    <string name="quartz_warp_hint_awg">Adds junk packets and a real WARP QUIC packet before the handshake, to get past DPI blocking. Needs AmneziaWG support (Quartz has it); the regular WireGuard app won\'t import it.</string>
+    <string name="quartz_warp_hint_wg">Standard WireGuard.</string>
+    <string name="quartz_warp_hint_awg">Obfuscated, gets past DPI blocking.</string>
 
-    <string name="quartz_warp_generate_desc">Registers a free WARP device with Cloudflare. Valid for 90 days.</string>
+    <string name="quartz_warp_generate_desc">Free, valid for 90 days.</string>
     <string name="quartz_warp_save">Save to tunnels</string>
     <string name="quartz_warp_save_new">Adds it as %1$s</string>
-    <string name="quartz_warp_save_replaces">Replaces %1$s (keeps its name, group and rules)</string>
+    <string name="quartz_warp_save_replaces">Replaces %1$s</string>
     <string name="quartz_warp_saved_as">Saved as %1$s</string>
     <string name="quartz_warp_advanced">Advanced options</string>
     <string name="quartz_warp_reroll">Pick another</string>
@@ -24,6 +24,9 @@
     <string name="quartz_warp_generate_button">Generate</string>
     <string name="quartz_warp_expires_on">Expires %1$s</string>
     <string name="quartz_warp_saved">Your WARP tunnels</string>
+    <string name="quartz_warp_profile">Profile</string>
+    <string name="quartz_warp_applied">Saved to tunnels</string>
+    <string name="quartz_warp_applied_desc">%1$s is up to date</string>
 
     <string name="quartz_expired">Expired</string>
     <plurals name="quartz_expires_days">

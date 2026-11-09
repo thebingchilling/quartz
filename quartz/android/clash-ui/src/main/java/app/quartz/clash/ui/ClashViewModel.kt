@@ -34,7 +34,7 @@ data class ClashUiState(
 
 /**
  * The Clash tunnel screen (FORK.md §8): subscription, settings and export. The live controls
- * (groups, nodes, delays, mode) are on the Tunnels screen ([ClashControlsViewModel]).
+ * (groups and nodes) are listed under the tunnel on the Tunnels screen ([QuartzClashRows]).
  */
 class ClashViewModel(
     private val tunnelId: Int,

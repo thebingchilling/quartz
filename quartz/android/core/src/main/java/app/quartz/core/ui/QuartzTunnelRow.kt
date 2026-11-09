@@ -24,9 +24,9 @@ import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
 
 /**
- * Adds Quartz's badges under a tunnel row's upstream description: the engine for non-WireGuard
- * tunnels ("Clash") and WARP expiry ("expires 5d" / "expired"). Called from one line in upstream's
- * TunnelList.kt.
+ * A tunnel row's description: its protocol (WireGuard, AmneziaWG or Clash) always, then
+ * upstream's own lines (entry tunnel), then WARP expiry. Latency is on the row's right side
+ * ([app.quartz.clash.ui.QuartzLatencyText]). Called from one line in upstream's TunnelList.kt.
  */
 @Composable
 fun quartzTunnelDescription(
@@ -42,22 +42,37 @@ fun quartzTunnelDescription(
                 }
             }
             .collectAsStateWithLifecycle(null)
-    val engine = remember(quickConfig) { EnginePlaceholder.engineOf(quickConfig) }
-    if (expiresAt == null && engine == null) return upstream
+    val protocol =
+        remember(quickConfig) {
+            when {
+                EnginePlaceholder.engineOf(quickConfig) == EngineProfile.ENGINE_MIHOMO ->
+                    R.string.quartz_engine_clash
+                isAmnezia(quickConfig) -> R.string.quartz_warp_awg
+                else -> R.string.quartz_warp_wg
+            }
+        }
     return {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            if (engine == EngineProfile.ENGINE_MIHOMO) {
-                Text(
-                    stringResource(R.string.quartz_engine_clash),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            Text(
+                stringResource(protocol),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
             upstream?.invoke()
             expiresAt?.let { ExpiryBadge(it) }
         }
     }
 }
+
+private val AMNEZIA_KEYS = setOf("jc", "jmin", "jmax", "s1", "s2", "s3", "s4", "h1", "h2", "h3", "h4", "i1")
+
+/** An AmneziaWG config sets any of its obfuscation fields to something other than 0. */
+private fun isAmnezia(quickConfig: String): Boolean =
+    quickConfig.lineSequence().any { line ->
+        val key = line.substringBefore('=', "").trim().lowercase()
+        val value = line.substringAfter('=', "").trim()
+        key in AMNEZIA_KEYS && value.isNotEmpty() && value != "0"
+    }
 
 /** Where tapping a tunnel row goes: Clash tunnels open the Clash screen; null means upstream's. */
 fun quartzTunnelRoute(tunnelId: Int, tunnels: List<TunnelConfig>): Route? {
@@ -86,3 +101,6 @@ private fun ExpiryBadge(expiresAt: Long) {
         }
     Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
 }
+
+/** Quartz shows no toasts (upstream's Toaster isn't drawn; MainActivity.kt). */
+const val QUARTZ_TOASTS = false

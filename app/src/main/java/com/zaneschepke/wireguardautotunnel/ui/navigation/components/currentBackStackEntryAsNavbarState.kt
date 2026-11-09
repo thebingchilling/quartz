@@ -461,7 +461,7 @@ fun currentRouteAsNavbarState(
                                     }
                                 else -> {
                                     // [fork-ui] Add and delay test only; hold a row to reorder
-                                    val delayTest = rememberQuartzDelayTest(sharedViewModel)
+                                    val delayTest = rememberQuartzDelayTest()
                                     Row {
                                         IconButton(
                                             onClick = {

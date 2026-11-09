@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.Casino
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Button
@@ -108,42 +109,84 @@ fun WarpScreen(viewModel: WarpViewModel = koinViewModel()) {
             if (showAdvanced) AdvancedOptions(form, viewModel)
 
             val existing = warpTunnels.firstOrNull { it.variant == form.variant }
-            if (state.generated == null) {
-                SurfaceRow(
-                    leading = { Icon(Icons.Outlined.Autorenew, contentDescription = null) },
-                    title = stringResource(R.string.quartz_warp_generate),
-                    description = {
-                        DescriptionText(stringResource(R.string.quartz_warp_generate_desc))
-                    },
-                    trailing = {
-                        ActionButton(stringResource(R.string.quartz_warp_generate_button)) {
-                            viewModel.generate()
-                        }
-                    },
-                    onClick = viewModel::generate,
-                    enabled = !state.busy,
-                )
-            } else {
-                SurfaceRow(
-                    leading = { Icon(Icons.Outlined.SaveAlt, contentDescription = null) },
-                    title = stringResource(R.string.quartz_warp_save),
-                    description = {
-                        DescriptionText(
-                            existing?.let {
-                                stringResource(R.string.quartz_warp_save_replaces, it.tunnel.name)
+            val name = existing?.tunnel?.name ?: WarpViewModel.tunnelName(form.toOptions())
+            when {
+                state.generated == null ->
+                    SurfaceRow(
+                        leading = { Icon(Icons.Outlined.Autorenew, contentDescription = null) },
+                        title = stringResource(R.string.quartz_warp_generate),
+                        description = {
+                            DescriptionText(stringResource(R.string.quartz_warp_generate_desc))
+                        },
+                        trailing = {
+                            ActionButton(stringResource(R.string.quartz_warp_generate_button)) {
+                                viewModel.generate()
                             }
-                                ?: stringResource(
-                                    R.string.quartz_warp_save_new,
-                                    WarpViewModel.tunnelName(form.toOptions()),
-                                )
-                        )
-                    },
-                    trailing = {
-                        ActionButton(stringResource(R.string.save)) { viewModel.save() }
-                    },
-                    onClick = viewModel::save,
-                    enabled = !state.busy,
+                        },
+                        onClick = viewModel::generate,
+                        enabled = !state.busy,
+                    )
+                state.saved ->
+                    // Applied: the visual indicator instead of a toast
+                    SurfaceRow(
+                        leading = {
+                            Icon(
+                                Icons.Outlined.CheckCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        },
+                        title = stringResource(R.string.quartz_warp_applied),
+                        description = {
+                            DescriptionText(stringResource(R.string.quartz_warp_applied_desc, name))
+                        },
+                    )
+                else ->
+                    SurfaceRow(
+                        leading = { Icon(Icons.Outlined.SaveAlt, contentDescription = null) },
+                        title = stringResource(R.string.quartz_warp_save),
+                        description = {
+                            DescriptionText(
+                                if (existing != null)
+                                    stringResource(R.string.quartz_warp_save_replaces, name)
+                                else stringResource(R.string.quartz_warp_save_new, name)
+                            )
+                        },
+                        trailing = {
+                            ActionButton(stringResource(R.string.save)) { viewModel.save() }
+                        },
+                        onClick = viewModel::save,
+                        enabled = !state.busy,
+                    )
+            }
+            state.error?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
+            }
+        }
+
+        if (state.generated != null) {
+            Column {
+                Box(
+                    modifier = Modifier.height(48.dp).padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    GroupLabel(stringResource(R.string.quartz_warp_profile))
+                }
+                viewModel.parameters().forEach { (key, value) ->
+                    SurfaceRow(
+                        title = key,
+                        description = {
+                            DescriptionText(
+                                if (value.length > 64) value.take(64) + "…" else value
+                            )
+                        },
+                    )
+                }
             }
         }
 

@@ -51,7 +51,9 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import app.quartz.clash.ui.QuartzClashPanel
+import app.quartz.clash.ui.QuartzDelays
+import app.quartz.clash.ui.QuartzLatencyText
+import app.quartz.clash.ui.QuartzRowExtras
 import app.quartz.core.ui.QuartzTunnelDragEffects
 import app.quartz.core.ui.quartzTunnelDescription
 import app.quartz.core.ui.quartzTunnelRoute
@@ -305,6 +307,7 @@ fun TunnelList(
             } else {
                 // [fork-ui] hold and drag to reorder, no separate reorder mode
                 ReorderableItem(reorderableLazyListState, row.key, enabled = !isTv) { isDragging ->
+                  Column {
                     ListRow(
                         row = row,
                         index = index,
@@ -320,8 +323,7 @@ fun TunnelList(
                             )
                         },
                         modifier =
-                            Modifier.animateItem()
-                                .then(
+                            Modifier.then(
                                     if (!isTv && quartzDrag.canDrag(row))
                                         Modifier.draggableHandle(
                                             onDragStarted = {
@@ -339,11 +341,11 @@ fun TunnelList(
                                     else Modifier
                                 ),
                     )
+                    QuartzRowExtras(row) // [fork-ui] a Clash tunnel's groups and nodes
+                  }
                 }
             }
         }
-        // [fork-ui] the running Clash tunnel's groups, mode and delay tests
-        if (!uiState.isReorderMode) item(key = "quartz-clash") { QuartzClashPanel() }
     }
 }
 
@@ -498,17 +500,21 @@ private fun ListRow(
                         { viewModel.toggleSelectedTunnel(tunnel.id) }
                     },
                 trailing = { rowModifier ->
-                    SwitchWithDivider(
-                        checked = isRunning,
-                        onClick = { checked ->
-                            if (checked) {
-                                viewModel.startTunnel(tunnel)
-                            } else {
-                                viewModel.stopTunnel(tunnel)
-                            }
-                        },
-                        modifier = rowModifier,
-                    )
+                    // [fork-ui] latency on the right, before the switch
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        QuartzLatencyText(QuartzDelays.tunnelKey(tunnel.id))
+                        SwitchWithDivider(
+                            checked = isRunning,
+                            onClick = { checked ->
+                                if (checked) {
+                                    viewModel.startTunnel(tunnel)
+                                } else {
+                                    viewModel.stopTunnel(tunnel)
+                                }
+                            },
+                            modifier = rowModifier,
+                        )
+                    }
                 },
             )
         }

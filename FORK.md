@@ -326,17 +326,17 @@ adding a second groups feature.
 
 ## 5. Delay tests
 
-A test per tunnel row, "Test all" per group, and ⚡ in the top bar for
-everything. Badge colours: 🟢 < 300 ms, 🟡 < 800 ms, 🔴 slower, ⚪ timeout.
-Results fade when older than ~10 minutes. Test URL is configurable (default
-`https://cp.cloudflare.com/generate_204`).
+One button in the Tunnels top bar tests **everything at once**, connected or
+not (`QuartzDelays`, up to 48 in parallel): every WireGuard/AmneziaWG
+tunnel's server gets one ICMP ping (1.5 s timeout); every Clash node gets a
+mihomo URL test (2.5 s timeout) while its tunnel runs, otherwise one ping of
+its server. Results show on the right of each row as they arrive, in the
+tunnel list's own label and colours (≤ 50 ms green, ≤ 150 ms yellow, else
+red, "unreachable"). Upstream's ping (3 pings, only while disconnected) is
+no longer called.
 
-| Member | Method | Accuracy |
-|---|---|---|
-| Clash nodes | mihomo URL test (`/proxies/{name}/delay`) | Real end-to-end |
-| WireGuard / AmneziaWG / WARP | Run the config as a temporary mihomo `wireguard` outbound and URL-test through it, without touching the active VPN | Real handshake + end-to-end |
-| OpenVPN (not connected) | TCP connect (TCP servers) or ICMP ping (UDP servers), via upstream's `pinger` | Reachability; labelled "ping" |
-| Connected tunnel | URL test through the live tunnel | Real |
+Later, maybe: WireGuard tunnels URL-tested through a temporary mihomo
+`wireguard` outbound (real handshake) instead of a ping.
 
 ## 6. Connection info — `quartz/android/connection-info`
 
@@ -449,18 +449,13 @@ and auto-updating subscriptions, saving Clash profiles as tunnels.
 
 ## 8. Clash (mihomo) UI — `quartz/android/clash-ui`
 
-- **On the Tunnels screen**, right under the tunnel list, while a Clash
-  tunnel runs: a "Clash" section header with **sort by delay** and
-  **grid/list** buttons, then only the proxy groups, each a row like a tunnel
-  group (folder icon, selected node underneath, chevron) that opens to its
-  nodes. A lone group starts open. List: node rows (selected one
-  highlighted, delay under the name). Grid: the app's selection cards, two
-  per row. Tap a node to select it in a Selector group. Nothing shows while
-  no Clash tunnel runs.
-- Delays come from the Tunnels top bar's **delay test** button, which pings
-  every tunnel (upstream's ping, which waits until nothing is connected)
-  and URL-tests every node of a running Clash tunnel (16 at a time, each
-  node once; `ClashDelays`).
+- **A Clash tunnel is a group on the Tunnels list**: right under its row,
+  each proxy group is a row like a tunnel group (folder icon, selected node
+  or type underneath, chevron), open by default, with its nodes underneath
+  as rows like tunnels: name, protocol under it (Shadowsocks, VMess, …),
+  latency on the right, a dot marking the selected node. Live from mihomo
+  while the tunnel runs (tap a node to select it in a Selector group),
+  otherwise read from the profile YAML (`ClashTrees`, `QuartzClashRows`).
 - Tapping a Clash tunnel opens its own screen for the rest: subscription
   (last updated, traffic used/total, expiry, Update now, provider page),
   tunnel settings and export.
@@ -477,7 +472,7 @@ start, stop and "set TUN fd".
   last delay, select, per-node and per-group URL tests, mode get/set,
   providers and provider update, version. Tested against a running host
   build of mihomo (no TUN: the wrapper treats a negative fd as "no TUN").
-- Done: `QuartzClashPanel` + `ClashControlsViewModel` (Tunnels screen) and
+- Done: `QuartzClashRows` + `ClashTrees` (Tunnels list) and
   `ClashScreen` + `ClashViewModel` (subscription, settings, export).
 - Start path: `MihomoRunner` starts `MihomoCompanionService` (foreground);
   the companion then starts `MihomoVpnService`, so a start from the
@@ -503,12 +498,13 @@ A Kotlin port of the generator at `thebingchilling/site` (`tools/warp`), so
 both produce identical, interchangeable configs. No engine work is needed: the
 output is a normal WireGuard or AmneziaWG tunnel. Entry: the **Info** tab →
 **WARP generator**. Built only from the app's own components (see the UI
-rule in §2): WireGuard / AmneziaWG selection cards with a sentence each, an
+rule in §2): WireGuard / AmneziaWG selection cards with a few words each, an
 **Advanced options** switch row revealing the config editor's text boxes,
 then **Generate**. Once generated, the only action is **Save to tunnels**
-(replaces the WARP tunnel of that kind); the screen ends with "Your WARP
-tunnels". No config text, copy, download or QR in the app (the site has
-those).
+(replaces the WARP tunnel of that kind) and a **Profile** section lists the
+generated parameters (private key left out). Saving turns the row into a
+"Saved to tunnels ✓" indicator until something changes. "Your WARP tunnels"
+last. No config text, copy, download or QR in the app (the site has those).
 
 **Rule: the configs follow the site's configurator.** Same choice (WireGuard
 or AmneziaWG), same advanced options, same defaults and fallbacks, so both
@@ -800,12 +796,12 @@ conflicts.
 | `service/autotunnel/AutoTunnelService.kt` | Tunnel flow wrapped in `QuartzAutoTunnel.candidates(…)` (skips expired, done); group targets later | WARP expiry, groups |
 | `data/backup/BackupArchive.kt`, `DatabaseBackup.kt` | Optional `quartz/…` zip entries (encrypted like the database); `QuartzBackup.export()` / `restore()` calls | Fork data in backups |
 | `ui/navigation/Route.kt` | `Route.Warp` (Info tab), `Route.Clash(id)` (+ `Tab` mapping) | WARP, Clash screens |
-| `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route; Tunnels top bar is just Add + delay test (`rememberQuartzDelayTest`), no ⋮ menu (reorder/ping) | Exhaustive `when` over `Route`; simpler top bar |
-| `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>` | Nav graph |
+| `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route; Tunnels top bar is just Add + delay test (`rememberQuartzDelayTest`, tests everything), no ⋮ menu (reorder/ping) | Exhaustive `when` over `Route`; simpler top bar |
+| `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>`; upstream's `Toaster` drawn only `if (QUARTZ_TOASTS)` (false: no toasts) | Nav graph; no toasts |
 | `viewmodel/SharedAppViewModel.kt` | `importTunnelConfigs`: `QuartzImport.claim(…)` first; `importFromUrl`: `QuartzImport.claimUrl(url)` first (2 lines) | Stock add paths take Clash/OpenVPN/links/subscriptions |
 | `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused | Files of any type |
 | `ui/screens/tunnels/components/TunnelStatisticsRow.kt` | Per-peer sections replaced by `QuartzIpInfo(activeTunnel)` (1 line) | Connection info: exit IP, location, ISP |
-| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); tunnel tap → `quartzTunnelRoute`; one `item { QuartzClashPanel() }` after the rows (Clash groups); normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`): hold to select, hold and drag to reorder; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
+| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); tunnel tap → `quartzTunnelRoute`; `QuartzRowExtras(row)` under each row (a Clash tunnel's groups and nodes); latency (`QuartzLatencyText`) before the switch on the right; normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`): hold to select, hold and drag to reorder; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |

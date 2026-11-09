@@ -11,13 +11,7 @@ import app.quartz.warp.WarpEndpoints
 import app.quartz.warp.WarpOptions
 import app.quartz.warp.WarpRepository
 import app.quartz.warp.WarpVariant
-import com.dokar.sonner.ToastType
-import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.domain.repository.GlobalEffectRepository
-import com.zaneschepke.wireguardautotunnel.domain.sideeffect.GlobalSideEffect
-import com.zaneschepke.wireguardautotunnel.util.FileUtils
-import com.zaneschepke.wireguardautotunnel.util.StringValue
-import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +58,9 @@ data class WarpForm(
 data class WarpUiState(
     val form: WarpForm = WarpForm(),
     val busy: Boolean = false,
+    val error: String? = null,
+    /** The current config was saved to tunnels (cleared when anything changes). */
+    val saved: Boolean = false,
     /** This visit's registration; options rebuild its config without registering again. */
     val generated: GeneratedWarp? = null,
 )
@@ -84,7 +81,8 @@ class WarpViewModel(
         )
 
     fun update(transform: (WarpForm) -> WarpForm) = _state.update {
-        it.copy(form = transform(it.form))
+        val form = transform(it.form)
+        it.copy(form = form, saved = it.saved && form == it.form, error = null)
     }
 
     fun reroll() = update { it.copy(endpoint = WarpEndpoints.random()) }
@@ -92,15 +90,14 @@ class WarpViewModel(
     /** Registers a new device (a failed attempt keeps the previous config, as on the site). */
     fun generate() {
         if (_state.value.busy) return
-        _state.update { it.copy(busy = true) }
+        _state.update { it.copy(busy = true, error = null) }
         viewModelScope.launch {
             runCatching { repository.generate(_state.value.form.toOptions()) }
                 .onSuccess { generated ->
-                    _state.update { it.copy(busy = false, generated = generated) }
+                    _state.update { it.copy(busy = false, generated = generated, saved = false) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(busy = false) }
-                    showError(e)
+                    _state.update { it.copy(busy = false, error = e.message ?: e.toString()) }
                 }
         }
     }
@@ -112,32 +109,25 @@ class WarpViewModel(
         _state.update { it.copy(busy = true) }
         viewModelScope.launch {
             runCatching { repository.save(generated, options) }
-                .onSuccess {
-                    // Saved: back to Generate for the next one.
-                    _state.update { it.copy(busy = false, generated = null) }
-                    val message =
-                        StringValue.StringResource(
-                            R.string.quartz_warp_saved_as,
-                            tunnelName(options),
-                        )
-                    globalEffectRepository.post(
-                        GlobalSideEffect.Snackbar(message, ToastType.Success)
-                    )
-                }
+                .onSuccess { _state.update { it.copy(busy = false, saved = true) } }
                 .onFailure { e ->
-                    _state.update { it.copy(busy = false) }
-                    showError(e)
+                    _state.update { it.copy(busy = false, error = e.message ?: e.toString()) }
                 }
         }
     }
 
-    private suspend fun showError(e: Throwable) =
-        globalEffectRepository.post(
-            GlobalSideEffect.Snackbar(
-                StringValue.DynamicString(e.message ?: e.toString()),
-                ToastType.Error,
-            )
-        )
+    /** The generated profile's parameters as "key = value" pairs (the private key left out). */
+    fun parameters(): List<Pair<String, String>> {
+        val generated = _state.value.generated ?: return emptyList()
+        return generated
+            .config(_state.value.form.toOptions())
+            .lineSequence()
+            .map { it.trim() }
+            .filter { it.contains('=') && !it.startsWith("#") && !it.startsWith("[") }
+            .map { it.substringBefore('=').trim() to it.substringAfter('=').trim() }
+            .filter { (key, _) -> !key.equals("PrivateKey", ignoreCase = true) }
+            .toList()
+    }
 
     companion object {
         fun tunnelName(options: WarpOptions) =

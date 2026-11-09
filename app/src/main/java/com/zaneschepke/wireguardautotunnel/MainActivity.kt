@@ -76,6 +76,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.quartz.clash.ui.ClashScreen
+import app.quartz.core.ui.QUARTZ_TOASTS
 import app.quartz.core.ui.QuartzInfoScreen
 import app.quartz.warp.ui.WarpScreen
 import com.dokar.sonner.TextToastAction
@@ -775,7 +776,8 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                             }
-                            Toaster(
+                            // [fork-ui] Quartz shows no toasts
+                            if (QUARTZ_TOASTS) Toaster(
                                 state = toaster,
                                 maxVisibleToasts = 1,
                                 alignment = Alignment.BottomCenter,
