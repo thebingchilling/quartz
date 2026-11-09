@@ -363,6 +363,11 @@ fun App(uiState: AppUiState, viewModel: AppViewModel, toaster: ToasterState) {
                                     }
                                     entry<Route.Support> { SupportScreen() }
                                     entry<Route.License> { LicenseScreen() }
+                                    entry<Route.Warp> { // [fork] Quartz WARP generator
+                                        app.quartz.windows.warp.DesktopWarpScreen(
+                                            onBack = { navController.pop() }
+                                        )
+                                    }
                                     entry<Route.Donate> { DonateScreen(viewModel) }
                                     entry<Route.Addresses> { AddressesScreen() }
                                     entry<Route.Appearance> { AppearanceScreen() }

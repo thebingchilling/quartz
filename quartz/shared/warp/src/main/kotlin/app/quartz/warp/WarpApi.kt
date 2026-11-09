@@ -2,7 +2,7 @@ package app.quartz.warp
 
 import com.wgtunnel.parser.crypto.Key
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
@@ -41,7 +41,8 @@ interface WarpApi {
 }
 
 class CloudflareWarpApi(
-    private val client: HttpClient = defaultClient(),
+    /** Engine chosen per platform (OkHttp on Android, CIO on Windows); see [warpTimeouts]. */
+    private val client: HttpClient,
     private val baseUrl: String = "https://api.cloudflareclient.com",
 ) : WarpApi {
 
@@ -135,13 +136,13 @@ class CloudflareWarpApi(
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US)
                 .withZone(java.time.ZoneOffset.UTC)
 
-        fun defaultClient() =
-            HttpClient(OkHttp) {
-                install(HttpTimeout) {
-                    requestTimeoutMillis = 30_000
-                    connectTimeoutMillis = 15_000
-                }
+        /** The timeouts the API client uses, whatever its engine. */
+        fun HttpClientConfig<*>.warpTimeouts() {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 30_000
+                connectTimeoutMillis = 15_000
             }
+        }
 
         /** Cloudflare's own message from `errors[0].message` or `error.message`, if any. */
         fun apiErrorMessage(json: JsonObject): String? =

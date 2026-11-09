@@ -42,10 +42,13 @@ upstream merge that conflicts, an engine bump). Upstream Android's branch is
       engine-bridge/            ← MultiEngineTunnelProvider, Clash profiles, mihomo VpnService + companion, manifest
       engine-mihomo/            ← cgo/JNI wrapper around mihomo (go/) + Kotlin MihomoEngine and REST API client (src/)
       importer/                 ← detecting importer (share links, Clash YAML, subscriptions, sing-box, templates)
-      warp/                     ← WARP generator (logic + screen); assets/warp/awg-payloads.txt = captured I1 packets
+      warp/                     ← WARP generator: Android repository, expiry and screen
+      clash-ui/                 ← Clash groups/nodes on the Tunnels list, delay test, refresh, Clash tunnel screen
       branding/                 ← resource overlay: icon, TV banner, notification glyph (res/), sources and PNGs (icon/)
-      (later: engine-openvpn/, groups/, clash-ui/, connection-info/)
-    windows/                    ← Quartz files for the desktop app (none needed yet; see its README)
+      (later: engine-openvpn/, groups/, connection-info/)
+    shared/
+      warp/                     ← platform-neutral WARP core compiled into both apps (options, API, config builder, AWG packets; assets/warp/awg-payloads.txt)
+    windows/                    ← Quartz files for the desktop app: src/main/kotlin (WARP generator screen), added to desktop/composeApp's jvmMain
   FORK.md                       ← this file
   .github/workflows/
     quartz-release.yml          ← push to quartz/** or manual → build both apps, one release; "update" input merges upstream
@@ -519,6 +522,19 @@ produce identical configs. In the app a blank endpoint means the default and
 the dice fills in a random one (the site's Default/Random/Custom). Don't add
 options the site doesn't have; change both together.
 
+### Windows (desktop) app
+
+The same generator is on Windows: Support → **WARP generator**
+(`quartz/windows/…/warp`: `DesktopWarpScreen` built from the desktop app's
+own `SurfaceRow`, `ThemedSwitch`, `ConfigurationTextBox`; `DesktopWarp`
+saves into the desktop tunnels). Both apps compile the same core from
+`quartz/shared/warp` (options, Cloudflare API, config builder, AWG packets
+and the captured-packet asset), so configs are identical. The HTTP engine is
+picked per platform (OkHttp on Android, CIO on Windows). On Windows the WARP
+tunnel of each kind is found by its `# WGT-` markers (no fork database
+there); saving replaces its config in place and reconnects it if running.
+Not on Windows yet: expiry notifications/badges and import adoption.
+
 ### Generation
 
 1. Curve25519 key pair on the device (wgtunnel/core's `Key`, not the site's
@@ -804,6 +820,8 @@ conflicts.
 | `data/backup/BackupArchive.kt`, `DatabaseBackup.kt` | Optional `quartz/…` zip entries (encrypted like the database); `QuartzBackup.export()` / `restore()` calls | Fork data in backups |
 | `ui/navigation/Route.kt` | `Route.Warp` (Info tab), `Route.Clash(id)` (+ `Tab` mapping) | WARP, Clash screens |
 | `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route; Tunnels top bar is just Add, delay test (`rememberQuartzDelayTest`, greyed while connected) and refresh (`rememberQuartzRefresh`), no ⋮ menu (reorder/ping) | Exhaustive `when` over `Route`; simpler top bar |
+| `desktop/composeApp/build.gradle.kts` | `jvmMain` adds `quartz/shared/warp` and `quartz/windows` sources, the shared asset as a resource, and Ktor core + CIO | Windows WARP generator |
+| `desktop/…/ui/navigation/Route.kt`, `App.kt`, `ui/screens/support/SupportScreen.kt` | `Route.Warp` (+ tab, serializer), its `entry`, and a "WARP generator" row | Windows WARP generator |
 | `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>`; upstream's `Toaster` drawn only `if (QUARTZ_TOASTS)` (false: no toasts) | Nav graph; no toasts |
 | `viewmodel/SharedAppViewModel.kt` | `importTunnelConfigs`: `QuartzImport.claim(…)` first; `importFromUrl`: `QuartzImport.claimUrl(url)` first (2 lines) | Stock add paths take Clash/OpenVPN/links/subscriptions |
 | `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused | Files of any type |

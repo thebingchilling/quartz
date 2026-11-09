@@ -23,24 +23,6 @@ import timber.log.Timber
  * it (no new device); only "Register a new device" makes another. I1..I5 are picked once per
  * registration, so switching between WireGuard and AmneziaWG doesn't reshuffle them.
  */
-data class GeneratedWarp(
-    val registration: WarpRegistration,
-    val awg: AwgParams,
-    val expiresAt: Long,
-) {
-    fun endpoint(options: WarpOptions) =
-        WarpConfigBuilder.resolveEndpoint(options.endpoint, registration)
-
-    fun config(options: WarpOptions): String =
-        WarpConfigBuilder.build(
-            registration,
-            options.variant,
-            options,
-            endpoint(options),
-            awg.takeIf { options.variant == WarpVariant.AWG },
-            expiresAt,
-        )
-}
 
 /** A saved tunnel that belongs to a WARP slot. */
 data class SlotTunnel(val tunnel: TunnelConfig, val meta: TunnelMeta) {

@@ -83,7 +83,13 @@ val quartzModule = module {
     single { IpLookup(get(named(Scope.APPLICATION))) }
     single { QuartzTunnelOrder(get(), get()) }
 
-    single<WarpApi> { CloudflareWarpApi() }
+    single<WarpApi> {
+        CloudflareWarpApi(
+            io.ktor.client.HttpClient(io.ktor.client.engine.okhttp.OkHttp) {
+                with(CloudflareWarpApi) { warpTimeouts() }
+            }
+        )
+    }
     single {
         WarpRepository(
             context = androidContext(),

@@ -157,6 +157,16 @@ kotlin {
             implementation(libs.nucleus.autolaunch)
             implementation(libs.nucleus.service.management.macos)
             implementation(project(":daemon"))
+
+            // Quartz: the WARP generator's HTTP client (quartz/shared/warp, quartz/windows)
+            implementation(libs.ktor.client.core.jvm)
+            implementation(libs.ktor.client.cio.jvm)
+        }
+        // Quartz fork code: the platform-neutral core shared with Android, and the Windows screens
+        jvmMain.configure {
+            kotlin.srcDir(rootDir.resolve("../quartz/shared/warp/src/main/kotlin"))
+            kotlin.srcDir(rootDir.resolve("../quartz/windows/src/main/kotlin"))
+            resources.srcDir(rootDir.resolve("../quartz/shared/warp/src/main/assets"))
         }
     }
     compilerOptions {

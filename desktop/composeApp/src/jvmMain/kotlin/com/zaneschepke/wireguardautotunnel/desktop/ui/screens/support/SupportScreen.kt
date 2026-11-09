@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Launch
 import androidx.compose.material.icons.outlined.Balance
 import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.InstallDesktop
@@ -159,6 +160,19 @@ fun SupportScreen(viewModel: SupportViewModel = koinViewModel()) {
                 stringResource(Res.string.thank_you),
                 modifier = Modifier.padding(horizontal = 16.dp),
                 MaterialTheme.colorScheme.onSurface,
+            )
+            // [fork] Quartz: WARP generator (quartz/windows)
+            SurfaceRow(
+                leading = {
+                    Icon(Icons.Outlined.Cloud, contentDescription = null)
+                },
+                title = "WARP generator",
+                description = {
+                    com.zaneschepke.wireguardautotunnel.desktop.ui.common.text.DescriptionText(
+                        "Free Cloudflare WARP configs, standard or AmneziaWG"
+                    )
+                },
+                onClick = { navController.push(Route.Warp) },
             )
             Column {
                 GroupLabel(

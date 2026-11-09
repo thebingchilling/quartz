@@ -26,6 +26,9 @@ sealed class Route : NavKey {
 
     @Keep @Serializable data object License : Route()
 
+    /** Quartz: the WARP generator (quartz/windows). */
+    @Keep @Serializable data object Warp : Route()
+
     @Keep @Serializable data object Logs : Route()
 
     @Keep @Serializable data object Appearance : Route()
@@ -129,6 +132,7 @@ enum class Tab(
                 Route.Startup -> SETTINGS
                 is Route.Support,
                 Route.License,
+                Route.Warp,
                 Route.Donate,
                 Route.Addresses -> SUPPORT
             }
@@ -139,6 +143,7 @@ fun routeSerializersModule(): SerializersModule = SerializersModule {
     polymorphic(NavKey::class) {
         subclass(Route.Support::class, Route.Support.serializer())
         subclass(Route.License::class, Route.License.serializer())
+        subclass(Route.Warp::class, Route.Warp.serializer())
         subclass(Route.Logs::class, Route.Logs.serializer())
         subclass(Route.Appearance::class, Route.Appearance.serializer())
         subclass(Route.Display::class, Route.Display.serializer())

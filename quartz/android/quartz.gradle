@@ -84,6 +84,9 @@ android {
             main.assets.directories.add("$dir/main/assets")
             test.kotlin.directories.add("$dir/test/java")
         }
+        // Platform-neutral code shared with the Windows app (quartz/shared): the WARP generator core.
+        main.kotlin.directories.add("$rootDir/quartz/shared/warp/src/main/kotlin")
+        main.assets.directories.add("$rootDir/quartz/shared/warp/src/main/assets")
     }
 }
 
