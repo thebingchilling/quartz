@@ -20,13 +20,28 @@ import org.koin.compose.koinInject
 
 /**
  * Hold a row and drag it to reorder, straight on the Tunnels list (no separate reorder mode),
- * as in WG Tunnel Desktop. A hold without moving still selects the row, as before; once the row
- * moves, that selection is dropped and the drag reorders. Wired into upstream's TunnelList.kt.
+ * as in WG Tunnel Desktop. The hold belongs to the drag handle: released without moving, it
+ * selects the row as upstream's hold did; moved, it reorders. Wired into upstream's TunnelList.kt.
  */
 @Stable
 class QuartzTunnelDrag
 internal constructor(private val order: QuartzTunnelOrder, private val scope: CoroutineScope) {
     private var draft by mutableStateOf<Pair<List<TunnelGroup>, List<TunnelConfig>>?>(null)
+    private var moved = false
+
+    /** A row was held long enough to drag. */
+    fun onHold(row: TunnelListRow) {
+        moved = false
+    }
+
+    /** The hold ended: without moving, it selects the row (the hold upstream used to select). */
+    fun onRelease(row: TunnelListRow, viewModel: SharedAppViewModel) {
+        if (moved) return
+        when (row) {
+            is TunnelListRow.TunnelRow -> viewModel.toggleSelectedTunnel(row.tunnel.id)
+            is TunnelListRow.GroupHeader -> viewModel.toggleSelectedGroup(row.group.id)
+        }
+    }
 
     /** The rows to show: the drag's order while one is in progress or being saved. */
     fun rows(uiState: TunnelsUiState): List<TunnelListRow> =
@@ -53,18 +68,7 @@ internal constructor(private val order: QuartzTunnelOrder, private val scope: Co
         val moved =
             QuartzTunnelOrder.moveDisplayedRows(groups, tunnels, from, to, rows) ?: return false
         draft = moved
-        // The hold that started this drag also selected the row: it's a drag, not a selection.
-        val row = rows[from]
-        val onlyThisSelected =
-            when (row) {
-                is TunnelListRow.TunnelRow ->
-                    uiState.selectedGroups.isEmpty() &&
-                        uiState.selectedTunnels.singleOrNull()?.id == row.tunnel.id
-                is TunnelListRow.GroupHeader ->
-                    uiState.selectedTunnels.isEmpty() &&
-                        uiState.selectedGroups.singleOrNull()?.id == row.group.id
-            }
-        if (onlyThisSelected) viewModel.clearSelectedTunnels()
+        this.moved = true
         return true
     }
 

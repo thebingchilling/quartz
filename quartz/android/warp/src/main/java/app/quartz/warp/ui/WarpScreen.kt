@@ -169,27 +169,6 @@ fun WarpScreen(viewModel: WarpViewModel = koinViewModel()) {
             }
         }
 
-        if (state.generated != null) {
-            Column {
-                Box(
-                    modifier = Modifier.height(48.dp).padding(horizontal = 16.dp),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    GroupLabel(stringResource(R.string.quartz_warp_profile))
-                }
-                viewModel.parameters().forEach { (key, value) ->
-                    SurfaceRow(
-                        title = key,
-                        description = {
-                            DescriptionText(
-                                if (value.length > 64) value.take(64) + "…" else value
-                            )
-                        },
-                    )
-                }
-            }
-        }
-
         if (warpTunnels.isNotEmpty()) {
             Column {
                 Box(

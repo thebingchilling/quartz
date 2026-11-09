@@ -52,6 +52,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.quartz.clash.ui.QuartzDelays
+import app.quartz.clash.ui.QuartzPullToRefresh
 import app.quartz.clash.ui.QuartzLatencyText
 import app.quartz.clash.ui.QuartzRowExtras
 import app.quartz.core.ui.QuartzTunnelDragEffects
@@ -155,6 +156,7 @@ fun TunnelList(
 
     QuartzTunnelDragEffects(quartzDrag, reorderableLazyListState.isAnyItemDragging, uiState)
 
+    QuartzPullToRefresh { // [fork-ui] pull to refresh subscriptions, Clash nodes, exit IP
     LazyColumn(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.Top),
@@ -327,11 +329,13 @@ fun TunnelList(
                                     if (!isTv && quartzDrag.canDrag(row))
                                         Modifier.draggableHandle(
                                             onDragStarted = {
+                                                quartzDrag.onHold(row)
                                                 hapticFeedback.performHapticFeedback(
                                                     HapticFeedbackType.GestureThresholdActivate
                                                 )
                                             },
                                             onDragStopped = {
+                                                quartzDrag.onRelease(row, viewModel)
                                                 hapticFeedback.performHapticFeedback(
                                                     HapticFeedbackType.GestureEnd
                                                 )
@@ -346,6 +350,7 @@ fun TunnelList(
                 }
             }
         }
+    }
     }
 }
 
@@ -422,8 +427,9 @@ private fun ListRow(
                     }
                 },
                 selected = isDragging || uiState.selectedGroups.any { it.id == row.group.id },
+                // [fork-ui] a hold is the drag handle's (it selects when released unmoved)
                 onLongClick =
-                    if (uiState.isReorderMode) null
+                    if (uiState.isReorderMode || (!isTv && !row.visibleExpanded)) null
                     else {
                         { viewModel.toggleSelectedGroup(row.group.id) }
                     },
@@ -494,8 +500,9 @@ private fun ListRow(
                     } else {
                         null
                     },
+                // [fork-ui] a hold is the drag handle's (it selects when released unmoved)
                 onLongClick =
-                    if (uiState.isReorderMode) null
+                    if (uiState.isReorderMode || !isTv) null
                     else {
                         { viewModel.toggleSelectedTunnel(tunnel.id) }
                     },

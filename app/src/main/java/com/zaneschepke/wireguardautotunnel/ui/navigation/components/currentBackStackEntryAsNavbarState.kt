@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.NetworkCheck
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Reorder
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.DropdownMenu
@@ -38,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.quartz.clash.ui.rememberQuartzDelayTest
+import app.quartz.clash.ui.rememberQuartzRefresh
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.ui.navigation.NavController
 import com.zaneschepke.wireguardautotunnel.ui.navigation.Route
@@ -460,8 +462,10 @@ fun currentRouteAsNavbarState(
                                         }
                                     }
                                 else -> {
-                                    // [fork-ui] Add and delay test only; hold a row to reorder
+                                    // [fork-ui] Add, delay test (off while connected) and refresh;
+                                    // hold a row to reorder
                                     val delayTest = rememberQuartzDelayTest()
+                                    val refresh = rememberQuartzRefresh()
                                     Row {
                                         IconButton(
                                             onClick = {
@@ -475,10 +479,19 @@ fun currentRouteAsNavbarState(
                                                 stringResource(R.string.add_tunnel),
                                             )
                                         }
-                                        IconButton(onClick = delayTest) {
+                                        IconButton(
+                                            onClick = delayTest,
+                                            enabled = !globalState.hasActiveTunnel,
+                                        ) {
                                             Icon(
                                                 Icons.Rounded.NetworkCheck,
                                                 stringResource(R.string.ping_servers),
+                                            )
+                                        }
+                                        IconButton(onClick = refresh) {
+                                            Icon(
+                                                Icons.Rounded.Refresh,
+                                                stringResource(R.string.quartz_refresh),
                                             )
                                         }
                                     }

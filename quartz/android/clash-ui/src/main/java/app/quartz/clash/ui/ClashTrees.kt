@@ -43,6 +43,10 @@ data class ClashTree(
 ) {
     fun groupNames(): Set<String> = groups.map { it.name }.toSet()
 
+    /** The group that starts open: the first one the user picks a node in (usually PROXY). */
+    val mainGroup: String?
+        get() = (groups.firstOrNull { it.selectable } ?: groups.firstOrNull())?.name
+
     /** Every node any group lists, once. */
     fun testableNodes(): List<ClashNode> =
         groups
@@ -61,6 +65,8 @@ data class ClashTree(
 class ClashTrees(
     private val profiles: ClashProfiles,
     private val runner: MihomoRunner,
+    /** mihomo's home directory, where it caches proxy-provider downloads. */
+    private val mihomoHome: File,
     private val scope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
 ) {
@@ -116,6 +122,11 @@ class ClashTrees(
         return ClashTree(groups, nodes, live = true)
     }
 
+    /**
+     * The profile as written, without mihomo: inline proxies plus the nodes of its proxy
+     * providers from mihomo's cache of them (so a subscription shows everything once it has run
+     * at least once), groups with `use`, `filter`, `exclude-filter` and `include-all` applied.
+     */
     @Suppress("UNCHECKED_CAST")
     private suspend fun offline(tunnelId: Int): ClashTree? =
         withContext(ioDispatcher) {
@@ -124,29 +135,73 @@ class ClashTrees(
             val mapping =
                 runCatching { ClashYaml.parseMapping(file.readText()) }.getOrNull()
                     ?: return@withContext null
-            val nodes =
-                ClashYaml.proxies(mapping)
-                    .mapNotNull { p ->
-                        val name = p["name"]?.toString() ?: return@mapNotNull null
-                        name to ClashNode(name, p["type"]?.toString().orEmpty(), p["server"]?.toString())
-                    }
-                    .toMap()
+            val inline = nodesOf(mapping)
+            val providers: Map<String, List<ClashNode>> =
+                (mapping["proxy-providers"] as? Map<String, Any?>).orEmpty().mapValues { (name, value) ->
+                    providerNodes(name, value as? Map<String, Any?>)
+                }
+            val nodes = (inline + providers.values.flatten()).associateBy { it.name }
+            val groupMaps =
+                (mapping["proxy-groups"] as? List<*>).orEmpty().mapNotNull { it as? Map<String, Any?> }
             val groups =
-                (mapping["proxy-groups"] as? List<*>).orEmpty().mapNotNull { entry ->
-                    val g = entry as? Map<String, Any?> ?: return@mapNotNull null
+                groupMaps.mapNotNull { g ->
                     if (g["hidden"] == true) return@mapNotNull null
                     val name = g["name"]?.toString() ?: return@mapNotNull null
                     val type = g["type"]?.toString().orEmpty()
+                    val listed = (g["proxies"] as? List<*>).orEmpty().map { it.toString() }
+                    val used =
+                        if (g["include-all"] == true || g["include-all-providers"] == true)
+                            providers.values.flatten()
+                        else (g["use"] as? List<*>).orEmpty().flatMap { providers[it.toString()].orEmpty() }
+                    val all =
+                        if (g["include-all"] == true || g["include-all-proxies"] == true) inline
+                        else emptyList()
+                    val filter = g["filter"]?.toString()?.let { runCatching { Regex(it) }.getOrNull() }
+                    val exclude =
+                        g["exclude-filter"]?.toString()?.let { runCatching { Regex(it) }.getOrNull() }
+                    val pulled =
+                        (all + used)
+                            .map { it.name }
+                            .filter { n -> filter == null || filter.containsMatchIn(n) }
+                            .filter { n -> exclude == null || !exclude.containsMatchIn(n) }
                     ClashGroup(
                         name = name,
                         type = type,
                         now = null,
-                        members = (g["proxies"] as? List<*>).orEmpty().map { it.toString() },
+                        members = (listed + pulled).distinct(),
                         selectable = type.equals("select", ignoreCase = true),
                     )
                 }
             ClashTree(groups, nodes, live = false)
         }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun nodesOf(mapping: Map<String, Any?>): List<ClashNode> =
+        ClashYaml.proxies(mapping).mapNotNull { p ->
+            val name = p["name"]?.toString() ?: return@mapNotNull null
+            ClashNode(name, p["type"]?.toString().orEmpty(), p["server"]?.toString())
+        }
+
+    /** A provider's nodes from mihomo's cached copy (its `path`, or mihomo's default path). */
+    private fun providerNodes(name: String, provider: Map<String, Any?>?): List<ClashNode> {
+        provider ?: return emptyList()
+        val path = provider["path"]?.toString()
+        val url = provider["url"]?.toString()
+        val candidates =
+            listOfNotNull(
+                path?.let { if (File(it).isAbsolute) File(it) else File(mihomoHome, it) },
+                url?.let { File(mihomoHome, "proxies/" + md5(it)) },
+                File(mihomoHome, "proxies/$name.yaml"),
+            )
+        val text = candidates.firstOrNull { it.isFile }?.let { runCatching { it.readText() }.getOrNull() }
+        val mapping = text?.let { ClashYaml.parseMapping(it) } ?: return emptyList()
+        return nodesOf(mapping)
+    }
+
+    private fun md5(text: String): String =
+        java.security.MessageDigest.getInstance("MD5")
+            .digest(text.toByteArray())
+            .joinToString("") { "%02x".format(it) }
 }
 
 private val BUILT_IN = setOf("direct", "reject", "rejectdrop", "pass", "compatible", "dns")

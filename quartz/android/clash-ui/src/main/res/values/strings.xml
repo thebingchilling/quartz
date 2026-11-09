@@ -9,6 +9,7 @@
     <string name="quartz_clash_web_page">Provider page</string>
     <string name="quartz_clash_not_running">Its proxy groups and nodes are listed under it on the Tunnels screen.</string>
     <string name="quartz_clash_group">Group</string>
+    <string name="quartz_refresh">Refresh</string>
     <string name="quartz_clash_provider_node">From a provider</string>
     <string name="quartz_clash_controls_on_tunnels">Its proxy groups and nodes are listed under it on the Tunnels screen.</string>
     <string name="quartz_clash_tunnel_settings">Tunnel settings</string>

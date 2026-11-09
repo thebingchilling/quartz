@@ -116,19 +116,6 @@ class WarpViewModel(
         }
     }
 
-    /** The generated profile's parameters as "key = value" pairs (the private key left out). */
-    fun parameters(): List<Pair<String, String>> {
-        val generated = _state.value.generated ?: return emptyList()
-        return generated
-            .config(_state.value.form.toOptions())
-            .lineSequence()
-            .map { it.trim() }
-            .filter { it.contains('=') && !it.startsWith("#") && !it.startsWith("[") }
-            .map { it.substringBefore('=').trim() to it.substringAfter('=').trim() }
-            .filter { (key, _) -> !key.equals("PrivateKey", ignoreCase = true) }
-            .toList()
-    }
-
     companion object {
         fun tunnelName(options: WarpOptions) =
             WarpConfigBuilder.tunnelName(options.slot, options.variant)

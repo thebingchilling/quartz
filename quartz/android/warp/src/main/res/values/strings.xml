@@ -24,7 +24,6 @@
     <string name="quartz_warp_generate_button">Generate</string>
     <string name="quartz_warp_expires_on">Expires %1$s</string>
     <string name="quartz_warp_saved">Your WARP tunnels</string>
-    <string name="quartz_warp_profile">Profile</string>
     <string name="quartz_warp_applied">Saved to tunnels</string>
     <string name="quartz_warp_applied_desc">%1$s is up to date</string>
 

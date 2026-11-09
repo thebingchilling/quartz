@@ -8,6 +8,7 @@ import app.quartz.bridge.SubscriptionWorker
 import app.quartz.bridge.Subscriptions
 import app.quartz.clash.ui.ClashTrees
 import app.quartz.clash.ui.QuartzDelays
+import app.quartz.clash.ui.QuartzRefresh
 import app.quartz.clash.ui.ClashViewModel
 import app.quartz.core.ip.IpLookup
 import app.quartz.core.ui.QuartzTunnelOrder
@@ -68,7 +69,16 @@ val quartzModule = module {
     viewModel { (tunnelId: Int) ->
         ClashViewModel(tunnelId, get(), get(), get(), get(), get(), get(), get())
     }
-    single { ClashTrees(get(), get(), get(named(Scope.APPLICATION)), get(named(Dispatcher.IO))) }
+    single {
+        ClashTrees(
+            get(),
+            get(),
+            File(androidContext().filesDir, "mihomo"),
+            get(named(Scope.APPLICATION)),
+            get(named(Dispatcher.IO)),
+        )
+    }
+    single { QuartzRefresh(get(), get(), get(), get(), get(), get(named(Scope.APPLICATION))) }
     single { QuartzDelays(get(), get(), get(), get(named(Scope.APPLICATION))) }
     single { IpLookup(get(named(Scope.APPLICATION))) }
     single { QuartzTunnelOrder(get(), get()) }
