@@ -26,16 +26,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class EndpointMode {
-    DEFAULT,
-    RANDOM,
-    CUSTOM,
-}
-
 /** The site configurator's fields, kept as text while editing. */
 data class WarpForm(
     val variant: WarpVariant = WarpVariant.WG,
-    val endpointMode: EndpointMode = EndpointMode.DEFAULT,
     val endpoint: String = "",
     val dns: String = WarpOptions.DEFAULT_DNS,
     val mtu: String = WarpOptions.DEFAULT_MTU.toString(),
@@ -52,16 +45,10 @@ data class WarpForm(
         WarpOptions(
             variant = variant,
             junk = Junk(int(jc, 4), int(jMin, 40), int(jMax, 70)),
+            // Blank is Cloudflare's default endpoint; the dice fills in a random one.
             endpoint =
-                when (endpointMode) {
-                    EndpointMode.DEFAULT -> EndpointChoice.Default
-                    EndpointMode.RANDOM -> EndpointChoice.Random(endpoint)
-                    EndpointMode.CUSTOM ->
-                        endpoint
-                            .trim()
-                            .takeIf { it.isNotEmpty() }
-                            ?.let { EndpointChoice.Custom(it) } ?: EndpointChoice.Default
-                },
+                endpoint.trim().takeIf { it.isNotEmpty() }?.let { EndpointChoice.Custom(it) }
+                    ?: EndpointChoice.Default,
             mtu = int(mtu, WarpOptions.DEFAULT_MTU),
             dns = dns.trim(),
             allowedIps = allowedIps.trim().ifEmpty { WarpOptions.DEFAULT_ALLOWED_IPS },
@@ -77,7 +64,6 @@ data class WarpForm(
 data class WarpUiState(
     val form: WarpForm = WarpForm(),
     val busy: Boolean = false,
-    val error: String? = null,
     /** This visit's registration; options rebuild its config without registering again. */
     val generated: GeneratedWarp? = null,
 )
@@ -98,50 +84,37 @@ class WarpViewModel(
         )
 
     fun update(transform: (WarpForm) -> WarpForm) = _state.update {
-        it.copy(form = transform(it.form), error = null)
-    }
-
-    fun setEndpointMode(mode: EndpointMode) = update {
-        it.copy(
-            endpointMode = mode,
-            endpoint = if (mode == EndpointMode.RANDOM) WarpEndpoints.random() else it.endpoint,
-        )
+        it.copy(form = transform(it.form))
     }
 
     fun reroll() = update { it.copy(endpoint = WarpEndpoints.random()) }
 
-    /** Editing a random pick makes it a custom endpoint, as on the site. */
-    fun editEndpoint(value: String) = update {
-        it.copy(
-            endpoint = value,
-            endpointMode =
-                if (it.endpointMode == EndpointMode.RANDOM) EndpointMode.CUSTOM
-                else it.endpointMode,
-        )
-    }
-
     /** Registers a new device (a failed attempt keeps the previous config, as on the site). */
     fun generate() {
-        _state.update { it.copy(busy = true, error = null) }
+        if (_state.value.busy) return
+        _state.update { it.copy(busy = true) }
         viewModelScope.launch {
             runCatching { repository.generate(_state.value.form.toOptions()) }
                 .onSuccess { generated ->
                     _state.update { it.copy(busy = false, generated = generated) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(busy = false, error = e.message ?: e.toString()) }
+                    _state.update { it.copy(busy = false) }
+                    showError(e)
                 }
         }
     }
 
     fun save() {
         val generated = _state.value.generated ?: return
+        if (_state.value.busy) return
         val options = _state.value.form.toOptions()
         _state.update { it.copy(busy = true) }
         viewModelScope.launch {
             runCatching { repository.save(generated, options) }
                 .onSuccess {
-                    _state.update { it.copy(busy = false) }
+                    // Saved: back to Generate for the next one.
+                    _state.update { it.copy(busy = false, generated = null) }
                     val message =
                         StringValue.StringResource(
                             R.string.quartz_warp_saved_as,
@@ -152,32 +125,19 @@ class WarpViewModel(
                     )
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(busy = false, error = e.message ?: e.toString()) }
+                    _state.update { it.copy(busy = false) }
+                    showError(e)
                 }
         }
     }
 
-    /** Downloads the config as warp.conf / warp-awg.conf, the site's file names. */
-    fun download() {
-        val generated = _state.value.generated ?: return
-        val options = _state.value.form.toOptions()
-        val config = generated.config(options)
-        viewModelScope.launch {
-            globalEffectRepository.post(
-                GlobalSideEffect.ExportFile(
-                    uri = null,
-                    fileName =
-                        if (options.variant == WarpVariant.AWG) "warp-awg.conf" else "warp.conf",
-                    mimeType = FileUtils.ALL_FILE_TYPES,
-                    successMessage = StringValue.StringResource(R.string.export_success),
-                    prepareFile = { file ->
-                        file.writeText(config)
-                        if (file.length() == 0L) throw IOException("Failed to create config file")
-                    },
-                )
+    private suspend fun showError(e: Throwable) =
+        globalEffectRepository.post(
+            GlobalSideEffect.Snackbar(
+                StringValue.DynamicString(e.message ?: e.toString()),
+                ToastType.Error,
             )
-        }
-    }
+        )
 
     companion object {
         fun tunnelName(options: WarpOptions) =

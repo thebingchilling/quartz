@@ -1,8 +1,7 @@
 package app.quartz.warp.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,21 +9,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.Casino
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.SaveAlt
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,24 +25,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.quartz.warp.SlotTunnel
 import app.quartz.warp.WarpVariant
 import com.zaneschepke.wireguardautotunnel.R
+import com.zaneschepke.wireguardautotunnel.ui.LocalNavController
 import com.zaneschepke.wireguardautotunnel.ui.common.button.IconSurfaceButton
 import com.zaneschepke.wireguardautotunnel.ui.common.button.SurfaceRow
-import com.zaneschepke.wireguardautotunnel.ui.common.functions.rememberClipboardHelper
+import com.zaneschepke.wireguardautotunnel.ui.common.button.ThemedSwitch
 import com.zaneschepke.wireguardautotunnel.ui.common.label.GroupLabel
 import com.zaneschepke.wireguardautotunnel.ui.common.text.DescriptionText
 import com.zaneschepke.wireguardautotunnel.ui.common.textbox.ConfigurationTextBox
+import com.zaneschepke.wireguardautotunnel.ui.navigation.Route
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -57,26 +52,28 @@ import java.time.format.FormatStyle
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * The WARP generator: the site's configurator (thebingchilling/site tools/warp) in the app's own
- * style. One WARP and one WARP AWG tunnel: saving replaces the previous one of that kind.
+ * The WARP generator, built only from the app's own components: pick WireGuard or AmneziaWG
+ * (selection cards, as the Wi-Fi detection screen), optional advanced options (a switch row and
+ * the config editor's text boxes), then Generate; once generated, the only action is Save to
+ * tunnels, which replaces the WARP tunnel of that kind. Your WARP tunnels are listed last.
  */
 @Composable
 fun WarpScreen(viewModel: WarpViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val warpTunnels by viewModel.warpTunnels.collectAsStateWithLifecycle()
+    val navController = LocalNavController.current
     val form = state.form
-    val clipboard = rememberClipboardHelper()
     var showAdvanced by rememberSaveable { mutableStateOf(false) }
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
         modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(horizontal = 16.dp),
         ) {
-            GroupLabel(stringResource(R.string.quartz_warp_type))
             WarpVariant.entries.forEach { variant ->
                 IconSurfaceButton(
                     title =
@@ -97,119 +94,38 @@ fun WarpScreen(viewModel: WarpViewModel = koinViewModel()) {
 
         Column {
             SurfaceRow(
+                leading = { Icon(Icons.Outlined.Tune, contentDescription = null) },
                 title = stringResource(R.string.quartz_warp_advanced),
+                trailing = { modifier ->
+                    ThemedSwitch(
+                        checked = showAdvanced,
+                        onClick = { showAdvanced = it },
+                        modifier = modifier,
+                    )
+                },
                 onClick = { showAdvanced = !showAdvanced },
-                trailing = { modifier ->
-                    IconButton(onClick = { showAdvanced = !showAdvanced }, modifier = modifier) {
-                        Icon(
-                            if (showAdvanced) Icons.Outlined.ExpandLess
-                            else Icons.Outlined.ExpandMore,
-                            null,
-                        )
-                    }
-                },
             )
-            AnimatedVisibility(showAdvanced) { AdvancedOptions(form, viewModel) }
-            SurfaceRow(
-                leading = { Icon(Icons.Outlined.Autorenew, null) },
-                title =
-                    stringResource(
-                        if (state.generated == null) R.string.quartz_warp_generate
-                        else R.string.quartz_warp_register_new
-                    ),
-                description = {
-                    DescriptionText(stringResource(R.string.quartz_warp_generate_desc))
-                },
-                trailing = { modifier ->
-                    if (state.busy) CircularProgressIndicator(modifier.size(24.dp))
-                },
-                onClick = { if (!state.busy) viewModel.generate() },
-            )
-        }
+            if (showAdvanced) AdvancedOptions(form, viewModel)
 
-        state.error?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-        }
-
-        state.generated?.let { generated ->
-            val options = form.toOptions()
-            val config = remember(generated, options) { generated.config(options) }
-            val existing = warpTunnels.firstOrNull { it.variant == options.variant }
-            Column {
-                GroupLabel(
-                    stringResource(R.string.quartz_warp_account),
-                    Modifier.padding(horizontal = 16.dp),
-                )
-                Column(
-                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    DescriptionText(
-                        stringResource(
-                            R.string.quartz_warp_account_type,
-                            generated.registration.accountType ?: "free",
-                        )
-                    )
-                    generated.registration.license?.let {
-                        DescriptionText(stringResource(R.string.quartz_warp_license_key, it))
-                    }
-                    generated.registration.createdAt?.let {
-                        DescriptionText(
-                            stringResource(R.string.quartz_warp_created, formatDate(it))
-                        )
-                    }
-                    DescriptionText(
-                        stringResource(
-                            R.string.quartz_warp_expires_on,
-                            formatDate(generated.expiresAt),
-                        )
-                    )
-                }
-            }
-            Column {
-                GroupLabel(
-                    stringResource(R.string.quartz_warp_config),
-                    Modifier.padding(horizontal = 16.dp),
-                )
-                SelectionContainer(
-                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        .fillMaxWidth()
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(12.dp),
-                        )
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        config,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+            val existing = warpTunnels.firstOrNull { it.variant == form.variant }
+            if (state.generated == null) {
                 SurfaceRow(
-                    leading = { Icon(Icons.Outlined.ContentCopy, null) },
-                    title = stringResource(R.string.quartz_warp_copy),
-                    onClick = { clipboard.copy(config) },
-                )
-                SurfaceRow(
-                    leading = { Icon(Icons.Outlined.Download, null) },
-                    title = stringResource(R.string.quartz_warp_download),
+                    leading = { Icon(Icons.Outlined.Autorenew, contentDescription = null) },
+                    title = stringResource(R.string.quartz_warp_generate),
                     description = {
-                        DescriptionText(
-                            if (options.variant == WarpVariant.AWG) "warp-awg.conf" else "warp.conf"
-                        )
+                        DescriptionText(stringResource(R.string.quartz_warp_generate_desc))
                     },
-                    onClick = viewModel::download,
+                    trailing = {
+                        ActionButton(stringResource(R.string.quartz_warp_generate_button)) {
+                            viewModel.generate()
+                        }
+                    },
+                    onClick = viewModel::generate,
+                    enabled = !state.busy,
                 )
+            } else {
                 SurfaceRow(
-                    leading = { Icon(Icons.Outlined.SaveAlt, null) },
+                    leading = { Icon(Icons.Outlined.SaveAlt, contentDescription = null) },
                     title = stringResource(R.string.quartz_warp_save),
                     description = {
                         DescriptionText(
@@ -218,102 +134,95 @@ fun WarpScreen(viewModel: WarpViewModel = koinViewModel()) {
                             }
                                 ?: stringResource(
                                     R.string.quartz_warp_save_new,
-                                    WarpViewModel.tunnelName(options),
+                                    WarpViewModel.tunnelName(form.toOptions()),
                                 )
                         )
                     },
-                    onClick = { if (!state.busy) viewModel.save() },
+                    trailing = {
+                        ActionButton(stringResource(R.string.save)) { viewModel.save() }
+                    },
+                    onClick = viewModel::save,
+                    enabled = !state.busy,
                 )
             }
         }
 
         if (warpTunnels.isNotEmpty()) {
             Column {
-                GroupLabel(
-                    stringResource(R.string.quartz_warp_saved),
-                    Modifier.padding(horizontal = 16.dp),
-                )
-                warpTunnels.forEach { SlotTunnelRow(it) }
+                Box(
+                    modifier = Modifier.height(48.dp).padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    GroupLabel(stringResource(R.string.quartz_warp_saved))
+                }
+                warpTunnels.forEach { warp ->
+                    WarpTunnelRow(warp) {
+                        navController.push(Route.TunnelSettings(warp.tunnel.id))
+                    }
+                }
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
+/** The auto-tunnel screen's row button. */
+@Composable
+private fun ActionButton(text: String, onClick: () -> Unit) {
+    Button(onClick) {
+        Text(
+            text,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.surface),
+        )
+    }
+}
+
 @Composable
 private fun AdvancedOptions(form: WarpForm, viewModel: WarpViewModel) {
-    val box = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
     val number = KeyboardOptions(keyboardType = KeyboardType.Number)
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.padding(vertical = 8.dp),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(horizontal = 16.dp),
-        ) {
-            DescriptionText(stringResource(R.string.quartz_warp_endpoint))
-            EndpointMode.entries.forEach { mode ->
-                IconSurfaceButton(
-                    title =
-                        stringResource(
-                            when (mode) {
-                                EndpointMode.DEFAULT -> R.string.quartz_warp_endpoint_default
-                                EndpointMode.RANDOM -> R.string.quartz_warp_endpoint_random
-                                EndpointMode.CUSTOM -> R.string.quartz_warp_endpoint_custom
-                            }
-                        ),
-                    selected = form.endpointMode == mode,
-                    onClick = { viewModel.setEndpointMode(mode) },
-                )
-            }
-        }
-        if (form.endpointMode != EndpointMode.DEFAULT) {
-            ConfigurationTextBox(
-                value = form.endpoint,
-                label = stringResource(R.string.quartz_warp_endpoint_address),
-                hint = "162.159.192.1:2408",
-                onValueChange = viewModel::editEndpoint,
-                trailing =
-                    if (form.endpointMode == EndpointMode.RANDOM) {
-                        { modifier ->
-                            IconButton(onClick = viewModel::reroll, modifier = modifier) {
-                                Icon(
-                                    Icons.Outlined.Casino,
-                                    stringResource(R.string.quartz_warp_reroll),
-                                )
-                            }
-                        }
-                    } else null,
-                modifier = box,
-            )
-        }
-        Field(stringResource(R.string.quartz_warp_dns), form.dns, box) { v ->
+        ConfigurationTextBox(
+            value = form.endpoint,
+            label = stringResource(R.string.endpoint),
+            hint = stringResource(R.string._default),
+            onValueChange = { v -> viewModel.update { it.copy(endpoint = v) } },
+            trailing = { modifier ->
+                IconButton(onClick = viewModel::reroll, modifier = modifier) {
+                    Icon(Icons.Outlined.Casino, stringResource(R.string.quartz_warp_reroll))
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Field(stringResource(R.string.dns_servers), form.dns) { v ->
             viewModel.update { it.copy(dns = v) }
         }
-        Field(stringResource(R.string.quartz_warp_mtu), form.mtu, box, number) { v ->
+        Field(stringResource(R.string.mtu), form.mtu, number) { v ->
             viewModel.update { it.copy(mtu = v) }
         }
-        Field(stringResource(R.string.quartz_warp_allowed_ips), form.allowedIps, box) { v ->
+        Field(stringResource(R.string.allowed_ips), form.allowedIps) { v ->
             viewModel.update { it.copy(allowedIps = v) }
         }
-        Field(stringResource(R.string.quartz_warp_keepalive), form.keepalive, box, number) { v ->
+        Field(stringResource(R.string.persistent_keepalive), form.keepalive, number) { v ->
             viewModel.update { it.copy(keepalive = v) }
         }
-        Field(stringResource(R.string.quartz_warp_device_type), form.deviceType, box) { v ->
+        Field(stringResource(R.string.quartz_warp_device_type), form.deviceType) { v ->
             viewModel.update { it.copy(deviceType = v) }
         }
-        Field(stringResource(R.string.quartz_warp_locale), form.locale, box) { v ->
+        Field(stringResource(R.string.quartz_warp_locale), form.locale) { v ->
             viewModel.update { it.copy(locale = v) }
         }
         if (form.variant == WarpVariant.AWG) {
-            Field(stringResource(R.string.quartz_warp_jc), form.jc, box, number) { v ->
+            Field(stringResource(R.string.jc), form.jc, number) { v ->
                 viewModel.update { it.copy(jc = v) }
             }
-            Field(stringResource(R.string.quartz_warp_jmin), form.jMin, box, number) { v ->
+            Field(stringResource(R.string.jmin), form.jMin, number) { v ->
                 viewModel.update { it.copy(jMin = v) }
             }
-            Field(stringResource(R.string.quartz_warp_jmax), form.jMax, box, number) { v ->
+            Field(stringResource(R.string.jmax), form.jMax, number) { v ->
                 viewModel.update { it.copy(jMax = v) }
             }
         }
@@ -324,7 +233,6 @@ private fun AdvancedOptions(form: WarpForm, viewModel: WarpViewModel) {
 private fun Field(
     label: String,
     value: String,
-    modifier: Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     onChange: (String) -> Unit,
 ) {
@@ -334,16 +242,16 @@ private fun Field(
         hint = "",
         keyboardOptions = keyboardOptions,
         onValueChange = onChange,
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
 @Composable
-private fun SlotTunnelRow(slotTunnel: SlotTunnel) {
-    val meta = slotTunnel.meta
+private fun WarpTunnelRow(warp: SlotTunnel, onClick: () -> Unit) {
+    val meta = warp.meta
     val details =
         listOfNotNull(
-                slotTunnel.variant?.let {
+                warp.variant?.let {
                     stringResource(
                         if (it == WarpVariant.AWG) R.string.quartz_warp_awg
                         else R.string.quartz_warp_wg
@@ -355,7 +263,11 @@ private fun SlotTunnelRow(slotTunnel: SlotTunnel) {
                 },
             )
             .joinToString(" · ")
-    SurfaceRow(title = slotTunnel.tunnel.name, description = { DescriptionText(details) })
+    SurfaceRow(
+        title = warp.tunnel.name,
+        description = { DescriptionText(details) },
+        onClick = onClick,
+    )
 }
 
 private fun formatDate(millis: Long): String =

@@ -52,8 +52,10 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.quartz.clash.ui.QuartzClashPanel
+import app.quartz.core.ui.QuartzTunnelDragEffects
 import app.quartz.core.ui.quartzTunnelDescription
 import app.quartz.core.ui.quartzTunnelRoute
+import app.quartz.core.ui.rememberQuartzTunnelDrag
 import com.wgtunnel.backend.state.ActiveTunnel
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.domain.model.TunnelConfig
@@ -100,6 +102,9 @@ fun TunnelList(
     }
 
     val lazyListState = rememberLazyListState()
+    val quartzDrag = rememberQuartzTunnelDrag() // [fork-ui] hold and drag to reorder
+
+    val rows = if (uiState.isReorderMode) editableRows else quartzDrag.rows(uiState)
 
     fun persistRows(rows: List<TunnelListRow>) {
         val (groups, tunnels) =
@@ -117,6 +122,11 @@ fun TunnelList(
             lazyListState,
             scrollThresholdPadding = WindowInsets.systemBars.asPaddingValues(),
         ) { from, to ->
+            if (!uiState.isReorderMode) {
+                if (quartzDrag.onMove(from.key, to.key, rows, uiState, viewModel))
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                return@rememberReorderableLazyListState
+            }
             editableRows =
                 editableRows.toMutableList().apply { add(to.index, removeAt(from.index)) }
             persistRows(editableRows)
@@ -141,7 +151,7 @@ fun TunnelList(
         }
     }
 
-    val rows = if (uiState.isReorderMode) editableRows else uiState.rows
+    QuartzTunnelDragEffects(quartzDrag, reorderableLazyListState.isAnyItemDragging, uiState)
 
     LazyColumn(
         horizontalAlignment = Alignment.Start,
@@ -293,22 +303,43 @@ fun TunnelList(
                     )
                 }
             } else {
-                ListRow(
-                    row = row,
-                    index = index,
-                    rowCount = rows.size,
-                    uiState = uiState,
-                    viewModel = viewModel,
-                    isTv = isTv,
-                    isDragging = false,
-                    focusRequester = if (index == 0) focusRequester else null,
-                    onNavigateTunnel = {
-                        navController.push(
-                            quartzTunnelRoute(it, uiState.tunnels) ?: Route.TunnelSettings(it)
-                        )
-                    },
-                    modifier = Modifier.animateItem(),
-                )
+                // [fork-ui] hold and drag to reorder, no separate reorder mode
+                ReorderableItem(reorderableLazyListState, row.key, enabled = !isTv) { isDragging ->
+                    ListRow(
+                        row = row,
+                        index = index,
+                        rowCount = rows.size,
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        isTv = isTv,
+                        isDragging = isDragging,
+                        focusRequester = if (index == 0) focusRequester else null,
+                        onNavigateTunnel = {
+                            navController.push(
+                                quartzTunnelRoute(it, uiState.tunnels) ?: Route.TunnelSettings(it)
+                            )
+                        },
+                        modifier =
+                            Modifier.animateItem()
+                                .then(
+                                    if (!isTv && quartzDrag.canDrag(row))
+                                        Modifier.draggableHandle(
+                                            onDragStarted = {
+                                                hapticFeedback.performHapticFeedback(
+                                                    HapticFeedbackType.GestureThresholdActivate
+                                                )
+                                            },
+                                            onDragStopped = {
+                                                hapticFeedback.performHapticFeedback(
+                                                    HapticFeedbackType.GestureEnd
+                                                )
+                                            },
+                                            dragGestureDetector = DragGestureDetector.LongPress,
+                                        )
+                                    else Modifier
+                                ),
+                    )
+                }
             }
         }
         // [fork-ui] the running Clash tunnel's groups, mode and delay tests

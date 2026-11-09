@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.quartz.clash.ui.rememberQuartzDelayTest
 import com.zaneschepke.wireguardautotunnel.R
 import com.zaneschepke.wireguardautotunnel.ui.navigation.NavController
 import com.zaneschepke.wireguardautotunnel.ui.navigation.Route
@@ -459,8 +460,8 @@ fun currentRouteAsNavbarState(
                                         }
                                     }
                                 else -> {
-                                    var showOverflowMenu by remember { mutableStateOf(false) }
-                                    val showTunnelMenu = globalState.tunnelNames.size > 1
+                                    // [fork-ui] Add and delay test only; hold a row to reorder
+                                    val delayTest = rememberQuartzDelayTest(sharedViewModel)
                                     Row {
                                         IconButton(
                                             onClick = {
@@ -474,61 +475,11 @@ fun currentRouteAsNavbarState(
                                                 stringResource(R.string.add_tunnel),
                                             )
                                         }
-                                        if (showTunnelMenu) {
-                                            IconButton(onClick = { showOverflowMenu = true }) {
-                                                Icon(
-                                                    Icons.Outlined.MoreVert,
-                                                    contentDescription =
-                                                        stringResource(R.string.more_options),
-                                                )
-                                            }
-                                            DropdownMenu(
-                                                expanded = showOverflowMenu,
-                                                onDismissRequest = { showOverflowMenu = false },
-                                                containerColor =
-                                                    MaterialTheme.colorScheme.surface.copy(
-                                                        alpha = 0.8f
-                                                    ),
-                                                tonalElevation = 4.dp,
-                                                shadowElevation = 4.dp,
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(stringResource(R.string.reorder))
-                                                    },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Rounded.Reorder,
-                                                            contentDescription = null,
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        showOverflowMenu = false
-                                                        sharedViewModel.enterReorderMode()
-                                                    },
-                                                )
-                                                if (!globalState.hasActiveTunnel) {
-                                                    DropdownMenuItem(
-                                                        text = {
-                                                            Text(
-                                                                stringResource(
-                                                                    R.string.ping_servers
-                                                                )
-                                                            )
-                                                        },
-                                                        leadingIcon = {
-                                                            Icon(
-                                                                Icons.Rounded.NetworkCheck,
-                                                                contentDescription = null,
-                                                            )
-                                                        },
-                                                        onClick = {
-                                                            showOverflowMenu = false
-                                                            sharedViewModel.pingTunnels()
-                                                        },
-                                                    )
-                                                }
-                                            }
+                                        IconButton(onClick = delayTest) {
+                                            Icon(
+                                                Icons.Rounded.NetworkCheck,
+                                                stringResource(R.string.ping_servers),
+                                            )
                                         }
                                     }
                                 }

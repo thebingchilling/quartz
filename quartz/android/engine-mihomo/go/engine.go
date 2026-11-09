@@ -26,6 +26,8 @@ import (
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
+	"github.com/metacubex/mihomo/listener"
+	LC "github.com/metacubex/mihomo/listener/config"
 )
 
 var mu sync.Mutex
@@ -59,7 +61,7 @@ func start(homeDir, configPath string, tunFd int, controller, secret string) (re
 			result = fmt.Sprint("mihomo: ", r)
 		}
 	}()
-	executor.Shutdown()
+	shutdown()
 
 	C2.SetHomeDir(homeDir)
 	C2.SetConfig(configPath)
@@ -122,7 +124,16 @@ func applyAndroidOverrides(raw *config.RawConfig, tunFd int, controller, secret 
 func stop() {
 	mu.Lock()
 	defer mu.Unlock()
+	shutdown()
+}
+
+// shutdown stops mihomo and forgets the TUN settings it last applied. Shutdown closes the TUN
+// listener but keeps those settings, and the next start's TUN usually gets the same fd number, so
+// mihomo saw "unchanged" settings and never opened a listener on the new TUN: connected, but no
+// traffic.
+func shutdown() {
 	executor.Shutdown()
+	listener.LastTunConf = LC.Tun{}
 }
 
 // validate parses the profile at configPath without running it.

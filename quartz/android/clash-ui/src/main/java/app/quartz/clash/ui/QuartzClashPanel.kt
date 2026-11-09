@@ -1,28 +1,26 @@
 package app.quartz.clash.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Sort
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,229 +29,163 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.quartz.engine.mihomo.MihomoMode
 import app.quartz.engine.mihomo.MihomoProxy
 import com.zaneschepke.wireguardautotunnel.R
+import com.zaneschepke.wireguardautotunnel.ui.common.button.IconSurfaceButton
 import com.zaneschepke.wireguardautotunnel.ui.common.button.SurfaceRow
 import com.zaneschepke.wireguardautotunnel.ui.common.label.GroupLabel
-import com.zaneschepke.wireguardautotunnel.ui.common.text.DescriptionText
-import com.zaneschepke.wireguardautotunnel.ui.common.textbox.ConfigurationTextBox
 import com.zaneschepke.wireguardautotunnel.ui.theme.AlertRed
 import com.zaneschepke.wireguardautotunnel.ui.theme.SilverTree
 import com.zaneschepke.wireguardautotunnel.ui.theme.Straw
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * The running Clash tunnel's controls, right on the Tunnels screen under the tunnel list: mode,
- * one delay test for every node, search/sort, and every group as a drop-down of its nodes. Draws
- * nothing while no Clash tunnel runs. Called from one line in upstream's TunnelList.kt.
+ * The running Clash tunnel's proxy groups, under the tunnel list on the Tunnels screen: each group
+ * is a row like a tunnel group (a lone group starts open) with its nodes underneath, as a list of
+ * rows or a grid of the app's selection cards. Sort by delay and list/grid sit in the section
+ * header. Delays come from the Tunnels screen's delay test. Nothing shows while no Clash tunnel
+ * runs. Built only from the app's own components; called from one line in TunnelList.kt.
  */
 @Composable
-fun QuartzClashPanel(
-    modifier: Modifier = Modifier,
-    viewModel: ClashControlsViewModel = koinViewModel(),
-) {
+fun QuartzClashPanel(viewModel: ClashControlsViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val name by viewModel.name.collectAsStateWithLifecycle()
-    if (state.tunnelId == null) return
+    if (state.tunnelId == null || state.groups.isEmpty()) return
 
-    Column(modifier.fillMaxWidth().padding(top = 12.dp)) {
-        GroupLabel(
-            listOf(stringResource(R.string.quartz_clash), name)
-                .filter { it.isNotBlank() }
-                .joinToString(" · "),
-            Modifier.padding(horizontal = 16.dp),
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
-        ) {
-            Chips(
-                MihomoMode.entries,
-                state.mode,
-                { it.value.replaceFirstChar(Char::uppercase) },
-                viewModel::setMode,
-                Modifier.weight(1f),
-            )
-            TextButton(onClick = viewModel::testAll, enabled = !state.testing) {
-                if (state.testing) {
-                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Text(
-                        "${state.tested}/${state.toTest}",
-                        Modifier.padding(start = 6.dp),
-                    )
-                } else {
-                    Icon(Icons.Outlined.Bolt, null, Modifier.padding(end = 4.dp))
-                    Text(stringResource(R.string.quartz_clash_test_all))
-                }
-            }
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        ) {
-            ConfigurationTextBox(
-                value = state.query,
-                label = stringResource(R.string.quartz_clash_search),
-                hint = "",
-                onValueChange = viewModel::setQuery,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = viewModel::toggleSort) {
-                Icon(
-                    Icons.Outlined.Sort,
-                    stringResource(R.string.quartz_clash_sort),
-                    tint =
-                        if (state.sortByDelay) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline,
-                )
-            }
-        }
-        state.error?.let { error ->
-            Text(
-                error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            )
-        }
-        val proxies = state.proxies
-        if (proxies == null) {
-            CircularProgressIndicator(Modifier.padding(16.dp).size(28.dp))
-            return@Column
-        }
-        proxies.groups
-            .filter { !it.hidden && (it.name != "GLOBAL" || state.mode == MihomoMode.GLOBAL) }
-            .forEach { group ->
-                val members =
-                    group.all
-                        .mapNotNull { proxies.byName[it] }
-                        .filter {
-                            state.query.isBlank() || it.name.contains(state.query, ignoreCase = true)
-                        }
-                        .let { list ->
-                            if (state.sortByDelay)
-                                list.sortedBy { state.delayOf(it) ?: Int.MAX_VALUE }
-                            else list
-                        }
-                if (state.query.isNotBlank() && members.isEmpty()) return@forEach
-                GroupRow(
-                    group = group,
-                    members = members,
-                    delayOf = state::delayOf,
-                    selectedDelay = group.now?.let { proxies.byName[it] }?.let(state::delayOf),
-                    expanded = group.name in state.expanded || state.query.isNotBlank(),
-                    onToggle = { viewModel.toggle(group.name) },
-                    onSelect = { viewModel.select(group.name, it) },
-                )
-            }
-        Spacer(Modifier.size(16.dp))
-    }
-}
-
-@Composable
-private fun GroupRow(
-    group: MihomoProxy,
-    members: List<MihomoProxy>,
-    delayOf: (MihomoProxy) -> Int?,
-    selectedDelay: Int?,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    onSelect: (String) -> Unit,
-) {
     Column {
-        SurfaceRow(
-            title = group.name,
-            description = {
-                DescriptionText(listOfNotNull(group.type, group.now).joinToString(" · "))
-            },
-            onClick = onToggle,
-            trailing = { modifier ->
-                Row(
-                    modifier,
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (group.now != null) DelayText(selectedDelay)
+        // Section header, as upstream's config editor draws its "Interface" header
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Box(
+                modifier = Modifier.height(48.dp).padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                GroupLabel(stringResource(R.string.quartz_clash))
+            }
+            Row {
+                IconButton(onClick = viewModel::toggleSort) {
                     Icon(
-                        if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                        null,
+                        Icons.AutoMirrored.Rounded.Sort,
+                        stringResource(R.string.sort_by_latency),
+                        tint =
+                            if (state.sortByDelay) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface,
                     )
                 }
-            },
-        )
-        if (expanded) {
-            members.forEach { member ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier.fillMaxWidth()
-                            .then(
-                                if (group.isSelectable) Modifier.clickable { onSelect(member.name) }
-                                else Modifier
+                IconButton(onClick = viewModel::toggleGrid) {
+                    Icon(
+                        if (state.grid) Icons.AutoMirrored.Rounded.ViewList
+                        else Icons.Rounded.GridView,
+                        stringResource(
+                            if (state.grid) R.string.quartz_clash_list else R.string.quartz_clash_grid
+                        ),
+                    )
+                }
+            }
+        }
+        state.groups.forEach { group ->
+            val open = state.isOpen(group)
+            SurfaceRow(
+                leading = {
+                    Icon(
+                        if (open) Icons.Outlined.FolderOpen else Icons.Outlined.Folder,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                },
+                title = group.name,
+                description =
+                    group.now?.let { now ->
+                        {
+                            Text(
+                                text = now,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                            .padding(start = 40.dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
-                ) {
-                    if (member.name == group.now) {
-                        Icon(
-                            Icons.Rounded.CheckCircle,
-                            null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    } else Spacer(Modifier.size(16.dp))
-                    Column(Modifier.weight(1f).padding(start = 8.dp)) {
-                        Text(member.name, style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            member.type,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline,
+                        }
+                    },
+                onClick = { viewModel.toggle(group.name) },
+                trailing = { _ ->
+                    Icon(
+                        if (open) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                        contentDescription =
+                            stringResource(if (open) R.string.collapse_group else R.string.expand_group),
+                    )
+                },
+            )
+            if (open) {
+                val members = state.members(group)
+                val onSelect: (MihomoProxy) -> Unit = { node ->
+                    if (group.isSelectable) viewModel.select(group.name, node.name)
+                }
+                if (state.grid) NodeGrid(members, group, state::delayOf, onSelect)
+                else
+                    members.forEach { node ->
+                        val delay = state.delayOf(node)
+                        val tested = node.name in state.results || node.delay != null
+                        SurfaceRow(
+                            modifier = Modifier.padding(start = 24.dp),
+                            title = node.name,
+                            description =
+                                if (tested) {
+                                    {
+                                        Text(
+                                            text = delayLabel(delay),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = delayColor(delay),
+                                        )
+                                    }
+                                } else null,
+                            selected = node.name == group.now,
+                            onClick = { onSelect(node) },
                         )
                     }
-                    DelayText(delayOf(member))
-                }
             }
         }
     }
 }
 
+/** Nodes as the app's selection cards, two per row. */
 @Composable
-private fun DelayText(delay: Int?) {
-    Text(
-        delay?.let { "$it ms" } ?: "—",
-        color = delayColor(delay),
-        style = MaterialTheme.typography.bodySmall,
-    )
-}
-
-/** FORK.md §5 badge colours. */
-private fun delayColor(delay: Int?): Color =
-    when {
-        delay == null -> Color.Gray
-        delay < 300 -> SilverTree
-        delay < 800 -> Straw
-        else -> AlertRed
-    }
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun <T> Chips(
-    options: List<T>,
-    selected: T?,
-    label: (T) -> String,
-    onSelect: (T) -> Unit,
-    modifier: Modifier = Modifier,
+private fun NodeGrid(
+    members: List<MihomoProxy>,
+    group: MihomoProxy,
+    delayOf: (MihomoProxy) -> Int?,
+    onSelect: (MihomoProxy) -> Unit,
 ) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier.padding(horizontal = 16.dp),
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(start = 40.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
     ) {
-        options.forEach { option ->
-            FilterChip(
-                selected = option == selected,
-                onClick = { onSelect(option) },
-                label = { Text(label(option)) },
-            )
+        members.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                pair.forEach { node ->
+                    Box(Modifier.weight(1f)) {
+                        IconSurfaceButton(
+                            title = node.name,
+                            description = delayOf(node)?.let { "${it}ms" },
+                            selected = node.name == group.now,
+                            onClick = { onSelect(node) },
+                        )
+                    }
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
         }
     }
 }
+
+// The Tunnels list's own latency label and colours (TunnelList.kt pingLatencyLabel/Color).
+@Composable
+private fun delayLabel(delay: Int?): String =
+    delay?.let { "${it}ms" } ?: stringResource(R.string.ping_unreachable)
+
+private fun delayColor(delay: Int?): Color =
+    when {
+        delay == null -> AlertRed
+        delay <= 50 -> SilverTree
+        delay <= 150 -> Straw
+        else -> AlertRed
+    }

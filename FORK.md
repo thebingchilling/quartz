@@ -132,6 +132,17 @@ people working on this repo follow this:
   `pr.yml` (upstream's format check) runs on pull requests, so avoid opening
   PRs here; work goes straight to `main`.
 
+### App UI uses only the app's own components (standing rule)
+
+Every Quartz screen and control is built from components WG Tunnel already
+has (`SurfaceRow`, `IconSurfaceButton`, `ThemedSwitch`, `ConfigurationTextBox`,
+`GroupLabel`, `DescriptionText`, `CustomBottomSheet`, the auto-tunnel row's
+`Button`, Material `IconButton`/icons as upstream uses them) and follows the
+patterns upstream screens already use (section header = `GroupLabel` in a
+48 dp box; choose-one = `IconSurfaceButton` cards; on/off = `SurfaceRow` +
+`ThemedSwitch`; latency text and colours as on the tunnel list). No new
+components, cards, borders, chips, colours or layout rules.
+
 ### Releases
 
 - No nightlies, no schedule: `quartz-release` runs on **pushes to `main`
@@ -426,11 +437,17 @@ and auto-updating subscriptions, saving Clash profiles as tunnels.
 ## 8. Clash (mihomo) UI — `quartz/android/clash-ui`
 
 - **On the Tunnels screen**, right under the tunnel list, while a Clash
-  tunnel runs: the mode switch (Rule / Global / Direct), **Test all** (one
-  URL test of every node in every group, 16 at a time, each node once,
-  results shown as they arrive), search and sort by delay, and every proxy
-  group as a drop-down of its nodes with their delays (tap a node to select
-  it in a Selector group). Nothing shows while no Clash tunnel runs.
+  tunnel runs: a "Clash" section header with **sort by delay** and
+  **grid/list** buttons, then only the proxy groups, each a row like a tunnel
+  group (folder icon, selected node underneath, chevron) that opens to its
+  nodes. A lone group starts open. List: node rows (selected one
+  highlighted, delay under the name). Grid: the app's selection cards, two
+  per row. Tap a node to select it in a Selector group. Nothing shows while
+  no Clash tunnel runs.
+- Delays come from the Tunnels top bar's **delay test** button, which pings
+  every tunnel (upstream's ping, which waits until nothing is connected)
+  and URL-tests every node of a running Clash tunnel (16 at a time, each
+  node once; `ClashDelays`).
 - Tapping a Clash tunnel opens its own screen for the rest: subscription
   (last updated, traffic used/total, expiry, Update now, provider page),
   tunnel settings and export.
@@ -457,22 +474,34 @@ start, stop and "set TUN fd".
   The JNI protector's old global ref is never freed (mihomo threads from the
   last run may still use it), and a Go panic during start is returned as an
   error instead of killing the app.
+- The companion stops itself (after startForeground, via `stopSelfResult`)
+  once the runner is Idle or Failed; nothing else stops it, since stopping a
+  `startForegroundService` service before its startForeground crashes the
+  app. A dying previous VPN service can't reset a new start (only Running
+  becomes Idle).
+- The Go wrapper clears mihomo's remembered TUN settings on every shutdown:
+  mihomo keeps them across `executor.Shutdown()`, and a new TUN with the
+  same fd number looked "unchanged", so no TUN listener was opened (connected
+  with no traffic).
 
 ## 9. WARP generator — `quartz/android/warp`
 
 A Kotlin port of the generator at `thebingchilling/site` (`tools/warp`), so
 both produce identical, interchangeable configs. No engine work is needed: the
 output is a normal WireGuard or AmneziaWG tunnel. Entry: the **Info** tab →
-**WARP generator**. It's styled like the rest of the app (the app's own rows
-and selection buttons, no cards), shows the config as plain text, and has no
-QR code.
+**WARP generator**. Built only from the app's own components (see the UI
+rule in §2): WireGuard / AmneziaWG selection cards with a sentence each, an
+**Advanced options** switch row revealing the config editor's text boxes,
+then **Generate**. Once generated, the only action is **Save to tunnels**
+(replaces the WARP tunnel of that kind); the screen ends with "Your WARP
+tunnels". No config text, copy, download or QR in the app (the site has
+those).
 
-**Rule: the app follows the site's configurator.** Same choice (WireGuard or
-AmneziaWG, one at a time), same advanced options, same defaults and
-fallbacks, same output (account info, QR or "too long", config text, Copy,
-Download as `warp.conf` / `warp-awg.conf`). The only additions are the
-Quartz-specific ones: the **Slot** field and **Add to tunnels / Replace in
-slot**. Don't add options the site doesn't have; change both together.
+**Rule: the configs follow the site's configurator.** Same choice (WireGuard
+or AmneziaWG), same advanced options, same defaults and fallbacks, so both
+produce identical configs. In the app a blank endpoint means the default and
+the dice fills in a random one (the site's Default/Random/Custom). Don't add
+options the site doesn't have; change both together.
 
 ### Generation
 
@@ -698,22 +727,28 @@ snackbar naming what was added.
 ### WARP generator (Info tab)
 
 ```
-┌───────────────────────────┐   ┌─────────────────────────────────────┐
-│ Info                      │   │ ← WARP generator                    │
-├───────────────────────────┤   ├─────────────────────────────────────┤
-│ Tunnel                    │   │ [ WireGuard ][ AmneziaWG ]          │
-│  Backend mode    VPN ›    │   │ A standard config for the official  │
-│  DNS settings      ›      │   │ WireGuard apps.                     │
-│  Tunnel globals    ›      │   │ ▸ Advanced options (endpoint, DNS,  │
-│  ☁ WARP generator  ›      │   │   MTU, allowed IPs, keepalive,      │
-│  Tunnel recovery   ›      │   │   device type, locale, Jc/Jmin/Jmax,│
-│  Tunnel monitoring ›      │   │   slot)                             │
-│  Android integrations ›   │   │ [ ⟳ Generate WARP config ]          │
-│ General                   │   │ Account · type · expires 30 Jan     │
-│  Appearance        ›      │   │ [QR]  config text                   │
-│  Security          ›      │   │ [Copy] [Download]                   │
-│  …                        │   │ [ Add to tunnels (slot warp) ]      │
-└───────────────────────────┘   └─────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ ← WARP generator                    │
+├─────────────────────────────────────┤
+│ ┌ WireGuard ──────────────────────┐ │
+│ │ A standard WARP config. Works   │ │
+│ │ in any WireGuard app.           │ │
+│ └─────────────────────────────────┘ │
+│ ┌ AmneziaWG ──────────────────────┐ │
+│ │ Adds junk packets and …         │ │
+│ └─────────────────────────────────┘ │
+│ ⚙ Advanced options          [ ○ ]   │
+│   (endpoint ⚄, DNS, MTU, allowed    │
+│    IPs, keepalive, device type,     │
+│    locale, Jc/Jmin/Jmax)            │
+│ ⟳ Generate WARP config  [Generate]  │
+│   → after generating, only:         │
+│ ⤓ Save to tunnels          [Save]   │
+│   Replaces WARP (keeps its name…)   │
+│ YOUR WARP TUNNELS                   │
+│  WARP          WireGuard · expires… │
+│  WARP AWG      AmneziaWG · expires… │
+└─────────────────────────────────────┘
 ```
 
 ### Expanded connection info
@@ -752,11 +787,11 @@ conflicts.
 | `service/autotunnel/AutoTunnelService.kt` | Tunnel flow wrapped in `QuartzAutoTunnel.candidates(…)` (skips expired, done); group targets later | WARP expiry, groups |
 | `data/backup/BackupArchive.kt`, `DatabaseBackup.kt` | Optional `quartz/…` zip entries (encrypted like the database); `QuartzBackup.export()` / `restore()` calls | Fork data in backups |
 | `ui/navigation/Route.kt` | `Route.Warp` (Info tab), `Route.Clash(id)` (+ `Tab` mapping) | WARP, Clash screens |
-| `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route | Exhaustive `when` over `Route` |
+| `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route; Tunnels top bar is just Add + delay test (`rememberQuartzDelayTest`), no ⋮ menu (reorder/ping) | Exhaustive `when` over `Route`; simpler top bar |
 | `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>` | Nav graph |
 | `viewmodel/SharedAppViewModel.kt` | `importTunnelConfigs`: `QuartzImport.claim(…)` first; `importFromUrl`: `QuartzImport.claimUrl(url)` first (2 lines) | Stock add paths take Clash/OpenVPN/links/subscriptions |
 | `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused | Files of any type |
-| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); tunnel tap → `quartzTunnelRoute`; one `item { QuartzClashPanel() }` after the rows (Clash controls); engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
+| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); tunnel tap → `quartzTunnelRoute`; one `item { QuartzClashPanel() }` after the rows (Clash groups); normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`): hold to select, hold and drag to reorder; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |

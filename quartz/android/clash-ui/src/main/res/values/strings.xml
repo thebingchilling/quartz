@@ -7,12 +7,10 @@
     <string name="quartz_clash_update_now">Update now</string>
     <string name="quartz_clash_updated">Subscription updated</string>
     <string name="quartz_clash_web_page">Provider page</string>
-    <string name="quartz_clash_not_running">Connect this tunnel: its nodes, delay tests and mode then show on the Tunnels screen.</string>
-    <string name="quartz_clash_mode">Mode</string>
-    <string name="quartz_clash_search">Search nodes</string>
-    <string name="quartz_clash_sort">Sort by delay</string>
-    <string name="quartz_clash_test_all">Test all</string>
-    <string name="quartz_clash_controls_on_tunnels">Nodes, delay tests and mode are on the Tunnels screen while this tunnel is connected.</string>
+    <string name="quartz_clash_not_running">Connect this tunnel: its proxy groups and nodes then show on the Tunnels screen.</string>
+    <string name="quartz_clash_grid">Show as grid</string>
+    <string name="quartz_clash_list">Show as list</string>
+    <string name="quartz_clash_controls_on_tunnels">Its proxy groups and nodes are on the Tunnels screen while this tunnel is connected.</string>
     <string name="quartz_clash_tunnel_settings">Tunnel settings</string>
     <string name="quartz_clash_tunnel_settings_desc">Name, auto-tunnel rules and more</string>
     <string name="quartz_clash_export">Export profile (.yaml)</string>

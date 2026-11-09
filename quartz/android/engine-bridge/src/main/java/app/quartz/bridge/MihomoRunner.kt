@@ -68,7 +68,6 @@ class MihomoRunner(private val context: Context) {
                                 .setAction(MihomoVpnService.ACTION_STOP)
                         )
                     }
-                    stopServices()
                 }
         }
 
@@ -85,12 +84,7 @@ class MihomoRunner(private val context: Context) {
                 _state.first { it is MihomoState.Idle || it is MihomoState.Failed }
             }
         }
-        stopServices()
         _state.value = MihomoState.Idle
-    }
-
-    private fun stopServices() {
-        context.stopService(Intent(context, MihomoCompanionService::class.java))
     }
 
     // Called by MihomoVpnService.
@@ -112,9 +106,15 @@ class MihomoRunner(private val context: Context) {
         onFailed(tunnelId, error.message ?: "Couldn't start the VPN service")
     }
 
+    /**
+     * mihomo stopped (asked to, or on its own: VPN revoked, service killed). Only a running
+     * profile becomes Idle: the previous session's service can finish dying after a new start
+     * began, and must not reset that start. The companion stops itself once the state is Idle or
+     * Failed; it's never stopped from here, because stopping it before it called startForeground
+     * crashes the app (Android's startForegroundService rule).
+     */
     internal fun onStopped() {
-        if (_state.value !is MihomoState.Failed) _state.value = MihomoState.Idle
-        stopServices()
+        if (_state.value is MihomoState.Running) _state.value = MihomoState.Idle
     }
 
     private companion object {

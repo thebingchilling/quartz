@@ -28,6 +28,8 @@ class MihomoCompanionService : Service() {
     private val runner: MihomoRunner by inject()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var notifications: Job? = null
+    private var watcher: Job? = null
+    private var lastStartId = 0
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -51,6 +53,21 @@ class MihomoCompanionService : Service() {
                     )
                 }
                 .onFailure { runner.onServiceStartFailed(it) }
+        }
+        lastStartId = startId
+        if (watcher?.isActive != true) {
+            // Stops itself when there's nothing left to show, always after startForeground.
+            watcher = scope.launch {
+                runner.state.collect { state ->
+                    if (state is MihomoState.Idle || state is MihomoState.Failed) {
+                        ServiceCompat.stopForeground(
+                            this@MihomoCompanionService,
+                            ServiceCompat.STOP_FOREGROUND_REMOVE,
+                        )
+                        stopSelfResult(lastStartId)
+                    }
+                }
+            }
         }
         if (notifications?.isActive == true) return START_NOT_STICKY
         notifications = scope.launch {
