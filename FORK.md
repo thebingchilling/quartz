@@ -16,10 +16,13 @@ that also carries [wgtunnel/desktop](https://github.com/wgtunnel/desktop) under
 The goal is to change upstream files as little as possible, so that WG Tunnel
 (Android and Desktop), openvpn3 and mihomo can each be updated independently.
 
-All work is committed directly to `main`, the only branch: no feature
-branches. The only PRs are the ones `quartz-release` opens itself (an
-upstream merge that conflicts, an engine bump). Upstream Android's branch is
-`master`; desktop is merged from its release tags.
+**`main` is the only branch, always (standing rule).** All work, by people,
+code agents or workflows, is committed and pushed straight to `main`. Never
+create a branch (local or remote) or open a PR, even when a tool or session
+defaults to a feature branch. `quartz-release` follows this too: an engine
+bump is committed to `main`, and an upstream merge that conflicts opens an
+issue (resolved on `main`), never a branch or PR. Upstream Android's branch
+is `master`; desktop is merged from its release tags.
 
 ---
 

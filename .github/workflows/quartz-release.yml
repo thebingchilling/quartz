@@ -114,12 +114,12 @@ jobs:
               git push origin HEAD:main
             else
               git merge --abort
-              branch="upstream-$tag"
-              git push --force origin "refs/tags/upstream-$tag:refs/heads/$branch"
-              if [ -z "$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number')" ]; then
-                gh pr create --head "$branch" --base main --title "Merge WG Tunnel $tag" --body "Merging [WG Tunnel $tag](https://github.com/wgtunnel/android/releases/tag/$tag) into main hit conflicts. The next Quartz release is published by the first run after this is merged.
+              # main is the only branch (FORK.md): no merge branch or PR, an issue instead.
+              title="Merge WG Tunnel $tag"
+              if [ -z "$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number')" ]; then
+                gh issue create --title "$title" --body "Merging [WG Tunnel $tag](https://github.com/wgtunnel/android/releases/tag/$tag) into main hit conflicts. The next Quartz release is published by the first run after it's merged on main.
 
-          Resolve locally (merge, never rebase), then push to main:
+          Resolve locally on main (merge, never rebase), then push to main:
 
           \`\`\`bash
           git fetch upstream tag $tag && git merge $tag
@@ -127,7 +127,7 @@ jobs:
 
           Check the touched-files list in FORK.md §11."
               fi
-              echo "::warning::Conflicts merging WG Tunnel $tag; opened a PR"
+              echo "::warning::Conflicts merging WG Tunnel $tag; opened an issue"
               echo "conflict=true" >> "$GITHUB_OUTPUT"
             fi
           fi
@@ -208,21 +208,16 @@ jobs:
             [ -n "$latest" ] || continue
             latest_sha=$(git ls-remote "$url" "refs/tags/$latest^{}" "refs/tags/$latest" | head -1 | awk '{print $1}')
             [ "$latest_sha" != "$pinned" ] || { echo "$name is up to date ($latest)"; continue; }
-            branch="engine-$name-$latest"
-            git ls-remote --exit-code --heads origin "$branch" >/dev/null && { echo "$branch already open"; continue; }
             echo "Bumping $name to $latest"
             git submodule update --init "$path"
             git -C "$path" fetch --depth 1 origin "refs/tags/$latest:refs/tags/$latest"
             git -C "$path" checkout -q "$latest"
-            git switch -q -c "$branch"
             # quartz/android/engines/versions.properties records the pinned release for the app.
             sed -i "s#^$name=.*#$name=$latest#" quartz/android/engines/versions.properties
             grep -q "^$name=" quartz/android/engines/versions.properties || echo "$name=$latest" >> quartz/android/engines/versions.properties
             git commit -qm "Bump $name engine to $latest" "$path" quartz/android/engines/versions.properties
-            git push -q origin "$branch"
-            gh pr create --head "$branch" --base main --title "Bump $name engine to $latest" \
-              --body "New $name release: $latest. Check \`quartz/android/engines/patches/$name\` still apply. Merging this doesn't publish a release; it ships with the next quartz-release build."
-            git switch -q main
+            # Straight onto main, the only branch (FORK.md); the android job builds this commit.
+            git push -q origin HEAD:main
           done
 
       - name: Record commit
