@@ -3,18 +3,23 @@ name: quartz-release
 # Runs on pushes to main that change Quartz's own app files (everything under
 # quartz/: quartz/android, quartz/windows) and when started by hand. Docs,
 # workflow files and upstream's folders (app/, desktop/) don't start it. A
-# commit message with [skip ci] skips the build. Every run builds both apps
-# from main and publishes one dual release: the Android APKs and the Windows
-# installer in a single GitHub release, e.g. quartz-5.8.2-desktop-2.4.1 (-2,
-# -3, … for further builds on the same bases). A newer push cancels a
-# push-triggered build that hasn't finished, to save Actions minutes.
+# newer push cancels a push-triggered build that hasn't finished.
 #
-# "update" (off by default) first brings in upstream resources, and is the only
-# thing that does:
+# Only what changed is built, to save Actions minutes: files changed since the
+# commit of the latest release decide. Android is built when quartz/android or
+# quartz/shared (or Android's upstream files) changed, the Windows installer
+# when quartz/windows or quartz/shared (or desktop/) changed. Each run still
+# publishes one dual release, e.g. quartz-5.8.2-desktop-2.4.1 (-2, -3, … for
+# further builds on the same bases): the app that wasn't rebuilt is carried
+# over from the previous release, so the desktop updater always finds its
+# latest.yml. A run by hand builds what its android/windows boxes say.
+#
+# "update" (off by default) first brings in upstream resources, is the only
+# thing that does, and always builds both apps:
 #  - a new wgtunnel/android release is merged into main, a new wgtunnel/desktop
-#    release is subtree-merged into desktop/; a conflicting merge opens a PR
-#    (Android) or an issue (desktop) and nothing is released until it's fixed;
-#  - new openvpn3 / mihomo releases get submodule bump PRs (no release).
+#    release is subtree-merged into desktop/; a conflicting merge opens an
+#    issue and nothing is released until it's fixed on main;
+#  - new openvpn3 / mihomo releases are committed to main (submodule bump).
 # Without it the run only builds what's on main.
 #
 # Tags start with "quartz-" so they never trigger upstream's publish.yml.
@@ -31,7 +36,15 @@ on:
     inputs:
       update:
         type: boolean
-        description: "Update first: merge new WG Tunnel Android/Desktop releases, open engine bump PRs"
+        description: "Update first: merge new WG Tunnel Android/Desktop releases, bump engines (builds both apps)"
+        default: false
+      android:
+        type: boolean
+        description: "Build Android"
+        default: true
+      windows:
+        type: boolean
+        description: "Build the Windows installer"
         default: false
 
 permissions:
@@ -52,6 +65,9 @@ jobs:
     outputs:
       sha: ${{ steps.done.outputs.sha }}
       release: ${{ steps.release.outputs.release }}
+      android: ${{ steps.build.outputs.android }}
+      windows: ${{ steps.build.outputs.windows }}
+      previous: ${{ steps.build.outputs.previous }}
       android_tag: ${{ steps.versions.outputs.android }}
       desktop_version: ${{ steps.versions.outputs.desktop }}
     steps:
@@ -179,11 +195,45 @@ jobs:
           echo "android=$(sed -nE 's/^versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
           echo "desktop=$(sed -nE 's/^app[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' desktop/gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
 
+      # Which apps to build: both with "update"; the boxes when run by hand;
+      # on a push, the apps whose files changed since the latest release's commit.
+      - name: What to build
+        id: build
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+          EVENT: ${{ github.event_name }}
+          UPDATE: ${{ inputs.update }}
+          IN_ANDROID: ${{ inputs.android }}
+          IN_WINDOWS: ${{ inputs.windows }}
+        run: |
+          previous=$(gh release list --exclude-drafts --limit 20 --json tagName,isLatest \
+            --jq '[.[] | select(.isLatest)][0].tagName // empty')
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          base=""
+          [ -n "$previous" ] && base=$(gh release view "$previous" --json targetCommitish --jq .targetCommitish)
+          if [ "$UPDATE" = "true" ] || [ -z "$previous" ]; then
+            android=true; windows=true
+          elif [ "$EVENT" = "workflow_dispatch" ]; then
+            android=$IN_ANDROID; windows=$IN_WINDOWS
+          elif ! grep -qE '^[0-9a-f]{40}$' <<<"$base" || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            android=true; windows=true
+          else
+            changed=$(git diff --name-only "$base" HEAD)
+            android=false; windows=false
+            grep -qE '^(quartz/android/|quartz/shared/|app/|gradle/|buildSrc/|logcatter/|networkmonitor/|pinger/|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$)' <<<"$changed" && android=true
+            grep -qE '^(quartz/windows/|quartz/shared/|desktop/)' <<<"$changed" && windows=true
+          fi
+          echo "Previous release: ${previous:-none} (${base:-?}); build android=$android windows=$windows"
+          echo "android=$android" >> "$GITHUB_OUTPUT"
+          echo "windows=$windows" >> "$GITHUB_OUTPUT"
+
       # One release for both apps, named after both bases. Nothing is released
-      # while either merge waits on a person.
+      # while either merge waits on a person, or when nothing needs building.
       - name: Release name
         id: release
-        if: steps.android.outputs.conflict != 'true' && steps.desktop.outputs.conflict != 'true'
+        if: >-
+          steps.android.outputs.conflict != 'true' && steps.desktop.outputs.conflict != 'true' &&
+          (steps.build.outputs.android == 'true' || steps.build.outputs.windows == 'true')
         env:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
         run: |
@@ -226,7 +276,7 @@ jobs:
 
   android:
     needs: sync
-    if: needs.sync.outputs.release != ''
+    if: needs.sync.outputs.release != '' && needs.sync.outputs.android == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -290,7 +340,7 @@ jobs:
 
   windows:
     needs: sync
-    if: needs.sync.outputs.release != ''
+    if: needs.sync.outputs.release != '' && needs.sync.outputs.windows == 'true'
     runs-on: windows-latest
     timeout-minutes: 120
     steps:
@@ -351,12 +401,32 @@ jobs:
 
   publish:
     needs: [sync, android, windows]
+    # Runs when the apps that were built succeeded; a skipped one is carried over.
+    if: >-
+      always() && needs.sync.outputs.release != '' &&
+      (needs.android.result == 'success' || needs.android.result == 'skipped') &&
+      (needs.windows.result == 'success' || needs.windows.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
+
+      # The app that wasn't rebuilt: its files from the previous release, so every
+      # release carries both (and the desktop updater's latest.yml).
+      - name: Carry over the app that wasn't built
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIOUS: ${{ needs.sync.outputs.previous }}
+        run: |
+          mkdir -p dist
+          if [ "${{ needs.sync.outputs.android }}" != "true" ] && [ -n "$PREVIOUS" ]; then
+            gh release download "$PREVIOUS" --pattern '*.apk' --dir dist
+          fi
+          if [ "${{ needs.sync.outputs.windows }}" != "true" ] && [ -n "$PREVIOUS" ]; then
+            gh release download "$PREVIOUS" --pattern '*.exe' --pattern '*.yml' --pattern '*.blockmap' --dir dist || true
+          fi
 
       - name: Publish
         env:
@@ -370,7 +440,11 @@ jobs:
           gh release create "$RELEASE" dist/* \
             --target "${{ needs.sync.outputs.sha }}" \
             --title "Quartz $TAG$suffix · Desktop $VERSION" \
-            --notes "One release, both apps, from the same commit.
+            --notes "One release, both apps. $(
+              [ "${{ needs.sync.outputs.android }}" = "true" ] && echo "Android built from this commit." || echo "Android unchanged, carried over from ${{ needs.sync.outputs.previous }}."
+            ) $(
+              [ "${{ needs.sync.outputs.windows }}" = "true" ] && echo "Windows built from this commit." || echo "Windows unchanged, carried over from ${{ needs.sync.outputs.previous }}."
+            )
 
           **Android**, built on [WG Tunnel $TAG](https://github.com/wgtunnel/android/releases/tag/$TAG): public debug build, signed with Quartz's committed debug key so every Quartz build installs over the last one (fdroid flavor, no in-app updater). Install the \`arm64\` APK on most phones, \`armv7\` on older ones, or \`universal\` if unsure.
 

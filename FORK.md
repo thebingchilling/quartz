@@ -114,10 +114,12 @@ GitHub Actions minutes are not the limit; Actions **storage** is (artifacts
 and caches of this private repository count towards it). Code agents and
 people working on this repo follow this:
 
-- **Minutes are fine to use; never hold a build back.** Push when work is
-  ready, start or re-run workflows by hand when useful, and don't use
-  `[skip ci]`: every push that changes `quartz/**` builds a dual release (a
-  newer push cancels an unfinished one).
+- **Build only what changed (minutes are limited).** Push when work is
+  ready; `quartz-release` builds Android only when Android's files changed
+  and the Windows installer only when Windows' files changed since the latest
+  release (a newer push cancels an unfinished one). Don't run it by hand
+  just to rebuild an unchanged app; by hand, tick only the app you need
+  (Windows is off by default). Only **update** builds both.
 - **One run per workflow:** `quartz-cleanup` runs after every successful run
   and deletes every other run of that workflow (older, failed, cancelled),
   with its artifacts and logs, and keeps only the newest cache for each set of
@@ -159,13 +161,19 @@ progress bars (`QuartzExpiry`) for WARP days left and subscription traffic.
 - No nightlies, no schedule: `quartz-release` runs on **pushes to `main`
   that change `quartz/**`** (Quartz's own app files) and when started by
   hand. Docs, workflow files and upstream folders don't start it; a newer
-  push cancels an unfinished push build. **Every run is a dual release:** one GitHub release with the
-  Android APKs and the Windows installer, built from the same commit and
-  named after both bases, e.g. `quartz-5.8.2-desktop-2.4.1` (`-2`, `-3`, …
-  for later builds on the same bases).
+  push cancels an unfinished push build. **Only the changed app is built:**
+  files changed since the latest release's commit decide — `quartz/android`,
+  `quartz/shared` or Android's upstream folders → Android;
+  `quartz/windows`, `quartz/shared` or `desktop/` → Windows; nothing
+  relevant → no release. Every release still carries both apps, named after
+  both bases, e.g. `quartz-5.8.2-desktop-2.4.1` (`-2`, `-3`, … for later
+  builds on the same bases): the app that wasn't rebuilt is copied from the
+  previous release (no build minutes), so the desktop updater always finds
+  `latest.yml`. A run by hand builds what its **android** / **windows**
+  boxes say (Android on, Windows off by default); **update** builds both.
 - **Updating upstream resources is manual only** (owner or agent): only a
-  run with **update** ticked merges new WG Tunnel Android/Desktop releases and opens
-  engine bump PRs. Without it the run just builds what's on `main`.
+  run with **update** ticked merges new WG Tunnel Android/Desktop releases and
+  commits engine bumps to `main`; it builds both apps. Without it the run just builds what's on `main`.
 - **In-app check:** Info tab → **Check upstream versions** compares this
   build's bases (baked into `BuildConfig` by `quartz.gradle`: WG Tunnel
   Android/Desktop versions, `engines/versions.properties` for the engines)
