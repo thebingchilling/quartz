@@ -10,7 +10,7 @@ data class GeneralSettings(
     val isMultiTunnelEnabled: Boolean = false,
     val isGlobalSplitTunnelEnabled: Boolean = false,
     val tunnelMode: TunnelMode = TunnelMode.fromValue(0),
-    val theme: Theme = Theme.AUTOMATIC,
+    val theme: Theme = Theme.DYNAMIC, // [fork] Quartz defaults to Dynamic
     val locale: String? = null,
     val remoteKey: String? = null,
     val isRemoteControlEnabled: Boolean = false,

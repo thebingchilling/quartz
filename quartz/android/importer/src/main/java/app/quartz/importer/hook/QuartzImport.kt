@@ -1,9 +1,15 @@
 package app.quartz.importer.hook
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import app.quartz.bridge.ClashProfiles
+import app.quartz.bridge.OpenVpnProfiles
 import app.quartz.bridge.Subscriptions
 import app.quartz.bridge.Subscriptions.Companion.withInfo
 import app.quartz.core.data.EngineProfile
+import app.quartz.engine.openvpn.OpenVpnCheck
+import app.quartz.engine.openvpn.OpenVpnEngine
 import app.quartz.importer.ClashTemplate
 import app.quartz.importer.Detected
 import app.quartz.importer.ImportDetector
@@ -22,11 +28,14 @@ import timber.log.Timber
 /**
  * Lets upstream's own add-tunnel paths (file, clipboard, QR, link) take any config (FORK.md §7).
  * Upstream hands everything to [claim] / [claimUrl] first: Clash profiles, share links,
- * subscriptions and sing-box configs are saved here as Clash tunnels; OpenVPN is refused with a
- * message for now; WireGuard is handed back to upstream's import unchanged.
+ * subscriptions and sing-box configs are saved here as Clash tunnels, OpenVPN profiles as OpenVPN
+ * tunnels; WireGuard is handed back to upstream's import unchanged. What a config is comes from
+ * its content, never its file name or extension.
  */
 object QuartzImport : KoinComponent {
     private val profiles: ClashProfiles by inject()
+    private val openVpnProfiles: OpenVpnProfiles by inject()
+    private val openVpnEngine: OpenVpnEngine by inject()
     private val subscriptions: Subscriptions by inject()
     private val globalEffects: GlobalEffectRepository by inject()
 
@@ -45,11 +54,7 @@ object QuartzImport : KoinComponent {
                     else saveProfile(detected, name)
                 is Detected.ClashProfile -> saveProfile(detected, name)
                 is Detected.SubscriptionUrl -> claimUrl(detected.url)
-                is Detected.OpenVpn ->
-                    notify(
-                        StringValue.StringResource(R.string.quartz_import_openvpn_later),
-                        ToastType.Info,
-                    )
+                is Detected.OpenVpn -> saveOpenVpn(detected.config, name)
             }
         }
         return forUpstream
@@ -92,6 +97,31 @@ object QuartzImport : KoinComponent {
         return true
     }
 
+    private suspend fun saveOpenVpn(config: String, name: String?) {
+        runCatching {
+            val check = openVpnEngine.check(OpenVpnProfiles.split(config).first)
+            if (check is OpenVpnCheck.Invalid) {
+                notify(StringValue.DynamicString(check.message), ToastType.Error)
+                return
+            }
+            val title =
+                name?.substringBeforeLast('.')?.ifBlank { null }
+                    ?: Regex("(?im)^\\s*remote\\s+(\\S+)").find(config)?.groupValues?.get(1)
+                    ?: "OpenVPN"
+            openVpnProfiles.create(title, config)
+            notify(
+                if (check is OpenVpnCheck.NeedsCredentials)
+                    StringValue.StringResource(R.string.quartz_import_openvpn_needs_login, title)
+                else StringValue.StringResource(R.string.quartz_import_saved, title),
+                ToastType.Success,
+            )
+        }
+            .onFailure {
+                Timber.e(it, "OpenVPN import failed")
+                notify(StringValue.DynamicString(it.message ?: "Import failed"), ToastType.Error)
+            }
+    }
+
     private suspend fun saveProfile(
         detected: Detected,
         name: String?,
@@ -111,6 +141,40 @@ object QuartzImport : KoinComponent {
                 notify(StringValue.DynamicString(it.message ?: "Import failed"), ToastType.Error)
             }
     }
+
+    /**
+     * What another app opened or shared with Quartz (MainActivity's intent handler): a file to read
+     * (first) or text to import (second): a share link, `clash://` deep link or pasted config.
+     * Null for intents that aren't imports (upstream's `wg://` link has its own prompt).
+     */
+    fun incoming(intent: Intent): Pair<Uri?, String?>? {
+        val data = intent.data
+        return when (intent.action) {
+            Intent.ACTION_SEND -> {
+                @Suppress("DEPRECATION")
+                val stream =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                        intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                    else intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
+                val text = intent.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }
+                when {
+                    stream != null -> stream to null
+                    data != null && data.scheme in FILE_SCHEMES -> data to null
+                    text != null -> null to text
+                    else -> null
+                }
+            }
+            else ->
+                when (data?.scheme?.lowercase()) {
+                    null,
+                    "wg" -> null
+                    in FILE_SCHEMES -> data to null
+                    else -> null to data.toString() // clash://, vmess://, … links
+                }
+        }
+    }
+
+    private val FILE_SCHEMES = setOf("content", "file")
 
     private suspend fun notify(message: StringValue, type: ToastType) =
         globalEffects.post(GlobalSideEffect.Snackbar(message, type))

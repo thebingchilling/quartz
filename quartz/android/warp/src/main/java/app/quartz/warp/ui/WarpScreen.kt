@@ -46,10 +46,6 @@ import com.zaneschepke.wireguardautotunnel.ui.common.label.GroupLabel
 import com.zaneschepke.wireguardautotunnel.ui.common.text.DescriptionText
 import com.zaneschepke.wireguardautotunnel.ui.common.textbox.ConfigurationTextBox
 import com.zaneschepke.wireguardautotunnel.ui.navigation.Route
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -271,27 +267,24 @@ private fun Field(
 @Composable
 private fun WarpTunnelRow(warp: SlotTunnel, onClick: () -> Unit) {
     val meta = warp.meta
-    val details =
-        listOfNotNull(
-                warp.variant?.let {
-                    stringResource(
-                        if (it == WarpVariant.AWG) R.string.quartz_warp_awg
-                        else R.string.quartz_warp_wg
-                    )
-                },
-                meta.expiresAt?.let {
-                    if (meta.isExpired()) stringResource(R.string.quartz_expired)
-                    else stringResource(R.string.quartz_warp_expires_on, formatDate(it))
-                },
-            )
-            .joinToString(" · ")
     SurfaceRow(
         title = warp.tunnel.name,
-        description = { DescriptionText(details) },
+        description = {
+            androidx.compose.foundation.layout.Column(
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
+            ) {
+                warp.variant?.let {
+                    DescriptionText(
+                        stringResource(
+                            if (it == WarpVariant.AWG) R.string.quartz_warp_awg
+                            else R.string.quartz_warp_wg
+                        )
+                    )
+                }
+                // Days left as a bar, and the expiry date without the year.
+                meta.expiresAt?.let { app.quartz.core.ui.QuartzExpiryBar(it) }
+            }
+        },
         onClick = onClick,
     )
 }
-
-private fun formatDate(millis: Long): String =
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-        .format(Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()))

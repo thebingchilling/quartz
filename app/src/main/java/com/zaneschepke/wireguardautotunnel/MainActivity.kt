@@ -75,7 +75,6 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import app.quartz.clash.ui.ClashScreen
 import app.quartz.core.ui.QUARTZ_TOASTS
 import app.quartz.core.ui.QuartzInfoScreen
 import app.quartz.warp.ui.WarpScreen
@@ -759,7 +758,6 @@ class MainActivity : AppCompatActivity() {
                                                 entry<Route.Logs> { LogsScreen() }
                                                 entry<Route.Support> { QuartzInfoScreen() }
                                                 entry<Route.Warp> { WarpScreen() }
-                                                entry<Route.Clash> { key -> ClashScreen(key.id) }
                                                 entry<Route.License> { LicenseScreen() }
                                                 entry<Route.Donate> { DonateScreen() }
                                                 entry<Route.Addresses> { AddressesScreen() }
@@ -981,16 +979,11 @@ class MainActivity : AppCompatActivity() {
             Intent.ACTION_VIEW,
             Intent.ACTION_EDIT,
             Intent.ACTION_SEND -> {
-                val uri: Uri? = intent.data ?: return
-                val name = uri?.lastPathSegment?.lowercase() ?: return
-                if (
-                    !name.endsWith(FileUtils.CONF_FILE_EXTENSION) &&
-                        !name.endsWith(FileUtils.ZIP_FILE_EXTENSION)
-                ) {
-                    Timber.d("Ignoring non-config URI in handleIncomingIntent: $uri")
-                    return
+                // [fork] any file, shared text or link; Quartz's import decides what it is
+                app.quartz.importer.hook.QuartzImport.incoming(intent)?.let {
+                    if (it.first != null) viewModel.importFromUri(it.first!!)
+                    else viewModel.importFromClipboard(it.second!!)
                 }
-                viewModel.importFromUri(uri)
             }
         }
     }

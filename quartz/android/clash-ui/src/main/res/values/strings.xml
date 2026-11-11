@@ -5,14 +5,13 @@
     <string name="quartz_clash_subscription">Subscription</string>
     <string name="quartz_clash_last_updated">Updated %1$s</string>
     <string name="quartz_clash_update_now">Update now</string>
-    <string name="quartz_clash_updated">Subscription updated</string>
     <string name="quartz_clash_web_page">Provider page</string>
-    <string name="quartz_clash_not_running">Its proxy groups and nodes are listed under it on the Tunnels screen.</string>
     <string name="quartz_clash_group">Group</string>
     <string name="quartz_refresh">Refresh</string>
     <string name="quartz_clash_provider_node">From a provider</string>
-    <string name="quartz_clash_controls_on_tunnels">Its proxy groups and nodes are listed under it on the Tunnels screen.</string>
-    <string name="quartz_clash_tunnel_settings">Tunnel settings</string>
-    <string name="quartz_clash_tunnel_settings_desc">Name, auto-tunnel rules and more</string>
-    <string name="quartz_clash_export">Export profile (.yaml)</string>
+    <string name="quartz_clash_type_select">Select</string>
+    <string name="quartz_clash_type_auto">Auto</string>
+    <string name="quartz_clash_type_fallback">Fallback</string>
+    <string name="quartz_clash_type_balance">Load balance</string>
+    <string name="quartz_clash_type_relay">Relay</string>
 </resources>

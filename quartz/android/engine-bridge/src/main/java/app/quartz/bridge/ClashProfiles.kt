@@ -82,7 +82,10 @@ class ClashProfiles(
     /** Drops rows and files of tunnels that no longer exist upstream. */
     suspend fun removeOrphans(existingIds: Set<Int>) =
         withContext(ioDispatcher) {
-            val orphans = profileDao.getAll().filter { it.tunnelId !in existingIds }
+            val orphans =
+                profileDao.getAll().filter {
+                    it.engine == EngineProfile.ENGINE_MIHOMO && it.tunnelId !in existingIds
+                }
             if (orphans.isEmpty()) return@withContext
             orphans.forEach { file(it).delete() }
             profileDao.deleteAll(orphans.map { it.tunnelId })

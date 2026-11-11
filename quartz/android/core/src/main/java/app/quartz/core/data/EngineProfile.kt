@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "engine_profile")
 data class EngineProfile(
     @PrimaryKey @ColumnInfo(name = "tunnel_id") val tunnelId: Int,
-    /** [ENGINE_MIHOMO], later "openvpn". */
+    /** [ENGINE_MIHOMO] or [ENGINE_OPENVPN]. */
     @ColumnInfo(name = "engine") val engine: String,
     /** File name under the engine's profile directory. */
     @ColumnInfo(name = "profile_file") val profileFile: String,
@@ -40,6 +40,7 @@ data class EngineProfile(
 ) {
     companion object {
         const val ENGINE_MIHOMO = "mihomo"
+        const val ENGINE_OPENVPN = "openvpn"
     }
 }
 

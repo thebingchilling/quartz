@@ -57,7 +57,7 @@ import app.quartz.clash.ui.QuartzLatencyText
 import app.quartz.clash.ui.QuartzRowExtras
 import app.quartz.core.ui.QuartzTunnelDragEffects
 import app.quartz.core.ui.quartzTunnelDescription
-import app.quartz.core.ui.quartzTunnelRoute
+import app.quartz.core.ui.quartzRowOutline
 import app.quartz.core.ui.rememberQuartzTunnelDrag
 import com.wgtunnel.backend.state.ActiveTunnel
 import com.zaneschepke.wireguardautotunnel.R
@@ -309,7 +309,7 @@ fun TunnelList(
             } else {
                 // [fork-ui] hold and drag to reorder, no separate reorder mode
                 ReorderableItem(reorderableLazyListState, row.key, enabled = !isTv) { isDragging ->
-                  Column {
+                  Column(Modifier.quartzRowOutline(rows, index)) { // [fork-ui] group outlines
                     ListRow(
                         row = row,
                         index = index,
@@ -319,11 +319,7 @@ fun TunnelList(
                         isTv = isTv,
                         isDragging = isDragging,
                         focusRequester = if (index == 0) focusRequester else null,
-                        onNavigateTunnel = {
-                            navController.push(
-                                quartzTunnelRoute(it, uiState.tunnels) ?: Route.TunnelSettings(it)
-                            )
-                        },
+                        onNavigateTunnel = { navController.push(Route.TunnelSettings(it)) },
                         modifier =
                             Modifier.then(
                                     if (!isTv && quartzDrag.canDrag(row))

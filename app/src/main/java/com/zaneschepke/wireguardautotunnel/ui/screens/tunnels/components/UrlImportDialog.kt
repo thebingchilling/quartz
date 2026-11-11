@@ -44,8 +44,9 @@ fun UrlImportDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
         },
         confirmText = stringResource(R.string.okay),
         onAttest = {
-            if (url.isNotBlank() && url.startsWith("https://")) {
-                onConfirm(url)
+            // [fork] any link: http(s) config or subscription, clash://, share links, pasted text
+            if (url.isNotBlank()) {
+                onConfirm(url.trim())
             } else isError = true
         },
     )

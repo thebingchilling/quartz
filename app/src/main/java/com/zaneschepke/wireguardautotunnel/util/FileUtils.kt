@@ -273,11 +273,9 @@ class FileUtils(private val context: Context, private val ioDispatcher: Coroutin
                             val configs = mutableMapOf<String, String>()
                             var entry: ZipEntry? = zip.nextEntry
                             while (entry != null) {
-                                if (
-                                    !entry.isDirectory &&
-                                        getFileExtensionFromFileName(entry.name.lowercase()) ==
-                                            CONF_FILE_EXTENSION.lowercase()
-                                ) {
+                                // [fork] every file in the zip, any extension; Quartz's import
+                                // decides what each one is
+                                if (!entry.isDirectory && !entry.name.startsWith("__MACOSX/")) {
                                     val content = zip.bufferedReader().readText()
                                     val name = getNameFromFileName(entry.name)
                                     configs[content] = name

@@ -39,7 +39,7 @@ is `master`; desktop is merged from its release tags.
       signing/quartz-debug.jks  ← committed debug key
       engines/
         mihomo/                 ← git submodule → MetaCubeX/mihomo, pinned to a release tag (unpatched)
-        openvpn3/               ← (step 7) git submodule → OpenVPN/openvpn3
+        openvpn3/               ← git submodule → OpenVPN/openvpn3, pinned to a release tag (unpatched)
         versions.properties     ← pinned engine releases (read by the app's "Check upstream versions")
       core/                     ← ForkDatabase, Quartz Koin module, startup sync, dialogs, Info tab, tunnel-row badges, upstream version check
       engine-bridge/            ← MultiEngineTunnelProvider, Clash profiles, mihomo VpnService + companion, manifest
@@ -48,7 +48,8 @@ is `master`; desktop is merged from its release tags.
       warp/                     ← WARP generator: Android repository, expiry and screen
       clash-ui/                 ← Clash groups/nodes on the Tunnels list, delay test, refresh, Clash tunnel screen
       branding/                 ← resource overlay: icon, TV banner, notification glyph (res/), sources and PNGs (icon/)
-      (later: engine-openvpn/, groups/, connection-info/)
+      engine-openvpn/           ← JNI wrapper around openvpn3's client API (cpp/: ovpn_jni.cpp + CMakeLists.txt) + Kotlin OpenVpnEngine (src/)
+      (later: groups/, connection-info/)
     shared/
       warp/                     ← platform-neutral WARP core compiled into both apps (options, API, config builder, AWG packets; assets/warp/awg-payloads.txt)
     windows/                    ← Quartz files for the desktop app: src/main/kotlin (WARP generator screen), added to desktop/composeApp's jvmMain
@@ -147,7 +148,11 @@ has (`SurfaceRow`, `IconSurfaceButton`, `ThemedSwitch`, `ConfigurationTextBox`,
 patterns upstream screens already use (section header = `GroupLabel` in a
 48 dp box; choose-one = `IconSurfaceButton` cards; on/off = `SurfaceRow` +
 `ThemedSwitch`; latency text and colours as on the tunnel list). No new
-components, cards, borders, chips, colours or layout rules.
+components, cards, chips, colours or layout rules, with these exceptions the
+owner asked for: a faint rounded outline (`QuartzOutline`, the theme's
+`outlineVariant`) around an upstream group and its tunnels, and around a
+Clash tunnel and its proxy groups; the Clash tree's compact rows; and thin
+progress bars (`QuartzExpiry`) for WARP days left and subscription traffic.
 
 ### Releases
 
@@ -250,6 +255,39 @@ separately.
 - Smoke-tested on the JVM with a host build (loads, version, validates good
   and bad profiles); running it on a device needs step 4's VpnService.
 
+### OpenVPN engine (built)
+
+- `quartz/android/engines/openvpn3` is pinned to a release tag
+  (`release/3.11.8`) and **not patched**. `engine-openvpn/cpp/ovpn_jni.cpp`
+  subclasses openvpn3's `ClientAPI::OpenVPNClient` and forwards its
+  tun-builder callbacks (addresses, routes, excluded routes, DNS, MTU),
+  `socket_protect`, events and logs to a Kotlin `OpenVpnNative.Callback`.
+  A profile without a client certificate is treated as username/password
+  (external PKI isn't offered). Legacy ciphers are allowed, as in OpenVPN 2.
+- `engine-openvpn/cpp/CMakeLists.txt` builds `libovpn3.so` from openvpn3's
+  `client/ovpncli.cpp` plus the wrapper, fetching openvpn3's dependencies
+  pinned at configure time: asio 1.24.0 with openvpn3's own
+  `deps/asio/patches`, lz4 1.10.0, mbed TLS 3.6.4 (release tarball, SHA-256
+  checked) and xxHash 0.8.3. `quartz.gradle` runs it per ABI with the NDK's
+  CMake toolchain file and the `cmake` on PATH, into
+  `build/generated/quartz/ovpnLibs` (stamped by submodule commit + wrapper,
+  skipped with `-PprebuiltEngines`); CI caches that directory separately from
+  mihomo's. The same CMakeLists builds on the host for a compile check (it
+  was compiled and its JNI loaded on a desktop JVM this way).
+- `OpenVpnEngine` runs one session on its own thread. `OpenVpnVpnService`
+  builds the TUN from the callbacks (excluded routes on Android 13+) and
+  hands the fd to openvpn3; `OpenVpnRunner` mirrors `MihomoRunner`;
+  `EngineCompanionService` (was `MihomoCompanionService`) holds the
+  notification for both engines. A reconnect shows as "connecting".
+- Storage: `files/openvpn/<uuid>.ovpn` + an `engine_profile` row
+  (`engine = openvpn`) and a shell row like Clash (`OpenVpnProfiles`). A
+  login entered in the tunnel's settings is kept in the same file as an
+  inline `<auth-user-pass>` block, stripped before openvpn3 sees the profile
+  and given with `provide_creds`; backups carry the files (`quartz/openvpn/…`).
+- Delay test pings the profile's first `remote`.
+- Not tested on a device yet. Not yet: kill switch (step 8), proxy mode,
+  static/dynamic challenge (OTP) prompts.
+
 ### Multi-engine routing (built)
 
 - `MultiEngineTunnelProvider` (`quartz/android/engine-bridge`) is the Koin-bound
@@ -267,7 +305,7 @@ separately.
   row (one table instead of a separate `subscription` table).
 - `MihomoVpnService` builds the TUN (172.19.0.1/30 + fdfe:dcba:9876::1/126,
   DNS 172.19.0.2 hijacked into mihomo, MTU 9000) and hands its fd to mihomo;
-  `MihomoCompanionService` holds upstream's tunnel notification in the
+  `EngineCompanionService` holds upstream's tunnel notification in the
   foreground, mirroring upstream's VpnService + VpnCompanionService split.
   Both are declared in `quartz/android/engine-bridge/src/main/AndroidManifest.xml`,
   merged through the flavor+build-type source sets.
@@ -396,11 +434,17 @@ screen.** The ＋ sheet is stock (file, QR, clipboard, URL, create).
 config to `QuartzImport.claim` first, and `importFromUrl` asks
 `QuartzImport.claimUrl`. Quartz saves Clash profiles, share links,
 subscriptions and sing-box configs as Clash tunnels (Simple template;
-subscriptions auto-update every 24 h or the provider's interval), answers
-OpenVPN with "not supported yet", and hands WireGuard back to upstream's
-import unchanged (a lone `wireguard://` link is converted to a WireGuard
-config first). Upstream's file reader accepts any file (not only `.conf` /
-`.zip`), read as text.
+subscriptions auto-update every 24 h or the provider's interval), saves
+OpenVPN profiles as OpenVPN tunnels (checked by openvpn3 first; one that asks
+for a login says so, and the login goes in the tunnel's settings), and hands
+WireGuard back to upstream's import unchanged (a lone `wireguard://` link is
+converted to a WireGuard config first). **What a config is comes from its
+content, never its extension:** upstream's file reader reads any file as text
+(every file inside a `.zip` too), "Add from URL" takes any link (http(s),
+`clash://`, share links) or text, and other apps can open `.ovpn`, YAML and
+text files in Quartz, share files or text to it, and open `clash://` and
+share links (`vmess://`, `ss://`, …) with it (intent filters in
+`engine-bridge`'s manifest → `QuartzImport.incoming`).
 
 **Detected:** file (any extension), clipboard, QR code, typed URL, deep
 links (`clash://install-config?url=…`, `clashmeta://…`) pasted as text.
@@ -460,18 +504,23 @@ and auto-updating subscriptions, saving Clash profiles as tunnels.
 
 ## 8. Clash (mihomo) UI — `quartz/android/clash-ui`
 
-- **A Clash tunnel is a group on the Tunnels list**, in the app's compact
-  list row (`ExpandingRowListItem`, the one upstream's reorder list uses):
-  under its row, each proxy group is just a folder icon and its name; the
-  main group (first selectable, usually PROXY) starts open, the rest
-  closed. Nodes follow, not indented: a dot for the selected one, name with
-  protocol under it, latency on the right. Shown whether connected or not:
+- **A Clash tunnel is a group on the Tunnels list**: its row and its proxy
+  groups share one faint rounded outline, so they read as one tunnel. Under
+  the row is a compact tree (`QuartzClashRows`): top-level groups are the
+  ones no other group lists (usually PROXY, which starts open). A group
+  another group lists (Auto, Fallback, …) is a sub-folder inside it, indented
+  in its own outline; its row shows its type and choice ("Auto → HK 01") and
+  the latency of the node actually used. Tapping the row picks it in the
+  parent; its chevron opens it to show its members. Nodes are one line: a dot
+  for the selected one, name, protocol, latency on the right. Shown whether connected or not:
   live from mihomo while it runs (tap a node to select it), otherwise from
   the profile YAML plus mihomo's cached proxy-provider files, with `use`,
   `filter`, `exclude-filter` and `include-all` applied (`ClashTrees`).
-- Tapping a Clash tunnel opens its own screen for the rest: subscription
-  (last updated, traffic used/total, expiry, Update now, provider page),
-  tunnel settings and export.
+- The subscription shows on the tunnel's row (traffic bar, expiry date and
+  days left, last update). Tapping a Clash tunnel opens upstream's tunnel
+  settings directly; at the top (`QuartzEngineSettings`, in place of the
+  WireGuard config section) are Update now and the provider page. No
+  separate Clash screen and no YAML export.
 - Optional: live connections, logs, provider refresh, DNS choice.
 
 The UI talks to mihomo's `external-controller` REST API on localhost
@@ -485,9 +534,9 @@ start, stop and "set TUN fd".
   last delay, select, per-node and per-group URL tests, mode get/set,
   providers and provider update, version. Tested against a running host
   build of mihomo (no TUN: the wrapper treats a negative fd as "no TUN").
-- Done: `QuartzClashRows` + `ClashTrees` (Tunnels list) and
-  `ClashScreen` + `ClashViewModel` (subscription, settings, export).
-- Start path: `MihomoRunner` starts `MihomoCompanionService` (foreground);
+- Done: `QuartzClashRows` + `ClashTrees` (Tunnels list), subscription on the
+  row and in tunnel settings (`QuartzEngineSettings`).
+- Start path: `MihomoRunner` starts `EngineCompanionService` (foreground);
   the companion then starts `MihomoVpnService`, so a start from the
   background (tile, auto-tunnel) doesn't throw. The VPN service parses the
   profile before it establishes the TUN (parsing downloads missing geodata,
@@ -604,7 +653,7 @@ PrivateKey = ...
   (or Cloudflare's account TTL, when it sets an earlier one).
 - Expired tunnels can't start (any start path, auto-tunnel skips them); a
   WorkManager job stops a running one at expiry and notifies 24 h before and
-  at expiry (lockdown-aware); list badge "expires 5d" / "expired". The only
+  at expiry (lockdown-aware); a bar of days left with "23 days left · expires 30 Jan" (no year) on the tunnel row and in the generator's list, or "expired". The only
   fix is generating a new one into the slot.
 
 ### Implementation status
@@ -821,19 +870,22 @@ conflicts.
 | `quickConfig` call sites (~9) | Skip WireGuard parsing for non-WG tunnels | Multi-engine |
 | `service/autotunnel/AutoTunnelService.kt` | Tunnel flow wrapped in `QuartzAutoTunnel.candidates(…)` (skips expired, done); group targets later | WARP expiry, groups |
 | `data/backup/BackupArchive.kt`, `DatabaseBackup.kt` | Optional `quartz/…` zip entries (encrypted like the database); `QuartzBackup.export()` / `restore()` calls | Fork data in backups |
-| `ui/navigation/Route.kt` | `Route.Warp` (Info tab), `Route.Clash(id)` (+ `Tab` mapping) | WARP, Clash screens |
+| `ui/navigation/Route.kt` | `Route.Warp` (Info tab, + `Tab` mapping) | WARP screen |
 | `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route; Tunnels top bar is just Add, delay test (`rememberQuartzDelayTest`, greyed while connected) and refresh (`rememberQuartzRefresh`), no ⋮ menu (reorder/ping) | Exhaustive `when` over `Route`; simpler top bar |
 | `desktop/composeApp/build.gradle.kts` | `jvmMain` adds `quartz/shared/warp` and `quartz/windows` sources, the shared asset as a resource, and Ktor core + CIO | Windows WARP generator |
 | `desktop/…/ui/navigation/Route.kt`, `App.kt`, `ui/screens/support/SupportScreen.kt` | `Route.Warp` (+ tab, serializer), its `entry`, and a "WARP generator" row | Windows WARP generator |
-| `MainActivity.kt` | `entry<Route.Warp>`, `entry<Route.Clash>`; upstream's `Toaster` drawn only `if (QUARTZ_TOASTS)` (false: no toasts) | Nav graph; no toasts |
+| `MainActivity.kt` | `entry<Route.Warp>`; upstream's `Toaster` drawn only `if (QUARTZ_TOASTS)` (false: no toasts); `handleConfigFileIntent` hands every VIEW/EDIT/SEND to `QuartzImport.incoming` (any file, shared text, links) instead of only `.conf`/`.zip` | Nav graph; no toasts; import anything |
 | `viewmodel/SharedAppViewModel.kt` | `importTunnelConfigs`: `QuartzImport.claim(…)` first; `importFromUrl`: `QuartzImport.claimUrl(url)` first (2 lines) | Stock add paths take Clash/OpenVPN/links/subscriptions |
-| `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused | Files of any type |
+| `util/FileUtils.kt` | `readConfigsFromUri`: other extensions are read as text instead of refused; every file in a `.zip`, not only `.conf` | Files of any type |
+| `ui/screens/tunnels/components/UrlImportDialog.kt`, `viewmodel/SharedAppViewModel.kt` (`importFromUrl`) | Any link or text accepted, not only `https://`; non-web links imported as text | Import anything |
+| `ui/screens/tunnels/settings/TunnelSettingsScreen.kt` | Configuration section skipped when `QuartzEngineSettings(…)` (Clash subscription, OpenVPN login) is shown instead (1 line) | Engine tunnels |
+| `domain/model/GeneralSettings.kt`, `ui/state/GlobalAppUiState.kt` | Default theme `DYNAMIC` instead of `AUTOMATIC`; `QuartzSync` moves an install still on Automatic to Dynamic once | Dynamic theme by default |
 | `ui/screens/tunnels/components/TunnelStatisticsRow.kt` | Per-peer sections replaced by `QuartzIpInfo(activeTunnel)` (1 line) | Connection info: exit IP, location, ISP |
-| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); tunnel tap → `quartzTunnelRoute`; `QuartzRowExtras(row)` under each row (a Clash tunnel's groups and nodes); latency (`QuartzLatencyText`) before the switch on the right; list wrapped in `QuartzPullToRefresh`; normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`), and `ListRow`'s `onLongClick` off on phones so the hold reaches the handle: hold and drag reorders, hold and release selects; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
+| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); each item's column wrapped in `quartzRowOutline(rows, index)` (group and Clash outlines); `QuartzRowExtras(row)` under each row (a Clash tunnel's groups and nodes); latency (`QuartzLatencyText`) before the switch on the right; list wrapped in `QuartzPullToRefresh`; normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`), and `ListRow`'s `onLongClick` off on phones so the hold reaches the handle: hold and drag reorders, hold and release selects; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |
-| `.gitmodules` (engines) | `quartz/android/engines/mihomo` submodule entry (its name is still `engines/mihomo`) | mihomo engine |
+| `.gitmodules` (engines) | `quartz/android/engines/mihomo` and `quartz/android/engines/openvpn3` submodule entries (named `engines/mihomo`, `engines/openvpn3`) | Engines |
 | `.gitmodules` | Entry for `desktop/daemon/winsw` (copied from `desktop/.gitmodules`; git only reads the root file). Update it if desktop changes that submodule's URL. | Desktop build |
 | `app/.../MainActivity.kt` | `Route.Support` shows `quartz/ui/QuartzInfoScreen` instead of `SupportScreen` (import + one line) | Info tab: About, Updates (this repo's releases), upstream version check, WARP generator |
 | `desktop/shared/.../core/profile/AppVariant.kt` | `quartz` names for data/IPC folders, keyring, lock; `qtz` interface prefix | Install next to WG Tunnel Desktop |
@@ -868,7 +920,7 @@ additions in separate composables called from a single line.
    Clash into the tunnel list and auto-tunnel.
 5. Groups (types, dropdown, editor) and delay tests.
 6. Connection info.
-7. OpenVPN engine and import.
+7. OpenVPN engine and import. Done (§3 "OpenVPN engine").
 8. Kill switch for non-WireGuard engines; test auto-tunnel and groups across
    all engine types.
 9. CI: release-following merge + release; engine bump PRs on new openvpn3/mihomo tags.

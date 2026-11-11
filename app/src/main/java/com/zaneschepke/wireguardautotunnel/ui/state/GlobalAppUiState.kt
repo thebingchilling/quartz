@@ -5,7 +5,7 @@ import com.zaneschepke.wireguardautotunnel.ui.theme.Theme
 
 data class GlobalAppUiState(
     val isAppLoaded: Boolean = false,
-    val theme: Theme = Theme.AUTOMATIC,
+    val theme: Theme = Theme.DYNAMIC, // [fork] Quartz defaults to Dynamic
     val pinLockEnabled: Boolean = false,
     val tunnelMode: TunnelMode = TunnelMode.VPN,
     val shouldShowDonationSnackbar: Boolean = false,

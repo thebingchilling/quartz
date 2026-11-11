@@ -28,7 +28,7 @@ sealed interface MihomoState {
 
 /**
  * Starts and stops a Clash profile through [MihomoVpnService] (which owns the TUN) and
- * [MihomoCompanionService] (the foreground notification), and reports what's running.
+ * [EngineCompanionService] (the foreground notification), and reports what's running.
  */
 class MihomoRunner(private val context: Context) {
     private val _state = MutableStateFlow<MihomoState>(MihomoState.Idle)
@@ -50,8 +50,8 @@ class MihomoRunner(private val context: Context) {
             runCatching {
                     ContextCompat.startForegroundService(
                         context,
-                        Intent(context, MihomoCompanionService::class.java)
-                            .setAction(MihomoCompanionService.ACTION_START_VPN),
+                        Intent(context, EngineCompanionService::class.java)
+                            .setAction(EngineCompanionService.ACTION_START_VPN),
                     )
                 }
                 .onFailure { onServiceStartFailed(it) }

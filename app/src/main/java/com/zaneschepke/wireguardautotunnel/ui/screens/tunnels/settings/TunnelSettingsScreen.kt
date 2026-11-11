@@ -59,6 +59,8 @@ fun TunnelSettingsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
     ) {
+        // [fork-ui] Clash/OpenVPN tunnels: their own section instead of the WireGuard config
+        if (!app.quartz.core.ui.QuartzEngineSettings(tunnel.id, tunnel.quickConfig))
         Column {
             GroupLabel(
                 stringResource(R.string.configuration),

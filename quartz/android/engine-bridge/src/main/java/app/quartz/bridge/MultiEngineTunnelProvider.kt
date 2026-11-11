@@ -26,24 +26,31 @@ class EngineModeException(message: String) : IllegalStateException(message)
 /**
  * Quartz's [TunnelProvider] (FORK.md §3), bound over upstream's through Koin. Every start goes
  * through here, so this is where tunnels are routed by ID: WireGuard/AmneziaWG to upstream's
- * backend unchanged, Clash profiles to mihomo. One engine runs at a time (Android allows one VPN),
- * and expired tunnels are refused. Upstream sees a single merged [backendStatus].
+ * backend unchanged, Clash profiles to mihomo, OpenVPN profiles to openvpn3. One engine runs at a
+ * time (Android allows one VPN), and expired tunnels are refused. Upstream sees a single merged
+ * [backendStatus].
  */
 class MultiEngineTunnelProvider(
     private val wireGuard: TunnelProvider,
     private val metaDao: TunnelMetaDao,
     private val profiles: ClashProfiles,
     private val mihomo: MihomoRunner,
+    private val openVpnProfiles: OpenVpnProfiles,
+    private val openVpn: OpenVpnRunner,
     scope: CoroutineScope,
 ) : TunnelProvider {
 
     /** The Clash tunnel mihomo is running, as upstream's UI and notification expect to see it. */
     private val mihomoActive = MutableStateFlow<Pair<Int, ActiveTunnel>?>(null)
 
+    /** The OpenVPN tunnel openvpn3 is running, likewise. */
+    private val openVpnActive = MutableStateFlow<Pair<Int, ActiveTunnel>?>(null)
+
     override val backendStatus: StateFlow<BackendStatus> =
-        combine(wireGuard.backendStatus, mihomoActive) { status, active ->
-                if (active == null) status
-                else BackendStatus(status.killSwitch, status.activeTunnels + active, status.dnsMode)
+        combine(wireGuard.backendStatus, mihomoActive, openVpnActive) { status, clash, ovpn ->
+                val engines = listOfNotNull(clash, ovpn)
+                if (engines.isEmpty()) status
+                else BackendStatus(status.killSwitch, status.activeTunnels + engines, status.dnsMode)
             }
             .stateIn(scope, SharingStarted.Eagerly, wireGuard.backendStatus.value)
 
@@ -56,6 +63,22 @@ class MultiEngineTunnelProvider(
                 val active = mihomoActive.value ?: return@collect
                 if (state !is MihomoState.Running || state.tunnelId != active.first)
                     mihomoActive.value = null
+            }
+        }
+        // Same for openvpn3; a reconnect shows as upstream's "connecting" state.
+        scope.launch {
+            openVpn.state.collect { state ->
+                val active = openVpnActive.value ?: return@collect
+                if (state !is OpenVpnState.Running || state.tunnelId != active.first)
+                    openVpnActive.value = null
+                else
+                    openVpnActive.value =
+                        active.first to
+                            active.second.copy(
+                                transportState =
+                                    if (state.reconnecting) Tunnel.State.Starting
+                                    else Tunnel.State.Up.Healthy
+                            )
             }
         }
     }
@@ -72,17 +95,22 @@ class MultiEngineTunnelProvider(
         val profile = profiles.get(tunnel.id)
         if (profile == null) {
             if (mihomoActive.value != null) stopMihomo()
+            if (openVpnActive.value != null) stopOpenVpn()
             return wireGuard.startTunnel(tunnel, mode, tunnelDnsConfig, outerConfig)
         }
-        if (profile.engine != EngineProfile.ENGINE_MIHOMO) {
-            return Result.failure(
-                EngineModeException("${profile.engine} tunnels aren't supported yet")
-            )
+        when (profile.engine) {
+            EngineProfile.ENGINE_MIHOMO -> Unit
+            EngineProfile.ENGINE_OPENVPN -> return startOpenVpn(tunnel, mode)
+            else ->
+                return Result.failure(
+                    EngineModeException("${profile.engine} tunnels aren't supported")
+                )
         }
         if (mode !is BackendMode.Vpn) {
             return Result.failure(EngineModeException("Clash tunnels run in VPN mode only for now"))
         }
         if (wireGuard.backendStatus.value.activeTunnels.isNotEmpty()) wireGuard.stopActiveTunnels()
+        if (openVpnActive.value != null) stopOpenVpn()
         return mihomo.start(tunnel.id, tunnel.name, profiles.file(profile)).map { _ ->
             mihomoActive.value =
                 tunnel.id to
@@ -95,14 +123,43 @@ class MultiEngineTunnelProvider(
         }
     }
 
+    private suspend fun startOpenVpn(tunnel: Tunnel, mode: BackendMode): Result<Unit> {
+        if (mode !is BackendMode.Vpn) {
+            return Result.failure(EngineModeException("OpenVPN tunnels run in VPN mode only"))
+        }
+        val (ovpn, credentials) =
+            openVpnProfiles.read(tunnel.id)
+                ?: return Result.failure(EngineModeException("OpenVPN profile missing"))
+        if (wireGuard.backendStatus.value.activeTunnels.isNotEmpty()) wireGuard.stopActiveTunnels()
+        if (mihomoActive.value != null) stopMihomo()
+        return openVpn.start(tunnel.id, tunnel.name, ovpn, credentials).map {
+            openVpnActive.value =
+                tunnel.id to
+                    ActiveTunnel(
+                        tunnel = tunnel,
+                        mode = mode,
+                        transportState = Tunnel.State.Up.Healthy,
+                        uptime = System.currentTimeMillis(),
+                    )
+        }
+    }
+
     override suspend fun stopTunnel(tunnelId: Int): Result<Unit> =
-        if (mihomoActive.value?.first == tunnelId) {
-            stopMihomo()
-            Result.success(Unit)
-        } else wireGuard.stopTunnel(tunnelId)
+        when (tunnelId) {
+            mihomoActive.value?.first -> {
+                stopMihomo()
+                Result.success(Unit)
+            }
+            openVpnActive.value?.first -> {
+                stopOpenVpn()
+                Result.success(Unit)
+            }
+            else -> wireGuard.stopTunnel(tunnelId)
+        }
 
     override suspend fun stopActiveTunnels(): Result<Unit> {
         if (mihomoActive.value != null) stopMihomo()
+        if (openVpnActive.value != null) stopOpenVpn()
         return wireGuard.stopActiveTunnels()
     }
 
@@ -112,11 +169,17 @@ class MultiEngineTunnelProvider(
     override suspend fun disableLockDown(): Result<Unit> = wireGuard.disableLockDown()
 
     override suspend fun updateTunnel(tunnel: Tunnel): Result<Unit> =
-        if (mihomoActive.value?.first == tunnel.id) Result.success(Unit)
+        if (mihomoActive.value?.first == tunnel.id || openVpnActive.value?.first == tunnel.id)
+            Result.success(Unit)
         else wireGuard.updateTunnel(tunnel)
 
     private suspend fun stopMihomo() {
         mihomo.stop()
         mihomoActive.value = null
+    }
+
+    private suspend fun stopOpenVpn() {
+        openVpn.stop()
+        openVpnActive.value = null
     }
 }

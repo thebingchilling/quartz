@@ -8,7 +8,7 @@ sealed interface Detected {
     /** WireGuard/AmneziaWG `.conf`: upstream's own import. */
     data class WireGuard(val config: String) : Detected
 
-    /** `.ovpn`: OpenVPN tunnel (engine in step 7). */
+    /** An OpenVPN profile (`.ovpn`, or any file with one in it): OpenVPN tunnel. */
     data class OpenVpn(val config: String) : Detected
 
     /** A complete Clash/mihomo profile, kept as-is. */
@@ -44,10 +44,9 @@ object ImportDetector {
     fun detect(content: String, fileName: String? = null): Detected {
         val text = content.removePrefix("﻿").trim()
         if (text.isEmpty()) return Detected.Unknown("Empty")
-        val ext = fileName?.substringAfterLast('.', "")?.lowercase()
-
+        // Decided by content alone: any file name or extension (.conf, .txt, none) works.
         if (isWireGuard(text)) return Detected.WireGuard(text)
-        if (ext == "ovpn" || isOpenVpn(text)) return Detected.OpenVpn(text)
+        if (isOpenVpn(text)) return Detected.OpenVpn(text)
 
         deepLinkSubscription(text)?.let {
             return Detected.SubscriptionUrl(it)
@@ -111,10 +110,14 @@ object ImportDetector {
         Regex("(?im)^\\s*\\[Interface]\\s*$").containsMatchIn(text) &&
             Regex("(?im)^\\s*\\[Peer]\\s*$").containsMatchIn(text)
 
+    /** A `remote` line plus anything only an OpenVPN profile has. */
     fun isOpenVpn(text: String): Boolean =
-        Regex("(?im)^\\s*client\\s*$").containsMatchIn(text) &&
-            Regex("(?im)^\\s*remote\\s+\\S+").containsMatchIn(text) ||
-            ("<ca>" in text && Regex("(?im)^\\s*remote\\s+\\S+").containsMatchIn(text))
+        Regex("(?im)^\\s*remote\\s+\\S+").containsMatchIn(text) &&
+            (Regex("(?im)^\\s*(client|tls-client|pull|nobind|persist-tun|auth-user-pass)\\b")
+                .containsMatchIn(text) ||
+                Regex("(?im)^\\s*dev\\s+(tun|tap)").containsMatchIn(text) ||
+                Regex("(?im)^\\s*proto\\s+(udp|tcp)").containsMatchIn(text) ||
+                "<ca>" in text)
 
     /** `clash://install-config?url=…` and `clashmeta://…` deep links. */
     fun deepLinkSubscription(text: String): String? {

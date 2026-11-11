@@ -4,16 +4,18 @@ import androidx.room.Room
 import app.quartz.bridge.ClashProfiles
 import app.quartz.bridge.MihomoRunner
 import app.quartz.bridge.MultiEngineTunnelProvider
+import app.quartz.bridge.OpenVpnProfiles
+import app.quartz.bridge.OpenVpnRunner
 import app.quartz.bridge.SubscriptionWorker
 import app.quartz.bridge.Subscriptions
 import app.quartz.clash.ui.ClashTrees
 import app.quartz.clash.ui.QuartzDelays
 import app.quartz.clash.ui.QuartzRefresh
-import app.quartz.clash.ui.ClashViewModel
 import app.quartz.core.ip.IpLookup
 import app.quartz.core.ui.QuartzTunnelOrder
 import app.quartz.core.data.ForkDatabase
 import app.quartz.engine.mihomo.MihomoEngine
+import app.quartz.engine.openvpn.OpenVpnEngine
 import app.quartz.warp.CloudflareWarpApi
 import app.quartz.warp.WarpApi
 import app.quartz.warp.WarpExpiry
@@ -45,7 +47,7 @@ val quartzModule = module {
     single { get<ForkDatabase>().engineProfileDao() }
 
     // Overrides upstream's binding in TunnelModule.kt: upstream's provider handles WireGuard,
-    // wrapped by the one that routes Clash tunnels to mihomo (FORK.md §3).
+    // wrapped by the one that routes Clash tunnels to mihomo and OpenVPN to openvpn3 (FORK.md §3).
     single<TunnelProvider> {
         MultiEngineTunnelProvider(
             wireGuard =
@@ -57,18 +59,21 @@ val quartzModule = module {
             metaDao = get(),
             profiles = get(),
             mihomo = get(),
+            openVpnProfiles = get(),
+            openVpn = get(),
             scope = get(named(Scope.APPLICATION)),
         )
     }
+
+    single { OpenVpnEngine() }
+    single { OpenVpnRunner(androidContext()) }
+    single { OpenVpnProfiles(androidContext(), get(), get(), get(named(Dispatcher.IO))) }
 
     single { MihomoEngine(File(androidContext().filesDir, "mihomo")) }
     single { MihomoRunner(androidContext()) }
     single { ClashProfiles(androidContext(), get(), get(), get(named(Dispatcher.IO))) }
     single { Subscriptions(get(), get(), get(), get(named(Dispatcher.IO))) }
     workerOf(::SubscriptionWorker)
-    viewModel { (tunnelId: Int) ->
-        ClashViewModel(tunnelId, get(), get(), get(), get(), get(), get(), get())
-    }
     single {
         ClashTrees(
             get(),
@@ -79,7 +84,7 @@ val quartzModule = module {
         )
     }
     single { QuartzRefresh(get(), get(), get(), get(), get(), get(named(Scope.APPLICATION))) }
-    single { QuartzDelays(get(), get(), get(), get(named(Scope.APPLICATION))) }
+    single { QuartzDelays(get(), get(), get(), get(), get(named(Scope.APPLICATION))) }
     single { IpLookup(get(named(Scope.APPLICATION))) }
     single { QuartzTunnelOrder(get(), get()) }
 
@@ -118,6 +123,16 @@ val quartzModule = module {
 
     single(createdAtStart = true) {
         SubscriptionWorker.schedule(androidContext())
-        QuartzSync(get(named(Scope.APPLICATION)), get(), get(), get(), get(), get())
+        QuartzSync(
+            androidContext(),
+            get(named(Scope.APPLICATION)),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+        )
     }
 }

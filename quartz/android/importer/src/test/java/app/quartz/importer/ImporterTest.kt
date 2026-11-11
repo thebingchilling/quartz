@@ -96,7 +96,17 @@ class ImporterTest {
             ImportDetector.detect("client\ndev tun\nremote vpn.example.com 1194\n")
                 is Detected.OpenVpn
         )
-        assertTrue(ImportDetector.detect("anything", "work.ovpn") is Detected.OpenVpn)
+        // Content decides, not the file name: an OpenVPN profile in a .txt or .conf file, and a
+        // .ovpn file that holds no profile.
+        assertTrue(
+            ImportDetector.detect("remote 192.0.2.1 443\nproto tcp\n", "work.txt")
+                is Detected.OpenVpn
+        )
+        assertTrue(
+            ImportDetector.detect("<ca>\nx\n</ca>\nremote vpn.example.com\n", "server.conf")
+                is Detected.OpenVpn
+        )
+        assertTrue(ImportDetector.detect("anything", "work.ovpn") is Detected.Unknown)
         assertEquals(
             Detected.SubscriptionUrl("https://sub.example.com/api?token=abc"),
             ImportDetector.detect(

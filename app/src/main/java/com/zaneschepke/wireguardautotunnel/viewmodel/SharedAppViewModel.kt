@@ -677,6 +677,11 @@ class SharedAppViewModel(
 
     fun importFromUrl(url: String) = intent {
         reduce { state.copy(pendingWgImportUrl = null) }
+        // [fork] not a web link (clash://, vmess://, …): imported as text
+        if (!url.startsWith("http://", true) && !url.startsWith("https://", true)) {
+            importFromClipboard(url)
+            return@intent
+        }
         if (QuartzImport.claimUrl(url)) return@intent // [fork] Clash subscription
         try {
             httpClient.prepareGet(url).execute { response ->

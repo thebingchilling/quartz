@@ -14,18 +14,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 /**
- * Foreground companion while a Clash profile runs: shows upstream's tunnel notification (built by
- * upstream's AppProvider from the merged status, so it looks like any tunnel's) and keeps the
- * process alive, as upstream's VpnCompanionService does for WireGuard.
+ * Foreground companion while a Clash (mihomo) or OpenVPN profile runs: shows upstream's tunnel
+ * notification (built by upstream's AppProvider from the merged status, so it looks like any
+ * tunnel's) and keeps the process alive, as upstream's VpnCompanionService does for WireGuard.
  */
-class MihomoCompanionService : Service() {
+class EngineCompanionService : Service() {
     private val appProvider: AppProvider by inject()
     private val tunnelProvider: TunnelProvider by inject()
-    private val runner: MihomoRunner by inject()
+    private val mihomo: MihomoRunner by inject()
+    private val openVpn: OpenVpnRunner by inject()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var notifications: Job? = null
     private var watcher: Job? = null
@@ -42,31 +44,43 @@ class MihomoCompanionService : Service() {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             else 0,
         )
-        // The VpnService is started from here, once this service is in the foreground: started
-        // straight from MihomoRunner it threw (and crashed the app) whenever the app was in the
-        // background, e.g. from the quick settings tile or auto-tunnel.
+        // The engine's VpnService is started from here, once this service is in the foreground:
+        // started straight from a runner it threw (and crashed the app) whenever the app was in
+        // the background, e.g. from the quick settings tile or auto-tunnel.
         if (intent?.action == ACTION_START_VPN) {
+            val openVpnStart = intent.getStringExtra(EXTRA_ENGINE) == ENGINE_OPENVPN
             runCatching {
                     startService(
-                        Intent(this, MihomoVpnService::class.java)
-                            .setAction(MihomoVpnService.ACTION_START)
+                        if (openVpnStart)
+                            Intent(this, OpenVpnVpnService::class.java)
+                                .setAction(OpenVpnVpnService.ACTION_START)
+                        else
+                            Intent(this, MihomoVpnService::class.java)
+                                .setAction(MihomoVpnService.ACTION_START)
                     )
                 }
-                .onFailure { runner.onServiceStartFailed(it) }
+                .onFailure {
+                    if (openVpnStart) openVpn.onServiceStartFailed(it)
+                    else mihomo.onServiceStartFailed(it)
+                }
         }
         lastStartId = startId
         if (watcher?.isActive != true) {
-            // Stops itself when there's nothing left to show, always after startForeground.
+            // Stops itself when no engine is left running, always after startForeground.
             watcher = scope.launch {
-                runner.state.collect { state ->
-                    if (state is MihomoState.Idle || state is MihomoState.Failed) {
-                        ServiceCompat.stopForeground(
-                            this@MihomoCompanionService,
-                            ServiceCompat.STOP_FOREGROUND_REMOVE,
-                        )
-                        stopSelfResult(lastStartId)
+                combine(mihomo.state, openVpn.state) { m, o ->
+                        (m is MihomoState.Idle || m is MihomoState.Failed) &&
+                            (o is OpenVpnState.Idle || o is OpenVpnState.Failed)
                     }
-                }
+                    .collect { idle ->
+                        if (idle) {
+                            ServiceCompat.stopForeground(
+                                this@EngineCompanionService,
+                                ServiceCompat.STOP_FOREGROUND_REMOVE,
+                            )
+                            stopSelfResult(lastStartId)
+                        }
+                    }
             }
         }
         if (notifications?.isActive == true) return START_NOT_STICKY
@@ -75,7 +89,7 @@ class MihomoCompanionService : Service() {
                 if (status.activeTunnels.isNotEmpty()) {
                     val notification = appProvider.buildVpnPersistentNotification(status)
                     ServiceCompat.startForeground(
-                        this@MihomoCompanionService,
+                        this@EngineCompanionService,
                         NotificationService.VPN_NOTIFICATION_ID,
                         notification,
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -94,6 +108,8 @@ class MihomoCompanionService : Service() {
     }
 
     companion object {
-        const val ACTION_START_VPN = "app.quartz.mihomo.START_VPN"
+        const val ACTION_START_VPN = "app.quartz.engine.START_VPN"
+        const val EXTRA_ENGINE = "engine"
+        const val ENGINE_OPENVPN = "openvpn"
     }
 }

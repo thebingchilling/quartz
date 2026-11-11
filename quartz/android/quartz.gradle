@@ -77,7 +77,7 @@ configurations.configureEach {
 // Each quartz/android/<name>/src/{main,test} adds its java, res and assets to the app's source sets.
 android {
     sourceSets {
-        ["core", "warp", "engine-mihomo", "engine-bridge", "importer", "clash-ui"].each { name ->
+        ["core", "warp", "engine-mihomo", "engine-openvpn", "engine-bridge", "importer", "clash-ui"].each { name ->
             def dir = "$rootDir/quartz/android/$name/src"
             main.kotlin.directories.add("$dir/main/java")
             main.res.directories.add("$dir/main/res")
@@ -184,6 +184,74 @@ android {
     packaging.jniLibs.useLegacyPackaging = true
 }
 tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach { dependsOn buildMihomo }
+
+// OpenVPN engine: quartz/android/engines/openvpn3 (submodule, unpatched) + quartz/android/engine-openvpn/cpp
+// (JNI wrapper and CMakeLists, which fetches asio, lz4, mbed TLS and xxHash pinned), built into
+// libovpn3.so per ABI with the NDK's CMake toolchain file and the cmake on PATH. Same skip rules as
+// mihomo: a stamp of the submodule commit + wrapper, -PprebuiltEngines. Its own output directory,
+// so CI caches it separately from mihomo's.
+def ovpnAbis = ["arm64-v8a", "armeabi-v7a"]
+def ovpnSrc = file("$rootDir/quartz/android/engines/openvpn3")
+def ovpnWrapper = file("$rootDir/quartz/android/engine-openvpn/cpp")
+def ovpnJniLibs = layout.buildDirectory.dir("generated/quartz/ovpnLibs").get().asFile
+def ovpnStamp = providers.provider {
+    def commit = providers.exec {
+        commandLine "git", "-C", ovpnSrc.path, "rev-parse", "HEAD"
+        ignoreExitValue = true
+    }.standardOutput.asText.get().trim()
+    def wrapper = fileTree(ovpnWrapper).files.sort { it.name }
+        .collect { it.name + ":" + it.bytes.encodeHex().toString().md5() }.join(",")
+    commit + "|" + wrapper.md5() + "|" + quartzNdkVersion
+}
+
+def buildOpenVpn = tasks.register("buildOpenVpn") {
+    description = "Builds libovpn3.so for every ABI (quartz/android/engines/openvpn3 + quartz/android/engine-openvpn/cpp)."
+}
+ovpnAbis.each { abi ->
+    def outDir = new File(ovpnJniLibs, abi)
+    def cmakeDir = layout.buildDirectory.dir("quartz/openvpn3/$abi").get().asFile
+    def onlyIfChanged = { task ->
+        task.onlyIf("prebuiltEngines not set") { !project.hasProperty("prebuiltEngines") }
+        task.onlyIf("submodule or wrapper changed") {
+            def stamp = new File(outDir, "libovpn3.stamp")
+            !(new File(outDir, "libovpn3.so").exists() && stamp.exists() && stamp.text == ovpnStamp.get())
+        }
+    }
+    def abiName = abi.replace("-", "").capitalize()
+    def configure = tasks.register("configureOpenVpn" + abiName, Exec) {
+        onlyIfChanged(it)
+        doFirst {
+            def ndk = new File(androidComponents.sdkComponents.sdkDirectory.get().asFile, "ndk/$quartzNdkVersion")
+            if (!ndk.exists()) {
+                throw new GradleException("NDK $quartzNdkVersion not found: sdkmanager \"ndk;$quartzNdkVersion\"")
+            }
+            cmakeDir.mkdirs()
+            commandLine "cmake", "-S", ovpnWrapper.path, "-B", cmakeDir.path,
+                "-DCMAKE_TOOLCHAIN_FILE=${new File(ndk, "build/cmake/android.toolchain.cmake").path}",
+                "-DANDROID_ABI=$abi", "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static",
+                "-DCMAKE_BUILD_TYPE=MinSizeRel", "-DOPENVPN3_DIR=${ovpnSrc.path}"
+        }
+        commandLine "cmake", "--version" // the real command is set in doFirst, once the NDK is known
+    }
+    def task = tasks.register("buildOpenVpn" + abiName, Exec) {
+        dependsOn configure
+        onlyIfChanged(it)
+        commandLine "cmake", "--build", cmakeDir.path, "--target", "ovpn3", "--parallel"
+        doLast {
+            outDir.mkdirs()
+            java.nio.file.Files.copy(new File(cmakeDir, "libovpn3.so").toPath(),
+                new File(outDir, "libovpn3.so").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            new File(outDir, "libovpn3.stamp").text = ovpnStamp.get()
+        }
+    }
+    buildOpenVpn.configure { dependsOn task }
+}
+
+android {
+    sourceSets.main.jniLibs.directories.add(ovpnJniLibs.path)
+    packaging.jniLibs.excludes.add("**/libovpn3.stamp")
+}
+tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach { dependsOn buildOpenVpn }
 
 // Libraries only fork code uses.
 dependencies {

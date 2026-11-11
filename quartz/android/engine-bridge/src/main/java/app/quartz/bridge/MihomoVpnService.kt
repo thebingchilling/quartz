@@ -19,7 +19,7 @@ import timber.log.Timber
 /**
  * The VpnService for Clash profiles: creates the TUN and hands its fd to mihomo, which reads
  * packets from it and protects its own sockets through [protect]. Not a foreground service (like
- * upstream's, for Android Auto); [MihomoCompanionService] holds the notification.
+ * upstream's, for Android Auto); [EngineCompanionService] holds the notification.
  */
 class MihomoVpnService : VpnService() {
     private val runner: MihomoRunner by inject()

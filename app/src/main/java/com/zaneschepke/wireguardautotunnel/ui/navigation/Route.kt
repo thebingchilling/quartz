@@ -161,8 +161,6 @@ sealed class Route : NavKey {
 
     // [fork-ui] Quartz
     @Keep @Serializable data object Warp : Route()
-
-    @Keep @Serializable data class Clash(val id: Int) : Route()
 }
 
 @Serializable
@@ -200,8 +198,7 @@ enum class Tab(
                 is Route.Config,
                 is Route.IPv6,
                 is Route.EntryTunnel,
-                is Route.SplitTunnel,
-                is Route.Clash -> TUNNELS
+                is Route.SplitTunnel -> TUNNELS
                 is Route.AutoTunnel,
                 Route.WifiDetectionMethod,
                 Route.WifiPreferences,

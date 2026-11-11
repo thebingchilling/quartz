@@ -1,6 +1,7 @@
 package app.quartz.core
 
 import app.quartz.bridge.ClashProfiles
+import app.quartz.bridge.OpenVpnProfiles
 import app.quartz.core.data.EngineProfile
 import app.quartz.core.data.EngineProfileDao
 import app.quartz.core.data.TunnelMeta
@@ -19,10 +20,12 @@ object QuartzBackup : KoinComponent {
     private const val TUNNEL_META = "tunnel_meta.json"
     private const val ENGINE_PROFILES = "engine_profile.json"
     private const val CLASH_DIR = "clash/"
+    private const val OPENVPN_DIR = "openvpn/"
     private val json = Json { ignoreUnknownKeys = true }
     private val metaDao: TunnelMetaDao by inject()
     private val profileDao: EngineProfileDao by inject()
     private val clashProfiles: ClashProfiles by inject()
+    private val openVpnProfiles: OpenVpnProfiles by inject()
 
     suspend fun export(): Map<String, ByteArray> {
         val profiles = profileDao.getAll()
@@ -30,8 +33,11 @@ object QuartzBackup : KoinComponent {
             put(TUNNEL_META, json.encodeToString(metaDao.getAll()).encodeToByteArray())
             put(ENGINE_PROFILES, json.encodeToString(profiles).encodeToByteArray())
             profiles.forEach { profile ->
-                val file = clashProfiles.file(profile)
-                if (file.isFile) put(CLASH_DIR + profile.profileFile, file.readBytes())
+                val (dir, file) =
+                    if (profile.engine == EngineProfile.ENGINE_OPENVPN)
+                        OPENVPN_DIR to openVpnProfiles.file(profile)
+                    else CLASH_DIR to clashProfiles.file(profile)
+                if (file.isFile) put(dir + profile.profileFile, file.readBytes())
             }
         }
     }
@@ -45,14 +51,17 @@ object QuartzBackup : KoinComponent {
         metaDao.replaceAll(decode<List<TunnelMeta>>(extras[TUNNEL_META]).orEmpty())
 
         val profiles = decode<List<EngineProfile>>(extras[ENGINE_PROFILES]).orEmpty()
-        clashProfiles.directory.listFiles()?.forEach { it.delete() }
-        clashProfiles.directory.mkdirs()
-        extras
-            .filterKeys { it.startsWith(CLASH_DIR) }
-            .forEach { (name, bytes) ->
-                val fileName = File(name.removePrefix(CLASH_DIR)).name // no path tricks
-                File(clashProfiles.directory, fileName).writeBytes(bytes)
-            }
+        for ((prefix, directory) in
+            listOf(CLASH_DIR to clashProfiles.directory, OPENVPN_DIR to openVpnProfiles.directory)) {
+            directory.listFiles()?.forEach { it.delete() }
+            directory.mkdirs()
+            extras
+                .filterKeys { it.startsWith(prefix) }
+                .forEach { (name, bytes) ->
+                    val fileName = File(name.removePrefix(prefix)).name // no path tricks
+                    File(directory, fileName).writeBytes(bytes)
+                }
+        }
         profileDao.deleteAll(profileDao.getAll().map { it.tunnelId })
         profiles.forEach { profileDao.upsert(it) }
     }

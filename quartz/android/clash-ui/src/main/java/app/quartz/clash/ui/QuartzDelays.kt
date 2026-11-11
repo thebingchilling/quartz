@@ -24,6 +24,7 @@ class QuartzDelays(
     private val tunnelRepository: TunnelRepository,
     private val networkUtils: NetworkUtils,
     private val trees: ClashTrees,
+    private val openVpnProfiles: app.quartz.bridge.OpenVpnProfiles,
     private val scope: CoroutineScope,
 ) {
     data class State(val results: Map<String, Int?> = emptyMap(), val testing: Boolean = false)
@@ -66,6 +67,19 @@ class QuartzDelays(
                                             put(nodeKey(tunnel.id, node.name), ms)
                                         }
                                     }
+                                }
+                            EngineProfile.ENGINE_OPENVPN ->
+                                launch {
+                                    // The profile's first server (`remote host [port]`).
+                                    val host =
+                                        openVpnProfiles.read(tunnel.id)?.first?.let {
+                                            Regex("(?im)^\\s*remote\\s+(\\S+)")
+                                                .find(it)
+                                                ?.groupValues
+                                                ?.get(1)
+                                        }
+                                    val ms = host?.let { permits.withPermit { ping(it) } }
+                                    put(tunnelKey(tunnel.id), ms)
                                 }
                             else -> Unit
                         }

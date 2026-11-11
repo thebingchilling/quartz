@@ -14,4 +14,17 @@
     <string name="quartz_ip_checking">Checking IP…</string>
     <string name="quartz_ip_failed">Couldn\'t look up the IP. Tap to retry.</string>
     <string name="quartz_ip_isp">ISP: %1$s</string>
+    <string name="quartz_expires_on">expires %1$s</string>
+    <plurals name="quartz_days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
+    <plurals name="quartz_hours_left">
+        <item quantity="one">%d hour left</item>
+        <item quantity="other">%d hours left</item>
+    </plurals>
+    <string name="quartz_openvpn_login">OpenVPN login</string>
+    <string name="quartz_openvpn_login_desc">For profiles that ask for a username and password. Saved with the profile and used on the next connect.</string>
+    <string name="quartz_openvpn_username">Username</string>
+    <string name="quartz_openvpn_password">Password</string>
 </resources>
