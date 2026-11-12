@@ -758,6 +758,9 @@ class MainActivity : AppCompatActivity() {
                                                 entry<Route.Logs> { LogsScreen() }
                                                 entry<Route.Support> { QuartzInfoScreen() }
                                                 entry<Route.Warp> { WarpScreen() }
+                                                entry<Route.AppRules> {
+                                                    app.quartz.apprules.ui.AppRulesScreen()
+                                                }
                                                 entry<Route.License> { LicenseScreen() }
                                                 entry<Route.Donate> { DonateScreen() }
                                                 entry<Route.Addresses> { AddressesScreen() }

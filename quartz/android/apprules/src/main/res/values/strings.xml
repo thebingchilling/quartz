@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quartz strings (quartz/android/apprules), prefixed quartz_. -->
+<resources>
+    <string name="quartz_apps_title">Tunnel by app</string>
+    <string name="quartz_apps_row_desc_none">Connect a tunnel while chosen apps are open</string>
+    <plurals name="quartz_apps_row_desc">
+        <item quantity="one">%d rule</item>
+        <item quantity="other">%d rules</item>
+    </plurals>
+    <string name="quartz_apps_row_off">off</string>
+    <string name="quartz_apps_row_no_detection">app detection is off</string>
+    <string name="quartz_apps_enabled">Tunnel by app</string>
+    <string name="quartz_apps_enabled_desc">While an app with a rule is on screen, auto-tunnel connects that rule\'s tunnel. When you leave the app, the other auto-tunnel rules decide again. Auto-tunnel must be on.</string>
+    <string name="quartz_apps_detection">App detection</string>
+    <string name="quartz_apps_watcher">Detect apps (accessibility)</string>
+    <string name="quartz_apps_watcher_on">On. Sees apps in every profile: work profile, private space, Secure Folder.</string>
+    <string name="quartz_apps_watcher_off">Off. Recommended: instant, and the only way to see apps in the work profile, private space and Secure Folder. Quartz only reads which app is in front, nothing on screen. Tap, then turn on Quartz under installed or downloaded apps.</string>
+    <string name="quartz_apps_usage">Usage access</string>
+    <string name="quartz_apps_usage_on">On. Used while app detection is off: checks every 2 seconds, main profile apps only.</string>
+    <string name="quartz_apps_usage_off">Off. A fallback for app detection: main profile apps only.</string>
+    <string name="quartz_apps_usage_unused">Not needed while app detection is on.</string>
+    <string name="quartz_apps_no_detection">Turn on app detection or usage access, or no rule can work.</string>
+    <string name="quartz_apps_rules">Rules</string>
+    <string name="quartz_apps_tunnel_missing">Tunnel deleted</string>
+    <string name="quartz_apps_add_rule">Add rule</string>
+    <string name="quartz_apps_notes">A VPN only carries traffic of the profile it runs in. For apps in the work profile, private space or Secure Folder, the rule still connects the tunnel when they open, but those apps\' traffic goes through it only if that profile uses the same VPN. If an app is installed in more than one profile, the rule reacts to it in any of them.</string>
+    <string name="quartz_apps_tunnel">Tunnel</string>
+    <string name="quartz_apps_apps">Apps (%d selected)</string>
+    <string name="quartz_apps_search">Search apps</string>
+    <string name="quartz_apps_hidden_profiles">Private space apps (and Secure Folder\'s on some phones) aren\'t listed, because Android shows them only to the launcher. With app detection on, open the app there once and it appears under “Seen in other profiles”.</string>
+    <string name="quartz_apps_save">Save rule</string>
+    <string name="quartz_apps_save_hint">Pick a tunnel and at least one app</string>
+    <string name="quartz_apps_delete">Delete rule</string>
+    <string name="quartz_profile_main">Apps</string>
+    <string name="quartz_profile_work">Work profile</string>
+    <string name="quartz_profile_private">Private space</string>
+    <string name="quartz_profile_secure_folder">Secure Folder</string>
+    <string name="quartz_profile_dual">Dual apps</string>
+    <string name="quartz_profile_other">Seen in other profiles</string>
+    <string name="quartz_apps_watcher_service">Quartz app detection</string>
+    <string name="quartz_apps_watcher_service_desc">Lets auto-tunnel connect a tunnel while chosen apps are open. Quartz only reads which app is in front (including apps in the work profile, private space and Secure Folder); it doesn\'t read what\'s on screen or act for you.</string>
+</resources>

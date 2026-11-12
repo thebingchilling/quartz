@@ -46,7 +46,8 @@ is `master`; desktop is merged from its release tags.
       engine-mihomo/            ← cgo/JNI wrapper around mihomo (go/) + Kotlin MihomoEngine and REST API client (src/)
       importer/                 ← detecting importer (share links, Clash YAML, subscriptions, sing-box, templates)
       warp/                     ← WARP generator: Android repository, expiry and screen
-      clash-ui/                 ← Clash groups/nodes on the Tunnels list, delay test, refresh, Clash tunnel screen
+      clash-ui/                 ← Clash groups/nodes on the Tunnels list, delay test, refresh
+      apprules/                 ← tunnel by app: rules, app detection (accessibility / usage access), Auto-tunnel → Tunnel by app screen (§14)
       branding/                 ← resource overlay: icon, TV banner, notification glyph (res/), sources and PNGs (icon/)
       engine-openvpn/           ← JNI wrapper around openvpn3's client API (cpp/: ovpn_jni.cpp + CMakeLists.txt) + Kotlin OpenVpnEngine (src/)
       (later: groups/, connection-info/)
@@ -880,6 +881,9 @@ conflicts.
 | `data/backup/BackupArchive.kt`, `DatabaseBackup.kt` | Optional `quartz/…` zip entries (encrypted like the database); `QuartzBackup.export()` / `restore()` calls | Fork data in backups |
 | `ui/navigation/Route.kt` | `Route.Warp` (Info tab, + `Tab` mapping) | WARP screen |
 | `ui/navigation/components/currentBackStackEntryAsNavbarState.kt` | Title/back button per fork route; Tunnels top bar is just Add, delay test (`rememberQuartzDelayTest`, greyed while connected) and refresh (`rememberQuartzRefresh`), no ⋮ menu (reorder/ping) | Exhaustive `when` over `Route`; simpler top bar |
+| `service/autotunnel/AutoTunnelService.kt` | Reconciler input wrapped in `QuartzAppTunnel.overlay(…)` (1 line + import) | Tunnel by app (§14) |
+| `ui/screens/autotunnel/AutoTunnelScreen.kt` | `QuartzAppRulesRow()` after "Stop on no internet" (1 line) | Tunnel by app |
+| `ui/navigation/Route.kt`, `…/currentBackStackEntryAsNavbarState.kt`, `MainActivity.kt` | `Route.AppRules` (+ Auto-tunnel tab), its title, its `entry` | Tunnel by app |
 | `desktop/composeApp/build.gradle.kts` | `jvmMain` adds `quartz/shared/warp` and `quartz/windows` sources, the shared asset as a resource, and Ktor core + CIO | Windows WARP generator |
 | `desktop/…/ui/navigation/Route.kt`, `App.kt`, `ui/screens/support/SupportScreen.kt` | `Route.Warp` (+ tab, serializer), its `entry`, and a "WARP generator" row | Windows WARP generator |
 | `MainActivity.kt` | `entry<Route.Warp>`; upstream's `Toaster` drawn only `if (QUARTZ_TOASTS)` (false: no toasts); `handleConfigFileIntent` hands every VIEW/EDIT/SEND to `QuartzImport.incoming` (any file, shared text, links) instead of only `.conf`/`.zip` | Nav graph; no toasts; import anything |
@@ -932,3 +936,44 @@ additions in separate composables called from a single line.
 8. Kill switch for non-WireGuard engines; test auto-tunnel and groups across
    all engine types.
 9. CI: release-following merge + release; engine bump PRs on new openvpn3/mihomo tags.
+
+## 14. Tunnel by app — `quartz/android/apprules`
+
+Auto-tunnel → **Tunnel by app**: rules of a tunnel and a set of apps. While
+one of a rule's apps is on screen, auto-tunnel connects that rule's tunnel
+(stopping any other); about 4 s after leaving it (so a share sheet or a quick
+switch doesn't flap), upstream's own rules (Wi-Fi, mobile data, Ethernet,
+trusted networks) decide again. Auto-tunnel must be on.
+
+- **How it plugs in:** upstream's `AutoTunnelReconciler` (in
+  `com.wgtunnel:backend`) acts on snapshots of network + policy + tunnels.
+  `QuartzAppTunnel.overlay` wraps that flow (one line in `AutoTunnelService`):
+  while a rule app is on screen, the snapshot becomes "on Ethernet, Ethernet
+  tunnel = the rule's tunnel", which upstream's engine turns into exactly
+  that tunnel. Its network key changes, which clears a manual override as any
+  network change does; leaving the app changes it back. Not applied without a
+  usable network, on a captive portal auto-tunnel is told to avoid, or when
+  the rule's tunnel isn't a candidate (deleted, expired). Unit-tested against
+  upstream's real `AutoTunnelEngine`.
+- **Detecting the app on screen** (`ForegroundApp`): **app detection**
+  (`QuartzAppWatcherService`, an accessibility service listening only to
+  window-state changes, no window content) is instant and sees apps in every
+  profile, since they share the screen. Without it, **usage access** is
+  polled every 2 s while the screen is on, main profile only. The screen links
+  to both system settings and shows which is on.
+- **Picking apps** (`AppCatalog`): the main profile's apps, plus every profile
+  `LauncherApps` shows Quartz, labelled Work profile, Secure Folder (Samsung
+  user 150+), Dual apps (user 95) or Private space (Android 15's user type).
+  Android hides the private space (and on some phones Secure Folder) from
+  apps that aren't the launcher, so apps app detection sees in a profile
+  Quartz can't list are remembered and offered under "Seen in other
+  profiles" (open the app there once).
+- **Limits:** detection reports a package, not its profile, so a rule reacts
+  to an app installed in several profiles in any of them. A VPN carries only
+  its own profile's traffic: for work profile, private space and Secure
+  Folder apps the tunnel connects when they open, but their traffic uses it
+  only if that profile routes through the same VPN (the screen says so).
+- Rules live in `files/app_rules.json` (`AppRules`), go into backups as
+  `quartz/app_rules.json`, and lose rules whose tunnel was deleted.
+- Not tested on a device yet.
+

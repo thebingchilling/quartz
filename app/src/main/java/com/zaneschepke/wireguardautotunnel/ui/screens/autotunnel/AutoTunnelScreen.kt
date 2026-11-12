@@ -373,6 +373,7 @@ fun AutoTunnelScreen(
                     )
                 },
             )
+            app.quartz.apprules.ui.QuartzAppRulesRow() // [fork-ui] tunnel by app
         }
         Column {
             GroupLabel(

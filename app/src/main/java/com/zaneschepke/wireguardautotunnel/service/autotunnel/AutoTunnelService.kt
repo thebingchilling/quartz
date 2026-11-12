@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import app.quartz.apprules.QuartzAppTunnel
 import app.quartz.core.QuartzAutoTunnel
 import com.wgtunnel.backend.Backend
 import com.wgtunnel.backend.autotunnel.AutoTunnelReconciler
@@ -175,7 +176,8 @@ class AutoTunnelService : LifecycleService() {
         // The wait is unbounded and the reconciler's actions are not cancellable, so it goes first
         tunnelCoordinator.awaitReady()
         tunnelCoordinator.userOverrideListener = { reconciler.notifyUserOverride() }
-        reconciler.start(autoTunnelStateFlow.map { it.toCore() })
+        // [fork] Quartz: while an app with a rule is on screen, its tunnel is the one wanted
+        reconciler.start(QuartzAppTunnel.overlay(autoTunnelStateFlow.map { it.toCore() }))
         try {
             awaitCancellation()
         } finally {

@@ -65,6 +65,7 @@ val quartzModule = module {
         )
     }
 
+    single { app.quartz.apprules.AppRules(androidContext(), get(named(Dispatcher.IO))) }
     single { OpenVpnEngine() }
     single { OpenVpnRunner(androidContext()) }
     single { OpenVpnProfiles(androidContext(), get(), get(), get(named(Dispatcher.IO))) }
@@ -126,6 +127,7 @@ val quartzModule = module {
         QuartzSync(
             androidContext(),
             get(named(Scope.APPLICATION)),
+            get(),
             get(),
             get(),
             get(),

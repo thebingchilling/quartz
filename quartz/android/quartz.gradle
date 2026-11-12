@@ -77,7 +77,7 @@ configurations.configureEach {
 // Each quartz/android/<name>/src/{main,test} adds its java, res and assets to the app's source sets.
 android {
     sourceSets {
-        ["core", "warp", "engine-mihomo", "engine-openvpn", "engine-bridge", "importer", "clash-ui"].each { name ->
+        ["core", "warp", "engine-mihomo", "engine-openvpn", "engine-bridge", "importer", "clash-ui", "apprules"].each { name ->
             def dir = "$rootDir/quartz/android/$name/src"
             main.kotlin.directories.add("$dir/main/java")
             main.res.directories.add("$dir/main/res")

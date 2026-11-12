@@ -161,6 +161,8 @@ sealed class Route : NavKey {
 
     // [fork-ui] Quartz
     @Keep @Serializable data object Warp : Route()
+
+    @Keep @Serializable data object AppRules : Route()
 }
 
 @Serializable
@@ -203,6 +205,7 @@ enum class Tab(
                 Route.WifiDetectionMethod,
                 Route.WifiPreferences,
                 is Route.PreferredTunnel,
+                Route.AppRules,
                 Route.LocationDisclosure -> AUTOTUNNEL
                 is Route.Settings,
                 Route.AndroidIntegrations,

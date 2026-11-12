@@ -21,17 +21,20 @@ object QuartzBackup : KoinComponent {
     private const val ENGINE_PROFILES = "engine_profile.json"
     private const val CLASH_DIR = "clash/"
     private const val OPENVPN_DIR = "openvpn/"
+    private const val APP_RULES = app.quartz.apprules.AppRules.FILE
     private val json = Json { ignoreUnknownKeys = true }
     private val metaDao: TunnelMetaDao by inject()
     private val profileDao: EngineProfileDao by inject()
     private val clashProfiles: ClashProfiles by inject()
     private val openVpnProfiles: OpenVpnProfiles by inject()
+    private val appRules: app.quartz.apprules.AppRules by inject()
 
     suspend fun export(): Map<String, ByteArray> {
         val profiles = profileDao.getAll()
         return buildMap {
             put(TUNNEL_META, json.encodeToString(metaDao.getAll()).encodeToByteArray())
             put(ENGINE_PROFILES, json.encodeToString(profiles).encodeToByteArray())
+            put(APP_RULES, appRules.export())
             profiles.forEach { profile ->
                 val (dir, file) =
                     if (profile.engine == EngineProfile.ENGINE_OPENVPN)
@@ -64,6 +67,7 @@ object QuartzBackup : KoinComponent {
         }
         profileDao.deleteAll(profileDao.getAll().map { it.tunnelId })
         profiles.forEach { profileDao.upsert(it) }
+        appRules.restore(extras[APP_RULES])
     }
 
     private inline fun <reified T> decode(data: ByteArray?): T? = data?.let {

@@ -25,6 +25,7 @@ class QuartzSync(
     clashProfiles: ClashProfiles,
     openVpnProfiles: OpenVpnProfiles,
     settingsRepository: GeneralSettingRepository,
+    appRules: app.quartz.apprules.AppRules,
 ) {
     init {
         scope.launch {
@@ -33,6 +34,7 @@ class QuartzSync(
                 runCatching {
                         clashProfiles.removeOrphans(ids)
                         openVpnProfiles.removeOrphans(ids)
+                        appRules.removeTunnelsNotIn(ids)
                     }
                     .onFailure { Timber.e(it, "Engine profile cleanup failed") }
                 runCatching { warpRepository.sync(tunnels) }
