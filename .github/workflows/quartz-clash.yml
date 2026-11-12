@@ -91,7 +91,10 @@ jobs:
       # The run number is the build number the in-app updater compares.
       - name: Build number
         shell: bash
-        run: sed -i.bak -E "s/^version: ([0-9.]+)\+.*/version: \1+${{ github.run_number }}/" pubspec.yaml && rm pubspec.yaml.bak
+        run: |
+          sed -i.bak -E "s/^version: ([0-9.]+)\+.*/version: \1+${{ github.run_number }}/" pubspec.yaml
+          rm pubspec.yaml.bak
+          grep '^version:' pubspec.yaml
 
       - name: Flutter dependencies
         run: |
