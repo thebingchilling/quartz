@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Quartz wording over upstream's strings (same names, higher-priority source set: quartz.gradle).
-     Upstream's add paths take any config here, so their text doesn't promise only .conf files. -->
-<resources>
-    <string name="import_url_description">A link to any config or subscription: WireGuard, OpenVPN, Clash/mihomo YAML, share links (vmess://, vless://, ss://, …) or clash:// links.</string>
-    <string name="example_import_url" translatable="false">https://example.com/sub</string>
-    <string name="enter_config_url">Config or subscription link</string>
-    <string name="error_file_extension">Not a config Quartz can read</string>
-</resources>

@@ -1,2 +1,0 @@
-What's new:
-- Bugfix for custom tunnel dns memory leak

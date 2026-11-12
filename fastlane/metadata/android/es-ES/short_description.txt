@@ -1,1 +1,0 @@
-Un cliente VPN WireGuard alternativo con túnel automático, aislamiento y proxy.

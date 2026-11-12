@@ -1,1 +1,0 @@
-WireGuard & AmneziaWG VPN bezeroa: tunel-automatikoa, blokeoa eta proxya.

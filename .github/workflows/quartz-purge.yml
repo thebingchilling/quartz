@@ -1,0 +1,35 @@
+name: quartz-purge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/quartz-purge.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Delete the WG Tunnel-based releases and their tags
+        run: |
+          gh release list --limit 200 --json tagName --jq '.[].tagName' |
+            grep -E '^quartz-(5\.|android-|desktop-)' |
+            while read -r tag; do gh release delete "$tag" --cleanup-tag --yes; done
+          gh api "repos/$GH_REPO/git/matching-refs/tags/quartz-" --jq '.[].ref' |
+            grep -E '^refs/tags/quartz-(5\.|android-|desktop-)' |
+            while read -r ref; do gh api -X DELETE "repos/$GH_REPO/git/$ref"; done
+
+      - name: Delete the WG Tunnel-based workflow runs and caches
+        run: |
+          gh api --paginate "repos/$GH_REPO/actions/runs?per_page=100" \
+            --jq '.workflow_runs[] | select(.path | test("quartz-clash|quartz-purge|build.yaml|pages.yaml") | not) | .id' |
+            while read -r id; do gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" || true; done
+          gh cache delete --all || true

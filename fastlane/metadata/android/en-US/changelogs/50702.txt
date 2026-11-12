@@ -1,3 +1,0 @@
-What's new:
-- Custom tunnel DNS race fixes
-- Tunnel DNS DoT optimizations and fixes for multi-origin sites

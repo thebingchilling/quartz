@@ -1,2 +1,0 @@
-What's new:
-- Bugfix for auto tunnel rapid toggle

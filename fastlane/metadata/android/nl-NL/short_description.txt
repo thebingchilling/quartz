@@ -1,1 +1,0 @@
-WireGuard- en AmneziaWG-VPN-client met autotunneling en lockdown
