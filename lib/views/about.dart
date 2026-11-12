@@ -97,14 +97,14 @@ class AboutView extends ConsumerWidget {
               _buildLinkItem(
                 glyph: AppGlyphs.cpu,
                 title: appLocalizations.core,
-                url: 'https://github.com/chen08209/Clash.Meta/tree/FlClash',
-                label: 'github.com/chen08209/Clash.Meta',
+                url: 'https://github.com/MetaCubeX/mihomo',
+                label: 'github.com/MetaCubeX/mihomo',
               ),
               _buildLinkItem(
-                glyph: AppGlyphs.send,
-                title: 'Telegram',
-                url: 'https://t.me/FlClash',
-                label: 't.me/FlClash',
+                glyph: AppGlyphs.code,
+                title: 'FlClash',
+                url: 'https://github.com/chen08209/FlClash',
+                label: 'github.com/chen08209/FlClash',
               ),
             ],
           ),
@@ -181,7 +181,8 @@ class _AboutHero extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: [
               _Pill(
-                label: 'v${globalState.packageInfo.version}',
+                label:
+                    'v${globalState.packageInfo.version} (${globalState.packageInfo.buildNumber})',
                 color: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
               ),

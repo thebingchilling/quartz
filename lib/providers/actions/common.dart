@@ -127,6 +127,35 @@ class CommonAction extends _$CommonAction {
     ];
   }
 
+  /// Downloads this device's file from the release and hands it to the system
+  /// installer; anything it can't install opens the release page instead.
+  Future<void> _installUpdate(Map<String, dynamic> release) async {
+    final asset = updateAssetFor(
+      release,
+      os: Platform.operatingSystem,
+      dartPlatform: Platform.version,
+    );
+    if (asset == null) {
+      await launchUrl(
+        Uri.parse('https://github.com/$repository/releases/latest'),
+      );
+      return;
+    }
+    final file = await globalState.loadingRun(
+      () => downloadUpdate(request.dio, asset),
+      title: currentAppLocalizations.checkUpdate,
+      tag: LoadingTag.checkUpdate,
+    );
+    if (file == null) return;
+    if (system.isAndroid) {
+      await app?.installApk(file.path);
+    } else if (Platform.isWindows) {
+      await Process.start(file.path, const [
+        '/SILENT',
+      ], mode: ProcessStartMode.detached);
+    }
+  }
+
   Future<void> checkUpdateResultHandle({
     Map<String, dynamic>? data,
     bool isUser = false,
@@ -144,11 +173,7 @@ class CommonAction extends _$CommonAction {
         cancelText: isUser ? null : currentAppLocalizations.noLongerRemind,
       );
       if (res == true) {
-        unawaited(
-          launchUrl(
-            Uri.parse('https://github.com/$repository/releases/latest'),
-          ),
-        );
+        unawaited(_installUpdate(data));
       } else if (!isUser && res == false) {
         ref
             .read(appSettingProvider.notifier)

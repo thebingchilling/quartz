@@ -85,14 +85,27 @@ class Request {
     }
   }
 
+  /// A JSON GET that goes the way the app's own traffic goes: through the core
+  /// while it runs, direct otherwise.
+  Future<Map<String, dynamic>> getJsonThroughApp(String url) async {
+    final response = await _clashDio.get<Map<String, dynamic>>(
+      url,
+      options: Options(
+        responseType: ResponseType.json,
+        sendTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 8),
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+    return response.data!;
+  }
+
   /// Null when this build is current; throws when GitHub cannot be asked.
   Future<Map<String, dynamic>?> checkForUpdate() async {
     final release = await latestRelease();
-    final remoteVersion = release['tag_name'] as String;
-    final version = globalState.packageInfo.version;
-    final hasUpdate =
-        compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
-    return hasUpdate ? release : null;
+    final remoteBuild = releaseBuildNumber(release['tag_name'] as String);
+    final build = int.tryParse(globalState.packageInfo.buildNumber) ?? 0;
+    return remoteBuild != null && remoteBuild > build ? release : null;
   }
 
   /// The release page redirect still answers once the hourly API quota is spent.
