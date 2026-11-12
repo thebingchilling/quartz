@@ -24,7 +24,8 @@ import timber.log.Timber
 class MihomoVpnService : VpnService() {
     private val runner: MihomoRunner by inject()
     private val engine: MihomoEngine by inject()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO + app.quartz.core.QuartzErrors.handler("mihomo"))
     private val mutex = Mutex()
     @Volatile private var running = false
 
@@ -38,13 +39,13 @@ class MihomoVpnService : VpnService() {
 
     private suspend fun start() = mutex.withLock {
         val request = runner.takeRequest() ?: return@withLock
-        if (running) engine.stop()
+        if (running) runCatching { engine.stop() }
         running = false
         // Parse first, before the TUN exists: parsing downloads missing geodata, which would hang
         // with the TUN up and unread. It also fails a broken profile fast.
-        engine.validate(request.profile)?.let {
-            return@withLock fail(request.tunnelId, it)
-        }
+        runCatching { engine.validate(request.profile) }
+            .getOrElse { it.message ?: "mihomo couldn't read the profile" }
+            ?.let { return@withLock fail(request.tunnelId, it) }
         val tun =
             runCatching { buildTun(request.name) }.getOrNull()
                 ?: return@withLock fail(request.tunnelId, "VPN permission missing or revoked")
@@ -80,7 +81,7 @@ class MihomoVpnService : VpnService() {
     }
 
     private suspend fun stop() = mutex.withLock {
-        if (running) engine.stop()
+        if (running) runCatching { engine.stop() }.onFailure { Timber.e(it, "mihomo stop") }
         running = false
         runner.onStopped()
         stopSelf()
@@ -93,7 +94,7 @@ class MihomoVpnService : VpnService() {
 
     override fun onDestroy() {
         // mihomo can take a moment to shut down: never block the main thread on it (ANR).
-        if (running) Thread { runBlocking { engine.stop() } }.start()
+        if (running) Thread { runCatching { runBlocking { engine.stop() } } }.start()
         running = false
         runner.onStopped()
         scope.cancel()

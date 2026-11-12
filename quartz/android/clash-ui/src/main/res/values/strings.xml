@@ -14,4 +14,8 @@
     <string name="quartz_clash_type_fallback">Fallback</string>
     <string name="quartz_clash_type_balance">Load balance</string>
     <string name="quartz_clash_type_relay">Relay</string>
+    <plurals name="quartz_clash_members">
+        <item quantity="one">%1$d proxy</item>
+        <item quantity="other">%1$d proxies</item>
+    </plurals>
 </resources>

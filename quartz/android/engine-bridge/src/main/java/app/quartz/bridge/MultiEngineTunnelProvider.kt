@@ -12,7 +12,10 @@ import com.wgtunnel.backend.state.BackendStatus
 import com.wgtunnel.parser.Config
 import com.zaneschepke.wireguardautotunnel.core.tunnel.TunnelProvider
 import com.zaneschepke.wireguardautotunnel.domain.model.LockdownSettings
+import app.quartz.engine.mihomo.MihomoApi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import timber.log.Timber
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,6 +40,7 @@ class MultiEngineTunnelProvider(
     private val mihomo: MihomoRunner,
     private val openVpnProfiles: OpenVpnProfiles,
     private val openVpn: OpenVpnRunner,
+    private val selections: ClashSelections,
     scope: CoroutineScope,
 ) : TunnelProvider {
 
@@ -88,6 +92,17 @@ class MultiEngineTunnelProvider(
         mode: BackendMode,
         tunnelDnsConfig: TunnelDnsConfig?,
         outerConfig: Config?,
+    ): Result<Unit> =
+        // Upstream calls this from view-model intents: anything thrown here crashed the app.
+        guarded("start ${tunnel.name}") {
+            startChecked(tunnel, mode, tunnelDnsConfig, outerConfig)
+        }
+
+    private suspend fun startChecked(
+        tunnel: Tunnel,
+        mode: BackendMode,
+        tunnelDnsConfig: TunnelDnsConfig?,
+        outerConfig: Config?,
     ): Result<Unit> {
         if (metaDao.get(tunnel.id)?.isExpired() == true) {
             return Result.failure(TunnelExpiredException(tunnel.name))
@@ -96,7 +111,18 @@ class MultiEngineTunnelProvider(
         if (profile == null) {
             if (mihomoActive.value != null) stopMihomo()
             if (openVpnActive.value != null) stopOpenVpn()
-            return wireGuard.startTunnel(tunnel, mode, tunnelDnsConfig, outerConfig)
+            return wireGuard.startTunnel(tunnel, mode, tunnelDnsConfig, outerConfig).fold(
+                onSuccess = {
+                    // Only a tunnel that reaches its server stays connected.
+                    val problem = Reachability.wireGuard(wireGuard.backendStatus, tunnel.id)
+                    if (problem == null) Result.success(Unit)
+                    else {
+                        runCatching { wireGuard.stopTunnel(tunnel.id) }
+                        Result.failure(TunnelUnreachableException("${tunnel.name}: $problem"))
+                    }
+                },
+                onFailure = { Result.failure(it) },
+            )
         }
         when (profile.engine) {
             EngineProfile.ENGINE_MIHOMO -> Unit
@@ -111,16 +137,28 @@ class MultiEngineTunnelProvider(
         }
         if (wireGuard.backendStatus.value.activeTunnels.isNotEmpty()) wireGuard.stopActiveTunnels()
         if (openVpnActive.value != null) stopOpenVpn()
-        return mihomo.start(tunnel.id, tunnel.name, profiles.file(profile)).map { _ ->
-            mihomoActive.value =
-                tunnel.id to
-                    ActiveTunnel(
-                        tunnel = tunnel,
-                        mode = mode,
-                        transportState = Tunnel.State.Up.Healthy,
-                        uptime = System.currentTimeMillis(),
-                    )
+        val controller = mihomo.start(tunnel.id, tunnel.name, profiles.file(profile)).getOrElse {
+            return Result.failure(it)
         }
+        // Shown as connecting while its servers are tested.
+        mihomoActive.value =
+            tunnel.id to
+                ActiveTunnel(
+                    tunnel = tunnel,
+                    mode = mode,
+                    transportState = Tunnel.State.Starting,
+                    uptime = System.currentTimeMillis(),
+                )
+        val problem = Reachability.clash(MihomoApi(controller), tunnel.id, selections)
+        if (problem != null) {
+            stopMihomo()
+            return Result.failure(TunnelUnreachableException("${tunnel.name}: $problem"))
+        }
+        mihomoActive.value =
+            mihomoActive.value?.let { (id, active) ->
+                id to active.copy(transportState = Tunnel.State.Up.Healthy)
+            }
+        return Result.success(Unit)
     }
 
     private suspend fun startOpenVpn(tunnel: Tunnel, mode: BackendMode): Result<Unit> {
@@ -144,7 +182,7 @@ class MultiEngineTunnelProvider(
         }
     }
 
-    override suspend fun stopTunnel(tunnelId: Int): Result<Unit> =
+    override suspend fun stopTunnel(tunnelId: Int): Result<Unit> = guarded("stop") {
         when (tunnelId) {
             mihomoActive.value?.first -> {
                 stopMihomo()
@@ -156,11 +194,12 @@ class MultiEngineTunnelProvider(
             }
             else -> wireGuard.stopTunnel(tunnelId)
         }
+    }
 
-    override suspend fun stopActiveTunnels(): Result<Unit> {
+    override suspend fun stopActiveTunnels(): Result<Unit> = guarded("stop all") {
         if (mihomoActive.value != null) stopMihomo()
         if (openVpnActive.value != null) stopOpenVpn()
-        return wireGuard.stopActiveTunnels()
+        wireGuard.stopActiveTunnels()
     }
 
     override suspend fun setLockDown(settings: LockdownSettings): Result<Unit> =
@@ -172,6 +211,17 @@ class MultiEngineTunnelProvider(
         if (mihomoActive.value?.first == tunnel.id || openVpnActive.value?.first == tunnel.id)
             Result.success(Unit)
         else wireGuard.updateTunnel(tunnel)
+
+    /** Runs [block], turning anything it throws (but cancellation) into a failed result. */
+    private suspend fun guarded(what: String, block: suspend () -> Result<Unit>): Result<Unit> =
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Timber.e(e, "Tunnel $what failed")
+            Result.failure(e)
+        }
 
     private suspend fun stopMihomo() {
         mihomo.stop()

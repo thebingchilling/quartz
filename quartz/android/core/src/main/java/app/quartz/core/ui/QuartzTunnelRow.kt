@@ -17,12 +17,37 @@ import app.quartz.core.data.EngineProfile
 import app.quartz.core.data.EngineProfileDao
 import app.quartz.core.data.TunnelMetaDao
 import com.zaneschepke.wireguardautotunnel.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.koin.compose.koinInject
 
 /**
+ * The fork data every Tunnels list row shows, read once for the whole list: each row used to
+ * watch both tables itself, so every database change re-ran a query per row (a laggy list).
+ */
+class QuartzRowData(metaDao: TunnelMetaDao, profileDao: EngineProfileDao, scope: CoroutineScope) {
+    val expiries: StateFlow<Map<Int, Long>> =
+        metaDao
+            .flow()
+            .map { metas -> metas.mapNotNull { m -> m.expiresAt?.let { m.tunnelId to it } }.toMap() }
+            .catch { emit(emptyMap()) }
+            .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val subscriptions: StateFlow<Map<Int, EngineProfile>> =
+        profileDao
+            .flow()
+            .map { list -> list.filter { it.subscriptionUrl != null }.associateBy { it.tunnelId } }
+            .catch { emit(emptyMap()) }
+            .stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+}
+
+/**
  * A tunnel row's description: its protocol (WireGuard, AmneziaWG, OpenVPN or Clash) always, then
- * upstream's own lines (entry tunnel), then WARP expiry as a days-left bar with the date, and a
+ * upstream's own lines (entry tunnel), then WARP expiry as a days-left bar, and a
  * Clash subscription's traffic and expiry. Latency is on the row's right side
  * ([app.quartz.clash.ui.QuartzLatencyText]). Called from one line in upstream's TunnelList.kt.
  */
@@ -31,25 +56,13 @@ fun quartzTunnelDescription(
     tunnelId: Int,
     upstream: (@Composable () -> Unit)?,
     quickConfig: String = "",
-    metaDao: TunnelMetaDao = koinInject(),
-    profileDao: EngineProfileDao = koinInject(),
+    data: QuartzRowData = koinInject(),
 ): (@Composable () -> Unit)? {
-    val expiresAt by
-        remember(tunnelId) {
-                metaDao.flow().map { metas ->
-                    metas.firstOrNull { it.tunnelId == tunnelId }?.expiresAt
-                }
-            }
-            .collectAsStateWithLifecycle(null)
+    val expiries by data.expiries.collectAsStateWithLifecycle()
+    val subscriptions by data.subscriptions.collectAsStateWithLifecycle()
+    val expiresAt = expiries[tunnelId]
     val engine = remember(quickConfig) { EnginePlaceholder.engineOf(quickConfig) }
-    val subscription by
-        remember(tunnelId, engine) {
-                profileDao.flow().map { list ->
-                    if (engine != EngineProfile.ENGINE_MIHOMO) null
-                    else list.firstOrNull { it.tunnelId == tunnelId && it.subscriptionUrl != null }
-                }
-            }
-            .collectAsStateWithLifecycle(null)
+    val subscription = if (engine == EngineProfile.ENGINE_MIHOMO) subscriptions[tunnelId] else null
     val protocol =
         remember(quickConfig) {
             when {

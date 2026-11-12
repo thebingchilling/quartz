@@ -40,6 +40,17 @@ import org.koin.dsl.module
  * definitions override upstream's where they share a type.
  */
 val quartzModule = module {
+    // Overrides upstream's application scope (AppModule.kt) with one that logs an uncaught
+    // exception in a background job instead of letting it take the whole app down. Upstream's and
+    // Quartz's background work (tunnel status, subscriptions, delay tests, Clash trees, WARP
+    // expiry, auto-tunnel) all runs in this scope.
+    single<kotlinx.coroutines.CoroutineScope>(named(Scope.APPLICATION)) {
+        kotlinx.coroutines.CoroutineScope(
+            kotlinx.coroutines.SupervisorJob() +
+                kotlinx.coroutines.Dispatchers.Default +
+                QuartzErrors.handler("app")
+        )
+    }
     single {
         Room.databaseBuilder(androidContext(), ForkDatabase::class.java, ForkDatabase.NAME).build()
     }
@@ -61,6 +72,7 @@ val quartzModule = module {
             mihomo = get(),
             openVpnProfiles = get(),
             openVpn = get(),
+            selections = get(),
             scope = get(named(Scope.APPLICATION)),
         )
     }
@@ -72,11 +84,13 @@ val quartzModule = module {
 
     single { MihomoEngine(File(androidContext().filesDir, "mihomo")) }
     single { MihomoRunner(androidContext()) }
+    single { app.quartz.bridge.ClashSelections(androidContext()) }
     single { ClashProfiles(androidContext(), get(), get(), get(named(Dispatcher.IO))) }
     single { Subscriptions(get(), get(), get(), get(named(Dispatcher.IO))) }
     workerOf(::SubscriptionWorker)
     single {
         ClashTrees(
+            get(),
             get(),
             get(),
             File(androidContext().filesDir, "mihomo"),
@@ -88,6 +102,7 @@ val quartzModule = module {
     single { QuartzDelays(get(), get(), get(), get(), get(named(Scope.APPLICATION))) }
     single { IpLookup(get(named(Scope.APPLICATION))) }
     single { QuartzTunnelOrder(get(), get()) }
+    single { app.quartz.core.ui.QuartzRowData(get(), get(), get(named(Scope.APPLICATION))) }
 
     single<WarpApi> {
         CloudflareWarpApi(

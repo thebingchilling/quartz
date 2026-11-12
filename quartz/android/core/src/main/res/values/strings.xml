@@ -14,7 +14,7 @@
     <string name="quartz_ip_checking">Checking IP…</string>
     <string name="quartz_ip_failed">Couldn\'t look up the IP. Tap to retry.</string>
     <string name="quartz_ip_isp">ISP: %1$s</string>
-    <string name="quartz_expires_on">expires %1$s</string>
+    <string name="quartz_expires_on">Expires %1$s</string>
     <plurals name="quartz_days_left">
         <item quantity="one">%d day left</item>
         <item quantity="other">%d days left</item>

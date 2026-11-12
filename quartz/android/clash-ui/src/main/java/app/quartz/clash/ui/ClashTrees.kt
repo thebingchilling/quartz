@@ -1,6 +1,8 @@
 package app.quartz.clash.ui
 
 import app.quartz.bridge.ClashProfiles
+import app.quartz.bridge.ClashSelections
+import app.quartz.engine.mihomo.MihomoController
 import app.quartz.bridge.MihomoRunner
 import app.quartz.bridge.MihomoState
 import app.quartz.engine.mihomo.MihomoApi
@@ -65,6 +67,7 @@ data class ClashTree(
 class ClashTrees(
     private val profiles: ClashProfiles,
     private val runner: MihomoRunner,
+    private val selections: ClashSelections,
     /** mihomo's home directory, where it caches proxy-provider downloads. */
     private val mihomoHome: File,
     private val scope: CoroutineScope,
@@ -87,27 +90,55 @@ class ClashTrees(
     private fun flow(tunnelId: Int) =
         synchronized(trees) { trees.getOrPut(tunnelId) { MutableStateFlow(null) } }
 
-    /** The running mihomo's API when [tunnelId] is the running Clash tunnel. */
-    fun api(tunnelId: Int): MihomoApi? =
-        (runner.state.value as? MihomoState.Running)
-            ?.takeIf { it.tunnelId == tunnelId }
-            ?.let { MihomoApi(it.controller) }
+    @Volatile private var cachedApi: Pair<MihomoController, MihomoApi>? = null
+
+    /** The running mihomo's API when [tunnelId] is the running Clash tunnel (one per run). */
+    fun api(tunnelId: Int): MihomoApi? {
+        val running =
+            (runner.state.value as? MihomoState.Running)?.takeIf { it.tunnelId == tunnelId }
+                ?: return null
+        cachedApi?.let { (controller, api) -> if (controller == running.controller) return api }
+        return MihomoApi(running.controller).also { cachedApi = running.controller to it }
+    }
 
     fun refresh(tunnelId: Int) {
-        scope.launch { load(tunnelId) }
+        scope.launch { runCatching { load(tunnelId) } }
+    }
+
+    /** Loads [tunnelId]'s tree unless it's loaded already (scrolling a row into view). */
+    fun ensure(tunnelId: Int) {
+        if (flow(tunnelId).value == null) refresh(tunnelId)
     }
 
     suspend fun load(tunnelId: Int): ClashTree? {
-        val tree = api(tunnelId)?.let { runCatching { live(it) }.getOrNull() } ?: offline(tunnelId)
+        val tree =
+            api(tunnelId)?.let { runCatching { live(it) }.getOrNull() }
+                ?: runCatching { offline(tunnelId) }.getOrNull()
         flow(tunnelId).value = tree
         return tree
     }
 
+    /**
+     * Picks [node] in select group [group]: saved for the next connect, and switched live (no
+     * reconnect) when the tunnel runs.
+     */
     fun select(tunnelId: Int, group: String, node: String, onSelected: () -> Unit) {
-        val api = api(tunnelId) ?: return
+        selections.set(tunnelId, group, node)
+        val api = api(tunnelId)
+        if (api == null) {
+            // Not running: show the pick straight away.
+            flow(tunnelId).value =
+                flow(tunnelId).value?.let { tree ->
+                    tree.copy(
+                        groups =
+                            tree.groups.map { if (it.name == group) it.copy(now = node) else it }
+                    )
+                }
+            return
+        }
         scope.launch {
             runCatching { api.select(group, node) }.onSuccess { onSelected() }
-            load(tunnelId)
+            runCatching { load(tunnelId) }
         }
     }
 
@@ -131,6 +162,7 @@ class ClashTrees(
     private suspend fun offline(tunnelId: Int): ClashTree? =
         withContext(ioDispatcher) {
             val profile = profiles.get(tunnelId) ?: return@withContext null
+            val saved = selections.get(tunnelId)
             val file: File = profiles.file(profile)
             val mapping =
                 runCatching { ClashYaml.parseMapping(file.readText()) }.getOrNull()
@@ -164,12 +196,17 @@ class ClashTrees(
                             .map { it.name }
                             .filter { n -> filter == null || filter.containsMatchIn(n) }
                             .filter { n -> exclude == null || !exclude.containsMatchIn(n) }
+                    val members = (listed + pulled).distinct()
+                    val selectable = type.equals("select", ignoreCase = true)
                     ClashGroup(
                         name = name,
                         type = type,
-                        now = null,
-                        members = (listed + pulled).distinct(),
-                        selectable = type.equals("select", ignoreCase = true),
+                        // What connects: the saved pick, else mihomo's default (the first).
+                        now =
+                            if (selectable) saved[name]?.takeIf { it in members } ?: members.firstOrNull()
+                            else null,
+                        members = members,
+                        selectable = selectable,
                     )
                 }
             ClashTree(groups, nodes, live = false)
@@ -194,8 +231,8 @@ class ClashTrees(
                 File(mihomoHome, "proxies/$name.yaml"),
             )
         val text = candidates.firstOrNull { it.isFile }?.let { runCatching { it.readText() }.getOrNull() }
-        val mapping = text?.let { ClashYaml.parseMapping(it) } ?: return emptyList()
-        return nodesOf(mapping)
+        val mapping = text?.let { runCatching { ClashYaml.parseMapping(it) }.getOrNull() } ?: return emptyList()
+        return runCatching { nodesOf(mapping) }.getOrDefault(emptyList())
     }
 
     private fun md5(text: String): String =

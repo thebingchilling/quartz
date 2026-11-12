@@ -16,9 +16,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import timber.log.Timber
 
 /**
  * What tunnel by app needs to know (FORK.md §14).
@@ -51,7 +53,15 @@ object ForegroundApp {
     }
 
     fun activity(context: Context): Flow<AppActivity> =
-        combine(watcherConnected, fromWatcher, usage(context)) { connected, watched, usage ->
+        combine(
+                watcherConnected,
+                fromWatcher,
+                // A failure here must not take auto-tunnel (and the app) down with it.
+                usage(context).catch {
+                    Timber.e(it, "Usage tracking stopped")
+                    emit(AppActivity(null, null))
+                },
+            ) { connected, watched, usage ->
                 AppActivity(
                     foreground = if (connected) watched else usage.foreground,
                     open = usage.open,
@@ -81,9 +91,8 @@ object ForegroundApp {
                 emit(AppActivity(null, null))
             } else if (power?.isInteractive != false) {
                 val now = System.currentTimeMillis()
-                runCatching { usage.queryEvents(since, now) }
-                    .getOrNull()
-                    ?.let { events ->
+                runCatching {
+                        val events = usage.queryEvents(since, now) ?: return@runCatching
                         val event = UsageEvents.Event()
                         while (events.hasNextEvent()) {
                             events.getNextEvent(event)
@@ -91,6 +100,7 @@ object ForegroundApp {
                         }
                         since = now
                     }
+                    .onFailure { Timber.w(it, "Usage events unreadable") }
                 emit(
                     AppActivity(
                         tracker.foreground,

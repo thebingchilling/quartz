@@ -76,7 +76,7 @@ class MihomoApiException(message: String) : Exception(message)
  */
 class MihomoApi(
     private val controller: MihomoController,
-    private val client: HttpClient = defaultClient(),
+    private val client: HttpClient = sharedClient,
 ) {
 
     /** All nodes and groups; groups in profile order (from GLOBAL's member list), GLOBAL last. */
@@ -228,6 +228,13 @@ class MihomoApi(
             ignoreUnknownKeys = true
             isLenient = true
         }
+
+        /**
+         * One client for every MihomoApi: a client holds a connection pool and threads, and one
+         * per API object (made on every tree load, delay test and node switch) piled up until the
+         * app ran out of memory or threads.
+         */
+        val sharedClient: HttpClient by lazy { defaultClient() }
 
         // The controller is on loopback: never route it through a system proxy.
         fun defaultClient() =

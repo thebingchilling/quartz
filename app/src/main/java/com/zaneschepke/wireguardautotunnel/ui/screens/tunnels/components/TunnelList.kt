@@ -54,10 +54,13 @@ import androidx.compose.ui.unit.dp
 import app.quartz.clash.ui.QuartzDelays
 import app.quartz.clash.ui.QuartzPullToRefresh
 import app.quartz.clash.ui.QuartzLatencyText
-import app.quartz.clash.ui.QuartzRowExtras
+import app.quartz.clash.ui.QuartzClashEntry
+import app.quartz.clash.ui.QuartzListEntry
+import app.quartz.clash.ui.rememberQuartzListEntries
 import app.quartz.core.ui.QuartzTunnelDragEffects
 import app.quartz.core.ui.quartzTunnelDescription
-import app.quartz.core.ui.quartzRowOutline
+import app.quartz.core.ui.QuartzCardItem
+import app.quartz.core.ui.quartzCardLayers
 import app.quartz.core.ui.rememberQuartzTunnelDrag
 import com.wgtunnel.backend.state.ActiveTunnel
 import com.zaneschepke.wireguardautotunnel.R
@@ -155,6 +158,9 @@ fun TunnelList(
     }
 
     QuartzTunnelDragEffects(quartzDrag, reorderableLazyListState.isAnyItemDragging, uiState)
+    // [fork-ui] rows plus Clash groups/nodes as their own items, grouped into cards
+    val quartzEntries = rememberQuartzListEntries(if (uiState.isReorderMode) emptyList() else rows)
+    val quartzStacks = remember(quartzEntries) { quartzEntries.map { it.stack } }
 
     QuartzPullToRefresh { // [fork-ui] pull to refresh subscriptions, Clash nodes, exit IP
     LazyColumn(
@@ -190,6 +196,56 @@ fun TunnelList(
                     onClick = { context.openWebUrl(it) },
                     modifier = Modifier.animateItem(),
                 )
+            }
+            return@LazyColumn
+        }
+
+        if (!uiState.isReorderMode) {
+            // [fork-ui] hold and drag to reorder, no separate reorder mode; groups as cards
+            quartzEntries.forEachIndexed { entryIndex, entry ->
+                item(key = entry.key) {
+                    val layers = quartzCardLayers(quartzStacks, entryIndex)
+                    when (entry) {
+                        is QuartzListEntry.Row -> {
+                            val row = entry.row
+                            val index = entry.index
+                            ReorderableItem(reorderableLazyListState, row.key, enabled = !isTv) { isDragging ->
+                                QuartzCardItem(layers) {
+                                    ListRow(
+                                        row = row,
+                                        index = index,
+                                        rowCount = rows.size,
+                                        uiState = uiState,
+                                        viewModel = viewModel,
+                                        isTv = isTv,
+                                        isDragging = isDragging,
+                                        focusRequester = if (index == 0) focusRequester else null,
+                                        onNavigateTunnel = { navController.push(Route.TunnelSettings(it)) },
+                                        modifier =
+                                            if (!isTv && quartzDrag.canDrag(row))
+                                                Modifier.draggableHandle(
+                                                    onDragStarted = {
+                                                        quartzDrag.onHold(row)
+                                                        hapticFeedback.performHapticFeedback(
+                                                            HapticFeedbackType.GestureThresholdActivate
+                                                        )
+                                                    },
+                                                    onDragStopped = {
+                                                        quartzDrag.onRelease(row, viewModel)
+                                                        hapticFeedback.performHapticFeedback(
+                                                            HapticFeedbackType.GestureEnd
+                                                        )
+                                                    },
+                                                    dragGestureDetector = DragGestureDetector.LongPress,
+                                                )
+                                            else Modifier,
+                                    )
+                                }
+                            }
+                        }
+                        else -> QuartzCardItem(layers) { QuartzClashEntry(entry) }
+                    }
+                }
             }
             return@LazyColumn
         }
@@ -306,44 +362,6 @@ fun TunnelList(
                             else Modifier,
                     )
                 }
-            } else {
-                // [fork-ui] hold and drag to reorder, no separate reorder mode
-                ReorderableItem(reorderableLazyListState, row.key, enabled = !isTv) { isDragging ->
-                  Column(Modifier.quartzRowOutline(rows, index)) { // [fork-ui] group outlines
-                    ListRow(
-                        row = row,
-                        index = index,
-                        rowCount = rows.size,
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        isTv = isTv,
-                        isDragging = isDragging,
-                        focusRequester = if (index == 0) focusRequester else null,
-                        onNavigateTunnel = { navController.push(Route.TunnelSettings(it)) },
-                        modifier =
-                            Modifier.then(
-                                    if (!isTv && quartzDrag.canDrag(row))
-                                        Modifier.draggableHandle(
-                                            onDragStarted = {
-                                                quartzDrag.onHold(row)
-                                                hapticFeedback.performHapticFeedback(
-                                                    HapticFeedbackType.GestureThresholdActivate
-                                                )
-                                            },
-                                            onDragStopped = {
-                                                quartzDrag.onRelease(row, viewModel)
-                                                hapticFeedback.performHapticFeedback(
-                                                    HapticFeedbackType.GestureEnd
-                                                )
-                                            },
-                                            dragGestureDetector = DragGestureDetector.LongPress,
-                                        )
-                                    else Modifier
-                                ),
-                    )
-                    QuartzRowExtras(row) // [fork-ui] a Clash tunnel's groups and nodes
-                  }
-                }
             }
         }
     }
@@ -458,7 +476,7 @@ private fun ListRow(
             SurfaceRow(
                 modifier =
                     modifier
-                        .then(if (row.grouped) Modifier.padding(start = 24.dp) else Modifier)
+                        // [fork-ui] no indent: a group's tunnels sit in its card
                         .then(
                             if (focusRequester != null) Modifier.focusRequester(focusRequester)
                             else Modifier

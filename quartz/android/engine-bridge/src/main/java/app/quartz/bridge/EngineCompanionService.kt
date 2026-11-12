@@ -28,7 +28,8 @@ class EngineCompanionService : Service() {
     private val tunnelProvider: TunnelProvider by inject()
     private val mihomo: MihomoRunner by inject()
     private val openVpn: OpenVpnRunner by inject()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val scope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Main + app.quartz.core.QuartzErrors.handler("companion"))
     private var notifications: Job? = null
     private var watcher: Job? = null
     private var lastStartId = 0
@@ -36,14 +37,24 @@ class EngineCompanionService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        ServiceCompat.startForeground(
-            this,
-            NotificationService.VPN_NOTIFICATION_ID,
-            appProvider.vpnInitNotification,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            else 0,
-        )
+        val foreground = runCatching {
+            ServiceCompat.startForeground(
+                this,
+                NotificationService.VPN_NOTIFICATION_ID,
+                appProvider.vpnInitNotification,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                else 0,
+            )
+        }
+        if (foreground.isFailure) {
+            // Android refused the foreground notification: fail the start instead of crashing.
+            val error = foreground.exceptionOrNull()!!
+            mihomo.onServiceStartFailed(error)
+            openVpn.onServiceStartFailed(error)
+            stopSelf()
+            return START_NOT_STICKY
+        }
         // The engine's VpnService is started from here, once this service is in the foreground:
         // started straight from a runner it threw (and crashed the app) whenever the app was in
         // the background, e.g. from the quick settings tile or auto-tunnel.
@@ -86,7 +97,7 @@ class EngineCompanionService : Service() {
         if (notifications?.isActive == true) return START_NOT_STICKY
         notifications = scope.launch {
             tunnelProvider.backendStatus.collect { status ->
-                if (status.activeTunnels.isNotEmpty()) {
+                if (status.activeTunnels.isNotEmpty()) runCatching {
                     val notification = appProvider.buildVpnPersistentNotification(status)
                     ServiceCompat.startForeground(
                         this@EngineCompanionService,

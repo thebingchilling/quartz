@@ -145,7 +145,7 @@ class OpenVpnRunner(private val context: Context) {
 
     private companion object {
         // openvpn3 keeps trying every remote in the profile; give up on the start after this.
-        val START_TIMEOUT = 60.seconds
+        val START_TIMEOUT = 30.seconds
         val STOP_TIMEOUT = 10.seconds
     }
 }

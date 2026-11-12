@@ -35,9 +35,16 @@ fun quartzShortDate(millis: Long): String {
         .format(Date(millis))
 }
 
+/** "30 Jan 2027" (or the locale's order), with the year. */
+fun quartzFullDate(millis: Long): String {
+    val locale = Locale.getDefault()
+    return SimpleDateFormat(DateFormat.getBestDateTimePattern(locale, "yMMMd"), locale)
+        .format(Date(millis))
+}
+
 /**
- * Expiry as a bar of the time left (full when new, empty at expiry) with "23 days left · expires
- * 30 Jan" under it. Yellow in the last week, red in the last day and once expired. Used on the
+ * WARP expiry as a bar of the time left (full when new, empty at expiry) with "23 days left"
+ * under it (days only, no date). Yellow in the last week, red in the last day and once expired. Used on the
  * Tunnels list and in the WARP generator's list.
  */
 @Composable
@@ -69,9 +76,7 @@ fun QuartzExpiryBar(
     QuartzBar(
         fraction = (remaining.toFloat() / lifetime).coerceIn(0f, 1f),
         color = color,
-        text =
-            if (remaining <= 0) "$left · ${quartzShortDate(expiresAt)}"
-            else "$left · ${stringResource(R.string.quartz_expires_on, quartzShortDate(expiresAt))}",
+        text = left,
         textColor = if (remaining <= TimeUnit.DAYS.toMillis(7)) color else MaterialTheme.colorScheme.outline,
         modifier = modifier,
     )
@@ -79,7 +84,7 @@ fun QuartzExpiryBar(
 
 /**
  * A Clash subscription's line(s): a bar of traffic used with "41.0 GB of 100 GB used", then
- * "expires 12 Dec · 32 days left" and when it was last updated. Shown on the tunnel's row and in
+ * "expires 12 Dec 2026" (the date, no days left) and when it was last updated. Shown on the tunnel's row and in
  * its settings.
  */
 @Composable
@@ -105,12 +110,9 @@ fun QuartzSubscriptionSummary(sub: EngineProfile, now: Long = System.currentTime
             listOfNotNull(
                 sub.subscriptionExpire?.let { seconds ->
                     val expires = seconds * 1000
-                    val days = TimeUnit.MILLISECONDS.toDays(expires - now).toInt()
-                    if (expires <= now) stringResource(R.string.quartz_expired)
-                    else
-                        stringResource(R.string.quartz_expires_on, quartzShortDate(expires)) +
-                            " · " +
-                            pluralStringResource(R.plurals.quartz_days_left, days, days)
+                    if (expires <= now)
+                        stringResource(R.string.quartz_expired) + " · " + quartzFullDate(expires)
+                    else stringResource(R.string.quartz_expires_on, quartzFullDate(expires))
                 },
                 sub.lastUpdatedAt?.let {
                     stringResource(R.string.quartz_clash_last_updated, quartzShortDate(it))

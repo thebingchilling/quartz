@@ -152,10 +152,13 @@ patterns upstream screens already use (section header = `GroupLabel` in a
 48 dp box; choose-one = `IconSurfaceButton` cards; on/off = `SurfaceRow` +
 `ThemedSwitch`; latency text and colours as on the tunnel list). No new
 components, cards, chips, colours or layout rules, with these exceptions the
-owner asked for: a faint rounded outline (`QuartzOutline`, the theme's
-`outlineVariant`) around an upstream group and its tunnels, and around a
-Clash tunnel and its proxy groups; the Clash tree's compact rows; and thin
-progress bars (`QuartzExpiry`) for WARP days left and subscription traffic.
+owner asked for: Material 3 cards on the Tunnels list (`QuartzCards`): an
+upstream group and its tunnels, and a Clash tunnel and its proxy groups, are
+each a raised card (surfaceContainerLow with a soft shadow), and groups
+inside them are nested tonal cards with an `outlineVariant` edge; the Clash
+rows (`QuartzClashRows`: nodes as divided 60 dp rows with a radio button and
+a type · latency line, sub-groups with a checkbox); and thin progress bars
+(`QuartzExpiry`) for WARP days left and subscription traffic.
 
 ### Releases
 
@@ -222,7 +225,23 @@ external `com.wgtunnel:backend` library (wgtunnel/core).
   already reads;
 - allows one engine at a time (Android allows one active VPN), stopping the
   running engine before starting another;
-- refuses to start expired tunnels (see §9).
+- refuses to start expired tunnels (see §9);
+- **only keeps a tunnel that can connect** (`Reachability`): a WireGuard /
+  AmneziaWG tunnel must report a handshake within 15 s (a tunnel still failing
+  its handshake or DNS then is stopped; one the backend never reports on is
+  left running); a Clash tunnel shows as connecting while mihomo URL-tests
+  the main group (saved picks applied first); if the picked node doesn't
+  answer but another does, the fastest is picked, and if none answers the
+  tunnel is stopped; OpenVPN must reach CONNECTED within 30 s. A refused
+  start returns a failure, so the switch goes back off;
+- never throws: anything a start or stop throws becomes a failed `Result`
+  (upstream calls it from view-model intents, where a throw crashed the app).
+
+**Crash guards:** Quartz overrides upstream's application `CoroutineScope`
+with one that has a `CoroutineExceptionHandler` (`QuartzErrors`), so an
+uncaught exception in background work is logged instead of killing the app;
+the engine services' scopes have one too. One shared HTTP client serves every
+`MihomoApi` (a client per call leaked threads until the app died).
 
 It replaces upstream's binding by loading our Koin module after upstream's
 (`allowOverride`), so `TunnelModule.kt` is not edited.
@@ -513,20 +532,24 @@ and auto-updating subscriptions, saving Clash profiles as tunnels.
 
 ## 8. Clash (mihomo) UI — `quartz/android/clash-ui`
 
-- **A Clash tunnel is a group on the Tunnels list**: its row and its proxy
-  groups share one faint rounded outline, so they read as one tunnel. Under
-  the row is a compact tree (`QuartzClashRows`): top-level groups are the
-  ones no other group lists (usually PROXY, which starts open). A group
-  another group lists (Auto, Fallback, …) is a sub-folder inside it, indented
-  in its own outline; its row shows its type and choice ("Auto → HK 01") and
-  the latency of the node actually used. Tapping the row picks it in the
-  parent; its chevron opens it to show its members. Nodes are one line: a dot
-  for the selected one, name, protocol, latency on the right. Shown whether connected or not:
-  live from mihomo while it runs (tap a node to select it), otherwise from
-  the profile YAML plus mihomo's cached proxy-provider files, with `use`,
-  `filter`, `exclude-filter` and `include-all` applied (`ClashTrees`).
-- The subscription shows on the tunnel's row (traffic bar, expiry date and
-  days left, last update). Tapping a Clash tunnel opens upstream's tunnel
+- **A Clash tunnel is a card on the Tunnels list** (`QuartzCards`), inside
+  its upstream group's card if it's in one. Its proxy groups and nodes are
+  separate lazy list items after its row (`rememberQuartzListEntries`), so a
+  profile with hundreds of nodes doesn't lag the list. Top-level groups are
+  the ones no other group lists (usually PROXY, which starts open). Every
+  group is a nested tonal card: its header shows the type, member count and
+  current choice with the latency of the node actually used, and opens or
+  closes it. A group another group lists (Auto, Fallback, …) is a card inside
+  that group's card, with a **checkbox** that picks it in the parent. Nodes
+  are divided rows, easy to tap: radio button, name, and under it the type
+  and latency; the selected one is tinted. Picking works whether connected or
+  not: live through mihomo while it runs, and saved per tunnel
+  (`ClashSelections`) so the next connect uses it. Offline the tree comes
+  from the profile YAML plus mihomo's cached proxy-provider files, with
+  `use`, `filter`, `exclude-filter` and `include-all` applied (`ClashTrees`);
+  trees load once, not on every scroll.
+- The subscription shows on the tunnel's row (traffic bar, expiry date with
+  the year, no days left; last update). Tapping a Clash tunnel opens upstream's tunnel
   settings directly; at the top (`QuartzEngineSettings`, in place of the
   WireGuard config section) are Update now and the provider page. No
   separate Clash screen and no YAML export.
@@ -662,7 +685,7 @@ PrivateKey = ...
   (or Cloudflare's account TTL, when it sets an earlier one).
 - Expired tunnels can't start (any start path, auto-tunnel skips them); a
   WorkManager job stops a running one at expiry and notifies 24 h before and
-  at expiry (lockdown-aware); a bar of days left with "23 days left · expires 30 Jan" (no year) on the tunnel row and in the generator's list, or "expired". The only
+  at expiry (lockdown-aware); a bar of days left with "23 days left" (days only, no date) on the tunnel row and in the generator's list, or "expired". The only
   fix is generating a new one into the slot.
 
 ### Implementation status
@@ -893,7 +916,7 @@ conflicts.
 | `ui/screens/tunnels/settings/TunnelSettingsScreen.kt` | Configuration section skipped when `QuartzEngineSettings(…)` (Clash subscription, OpenVPN login) is shown instead (1 line) | Engine tunnels |
 | `domain/model/GeneralSettings.kt`, `ui/state/GlobalAppUiState.kt` | Default theme `DYNAMIC` instead of `AUTOMATIC`; `QuartzSync` moves an install still on Automatic to Dynamic once | Dynamic theme by default |
 | `ui/screens/tunnels/components/TunnelStatisticsRow.kt` | Per-peer sections replaced by `QuartzIpInfo(activeTunnel)` (1 line) | Connection info: exit IP, location, ISP |
-| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); each item's column wrapped in `quartzRowOutline(rows, index)` (group and Clash outlines); `QuartzRowExtras(row)` under each row (a Clash tunnel's groups and nodes); latency (`QuartzLatencyText`) before the switch on the right; list wrapped in `QuartzPullToRefresh`; normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`), and `ListRow`'s `onLongClick` off on phones so the hold reaches the handle: hold and drag reorders, hold and release selects; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
+| `ui/screens/tunnels/components/TunnelList.kt` | Row description wrapped in `quartzTunnelDescription(…)` (expiry badge, done); outside reorder mode the items come from `rememberQuartzListEntries(rows)` (rows plus each Clash tunnel's groups and nodes as their own items), each drawn in its cards by `QuartzCardItem(quartzCardLayers(…))`; a grouped tunnel isn't indented (its card shows the group); latency (`QuartzLatencyText`) before the switch on the right; list wrapped in `QuartzPullToRefresh`; normal rows wrapped in `ReorderableItem` with a long-press drag handle (`QuartzTunnelDrag`, desktop's `moveDisplayedRows` port in `QuartzTunnelOrder`), and `ListRow`'s `onLongClick` off on phones so the hold reaches the handle: hold and drag reorders, hold and release selects; engine/delay badges, group toggle + dropdown, connection info later | Groups, UI |
 | Group create/rename UI (`GroupNameDialog.kt`, `GroupActionsSheet.kt`) | Group type and settings | Groups |
 | `AndroidManifest.xml` | Intent filters for files, share and `clash://` deep links | Import |
 | `.github/dependabot.yml` | Deleted | No dependency PRs; bumps come with upstream. `quartz-release` keeps it deleted when upstream changes it (and any other file we deleted). |

@@ -56,7 +56,9 @@ class QuartzSync(
         }
         scope.launch {
             runCatching { warpExpiry.check() }.onFailure { Timber.e(it, "Expiry check failed") }
-            metaDao.flow().drop(1).collect { warpExpiry.schedule(it) }
+            metaDao.flow().drop(1).collect {
+                runCatching { warpExpiry.schedule(it) }.onFailure { e -> Timber.e(e, "Expiry schedule failed") }
+            }
         }
     }
 

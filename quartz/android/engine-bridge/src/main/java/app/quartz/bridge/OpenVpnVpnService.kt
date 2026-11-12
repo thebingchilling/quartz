@@ -27,7 +27,8 @@ import timber.log.Timber
 class OpenVpnVpnService : VpnService() {
     private val runner: OpenVpnRunner by inject()
     private val engine: OpenVpnEngine by inject()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO + app.quartz.core.QuartzErrors.handler("openvpn"))
     private val mutex = Mutex()
     @Volatile private var session: OpenVpnSession? = null
     /** Bumped on every start, so a previous session ending late can't touch the new one. */
@@ -43,7 +44,7 @@ class OpenVpnVpnService : VpnService() {
 
     private suspend fun start() = mutex.withLock {
         val request = runner.takeRequest() ?: return@withLock
-        session?.stop()
+        runCatching { session?.stop() }
         session = null
         if (prepare(this) != null) {
             return@withLock fail(request.tunnelId, "VPN permission missing or revoked")
@@ -90,7 +91,11 @@ class OpenVpnVpnService : VpnService() {
         if (running == null) {
             runner.onStopped()
             stopSelf()
-        } else running.stop() // onEnded follows and stops the service
+        } else runCatching { running.stop() } // onEnded follows and stops the service
+            .onFailure {
+                runner.onStopped()
+                stopSelf()
+            }
     }
 
     override fun onRevoke() {
@@ -99,7 +104,7 @@ class OpenVpnVpnService : VpnService() {
     }
 
     override fun onDestroy() {
-        session?.stop()
+        runCatching { session?.stop() }
         session = null
         runner.onStopped()
         scope.cancel()

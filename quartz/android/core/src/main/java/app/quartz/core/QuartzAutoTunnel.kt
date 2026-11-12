@@ -3,6 +3,7 @@ package app.quartz.core
 import app.quartz.core.data.TunnelMetaDao
 import com.zaneschepke.wireguardautotunnel.domain.model.TunnelConfig
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -16,7 +17,7 @@ object QuartzAutoTunnel : KoinComponent {
     private val metaDao: TunnelMetaDao by inject()
 
     fun candidates(tunnels: Flow<List<TunnelConfig>>): Flow<List<TunnelConfig>> =
-        combine(tunnels, metaDao.flow()) { list, metas ->
+        combine(tunnels, metaDao.flow().catch { emit(emptyList()) }) { list, metas ->
             val expired = metas.filter { it.isExpired() }.map { it.tunnelId }.toSet()
             if (expired.isEmpty()) list else list.filterNot { it.id in expired }
         }
