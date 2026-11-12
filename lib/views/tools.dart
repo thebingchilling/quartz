@@ -16,8 +16,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'config/advanced.dart';
 import 'config/custom_resources.dart';
 import 'developer.dart';
-import 'disclaimer.dart';
 import 'theme.dart';
+import 'warp.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
   const ToolsView({super.key});
@@ -40,7 +40,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     return generateSection(
       title: context.appLocalizations.other,
       items: [
-        const _DisclaimerItem(),
         if (enableDeveloperMode) const _DeveloperItem(),
         const _InfoItem(),
       ],
@@ -58,6 +57,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (system.isAndroid) const _AccessItem(),
         const _AdvancedConfigItem(),
         const _CustomResourcesItem(),
+        const _WarpItem(),
         const _GeneralItem(),
       ],
     );
@@ -232,15 +232,16 @@ class _CustomResourcesItem extends StatelessWidget {
   }
 }
 
-class _DisclaimerItem extends StatelessWidget {
-  const _DisclaimerItem();
+class _WarpItem extends StatelessWidget {
+  const _WarpItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.gavel),
-      title: Text(context.appLocalizations.disclaimer),
-      widget: const DisclaimerView(),
+      leading: const GlyphIcon(AppGlyphs.cloud),
+      title: Text(context.appLocalizations.warpGenerator),
+      subtitle: Text(context.appLocalizations.warpGeneratorDesc),
+      widget: const WarpView(),
     );
   }
 }
