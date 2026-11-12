@@ -1,11 +1,11 @@
 script_template: inno_setup.iss
-app_id: 728B3532-C74B-4870-9068-BE70FE12A3E6
-app_name: FlClash
-publisher: chen08209
-publisher_url: https://github.com/chen08209/FlClash
-display_name: FlClash
-executable_name: FlClash.exe
-output_base_file_name: FlClash.exe
+app_id: 4F6B2C1E-8A3D-4E7B-9C25-6D1A0B3E7F48
+app_name: Quartz
+publisher: Quartz
+publisher_url: https://github.com/thebingchilling/quartz
+display_name: Quartz
+executable_name: Quartz.exe
+output_base_file_name: Quartz.exe
 # Resolved against the project root: flutter_distributor turns this into an
 # absolute path via Directory.current.
 setup_icon_file: windows\runner\resources\app_icon.ico
