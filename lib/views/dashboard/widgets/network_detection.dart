@@ -1,149 +1,127 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/service_probe.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/providers/outbound_ip.dart';
-import 'package:fl_clash/providers/routed_probe.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/probe_start_hold.dart';
+import 'package:fl_clash/providers/ip_details.dart';
 import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
-class NetworkDetection extends ConsumerStatefulWidget {
+/// Where the connection reaches the internet from: flag, country, IP, city and
+/// ISP, connected or not. Tapping it looks again.
+class NetworkDetection extends ConsumerWidget {
   const NetworkDetection({super.key});
 
   @override
-  ConsumerState<NetworkDetection> createState() => _NetworkDetectionState();
-}
-
-class _NetworkDetectionState extends ConsumerState<NetworkDetection>
-    with ProbeStartHold<NetworkDetection> {
-  late final OutboundIpProbe _probe;
-
-  @override
-  void initState() {
-    super.initState();
-    _probe = ref.read(outboundIpProbeProvider.notifier)..watch(routedOutbound);
-  }
-
-  @override
-  void dispose() {
-    _probe.unwatch(routedOutbound);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final entry = ref.watch(
-      outboundIpProbeProvider.select((state) => state.entryOf(routedOutbound)),
-    );
-    final ipInfo = entry.value;
-    final failed = shownPhase(entry) == ProbePhase.failed;
-    final emojiTextStyle = context.textTheme.titleMedium?.toLight.copyWith(
-      fontFamily: FontFamily.twEmoji.value,
-    );
-    final titleTextStyle = context.colorScheme.onSurfaceVariant;
-    final textScale = DashboardWidgetMetrics.textScaleOf(context);
+    final colorScheme = context.colorScheme;
+    final textTheme = context.textTheme;
+    final details = ref.watch(ipDetailsProvider);
+    final info = details.value;
+    final padding = DashboardWidgetMetrics.paddingOf(context);
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 1),
+      height: DashboardWidgetMetrics.heightOf(context, 2),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
-        onPressed: failed ? () => _probe.retry(routedOutbound) : () {},
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              height: globalState.measure.titleMediumHeight * textScale + 16,
-              padding: DashboardWidgetMetrics.paddingOf(
-                context,
-              ).copyWith(bottom: 0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
+        onPressed: () => ref.read(ipDetailsProvider.notifier).refresh(),
+        child: Padding(
+          padding: padding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  ipInfo != null
+                  info != null
                       ? Text(
-                          ipInfo.countryCode.countryFlagEmoji,
-                          style: emojiTextStyle,
+                          info.countryCode.countryFlagEmoji,
+                          style: textTheme.titleLarge?.copyWith(
+                            fontFamily: FontFamily.twEmoji.value,
+                          ),
                         )
                       : GlyphIcon(
                           AppGlyphs.networkCheck,
-                          color: titleTextStyle,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                   const SizedBox(width: 8),
-                  Flexible(
-                    flex: 1,
-                    child: TooltipText(
-                      text: Text(
-                        appLocalizations.networkDetection,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.sectionHeaderStyle,
-                      ),
+                  Expanded(
+                    child: Text(
+                      info?.country ?? appLocalizations.networkDetection,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.sectionHeaderStyle,
                     ),
                   ),
-                  const SizedBox(width: 2),
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: IconButton(
-                      tooltip: appLocalizations.tip,
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        dialogs.showMessage(
-                          title: appLocalizations.tip,
-                          message: TextSpan(
-                            text: appLocalizations.detectionTip,
-                          ),
-                          cancelable: false,
-                        );
-                      },
-                      icon: GlyphIcon(
-                        size: 16.ap,
-                        AppGlyphs.info,
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                  if (details.isLoading)
+                    const SizedBox.square(
+                      dimension: 16,
+                      child: CommonCircleLoading(),
                     ),
-                  ),
                 ],
               ),
-            ),
-            Container(
-              padding: DashboardWidgetMetrics.paddingOf(
-                context,
-              ).copyWith(top: 0),
-              child: SizedBox(
-                height: globalState.measure.bodyMediumHeight * textScale + 2,
-                child: FadeThroughBox(
-                  child: ipInfo != null
-                      ? IpQualityText(
-                          ip: ipInfo.ip,
-                          openDetails: true,
-                          style: context.textTheme.bodyMedium?.adjustSize(1),
-                        )
-                      : failed
-                      ? Text(
-                          'Timeout',
-                          style: context.textTheme.bodyMedium
-                              ?.copyWith(color: context.colorScheme.error)
-                              .adjustSize(1),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      : Container(
-                          padding: const EdgeInsets.all(2),
-                          child: const AspectRatio(
-                            aspectRatio: 1,
-                            child: CommonCircleLoading(),
+              const Spacer(),
+              FadeThroughBox(
+                child: info != null
+                    ? Column(
+                        key: ValueKey(info.ip),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            info.ip,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
+                          const SizedBox(height: 6),
+                          _Line(glyph: AppGlyphs.locate, text: info.place),
+                          _Line(glyph: AppGlyphs.dns, text: info.isp),
+                        ],
+                      )
+                    : details.hasError
+                    ? Text(
+                        appLocalizations.serviceFailed,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.error,
                         ),
-                ),
+                      )
+                    : const SizedBox.shrink(),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _Line extends StatelessWidget {
+  const _Line({required this.glyph, required this.text});
+
+  final Glyph glyph;
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = text;
+    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    final color = context.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          GlyphIcon(glyph, size: 14, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodyMedium?.copyWith(color: color),
+            ),
+          ),
+        ],
       ),
     );
   }
