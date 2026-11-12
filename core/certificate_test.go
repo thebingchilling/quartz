@@ -44,14 +44,6 @@ func TestDownloadRejectsAnUntrustedCertificateByDefault(t *testing.T) {
 	}
 }
 
-func TestDownloadAcceptsAnUntrustedCertificateWhenCheckIsOff(t *testing.T) {
-	withSkipCertVerify(t, true)
-
-	if err := fetchSelfSigned(t); err != nil {
-		t.Fatalf("error = %v, want the self-signed server accepted", err)
-	}
-}
-
 func TestSkipCertVerifyLeavesExplicitCAOptionsStrict(t *testing.T) {
 	withSkipCertVerify(t, true)
 

@@ -78,8 +78,8 @@ func onGeoUpdate(geoType string, updating bool, skipped bool, updateErr error) {
 }
 
 var (
-	registerGeoUpdater = updater.RegisterGeoUpdaterWithCancel
-	stopGeoUpdater     = updater.StopGeoUpdater
+	registerGeoUpdater = startGeoUpdater
+	stopGeoUpdater     = stopGeoUpdaterNow
 )
 
 func syncGeoUpdater(autoUpdate *bool, interval *int) {

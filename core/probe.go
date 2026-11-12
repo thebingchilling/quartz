@@ -127,6 +127,30 @@ func (c *routedConn) Close() error {
 	return c.Conn.Close()
 }
 
+// Stock mihomo has no new-connection hook, so the route is read from the tunnel's
+// tracker once the first byte comes back, which the tunnel only relays after
+// registering that tracker.
+func (c *routedConn) Read(b []byte) (int, error) {
+	n, err := c.Conn.Read(b)
+	if n > 0 && c.resolve() == nil {
+		if tracker := trackerFor(c.metadata); tracker != nil {
+			notifyProbeRoute(tracker)
+		}
+	}
+	return n, err
+}
+
+func trackerFor(metadata *constant.Metadata) (found statistic.Tracker) {
+	statistic.DefaultManager.Range(func(t statistic.Tracker) bool {
+		if t.Info().Metadata == metadata {
+			found = t
+			return false
+		}
+		return true
+	})
+	return found
+}
+
 func (c *routedConn) resolve() *probeRoute {
 	c.mu.Lock()
 	defer c.mu.Unlock()

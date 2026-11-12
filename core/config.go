@@ -17,7 +17,6 @@ import (
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	authStore "github.com/metacubex/mihomo/listener/auth"
@@ -133,7 +132,7 @@ func applyConfig(params *SetupParams) error {
 	}
 
 	currentConfig = cfg
-	hub.ApplyConfig(cfg)
+	applyMihomoConfig(cfg)
 	patchSelectGroup(params.SelectedMap)
 	bumpRouteEpoch()
 	updateListeners(cfg)

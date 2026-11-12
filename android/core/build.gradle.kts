@@ -20,13 +20,6 @@ android {
         consumerProguardFiles("consumer-rules.pro")
     }
 
-    // :app strips what it packages; Crashlytics symbolication needs the unstripped libraries to reach its merge.
-    packaging {
-        jniLibs {
-            keepDebugSymbols += "**/*.so"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -248,7 +241,8 @@ val bindCore =
         )
         targets.set(gomobileTargets)
         androidApi.set(libs.versions.minSdk.get().toInt())
-        tags.set(buildConfig.map { it["tags"].orEmpty() })
+        // cmfa: stock mihomo's mode for running inside an Android app's VpnService.
+        tags.set(buildConfig.map { listOf(it["tags"].orEmpty(), "cmfa").filter(String::isNotEmpty).joinToString(",") })
         // Crashlytics symbolicates native crashes from the unstripped library :app merges, so the Core keeps its symbols.
         ldflags.set(
             buildConfig.map { config ->

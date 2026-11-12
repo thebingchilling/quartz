@@ -5,13 +5,15 @@ import (
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
+// Stock mihomo doesn't count proxied traffic apart from direct, so
+// onlyStatisticsProxy no longer changes the figures.
 func handleGetTraffic(onlyStatisticsProxy bool) Traffic {
-	up, down := statistic.DefaultManager.NowTraffic(onlyStatisticsProxy)
+	up, down := statistic.DefaultManager.Now()
 	return Traffic{Up: up, Down: down}
 }
 
 func handleGetTotalTraffic(onlyStatisticsProxy bool) Traffic {
-	up, down := statistic.DefaultManager.TotalTraffic(onlyStatisticsProxy)
+	up, down := statistic.DefaultManager.Total()
 	return Traffic{Up: up, Down: down}
 }
 
