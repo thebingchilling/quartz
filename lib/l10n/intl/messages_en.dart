@@ -199,9 +199,12 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m71(label) => "${label} must be a URL";
 
   static String m72(count) =>
+      "${Intl.plural(count, one: '1 day left', other: '${count} days left')}";
+
+  static String m73(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
-  static String m73(count) => "${Intl.plural(count, other: '${count}y ago')}";
+  static String m74(count) => "${Intl.plural(count, other: '${count}y ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -897,9 +900,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -1772,6 +1776,32 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage(
       "Changes take effect after restarting the VPN",
     ),
+    "warpAwgDesc": MessageLookupByLibrary.simpleMessage(
+      "AmneziaWG hides the WireGuard handshake from networks that block it",
+    ),
+    "warpDaysLeft": m72,
+    "warpDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "warpEmpty": MessageLookupByLibrary.simpleMessage("No WARP profiles yet"),
+    "warpEndpoint": MessageLookupByLibrary.simpleMessage("Endpoint"),
+    "warpEndpointAuto": MessageLookupByLibrary.simpleMessage(
+      "Cloudflare\'s default",
+    ),
+    "warpEndpointRandom": MessageLookupByLibrary.simpleMessage("Random"),
+    "warpExpired": MessageLookupByLibrary.simpleMessage("Expired"),
+    "warpGenerate": MessageLookupByLibrary.simpleMessage("Generate"),
+    "warpGenerated": MessageLookupByLibrary.simpleMessage("Generated"),
+    "warpGenerator": MessageLookupByLibrary.simpleMessage("WARP generator"),
+    "warpGeneratorDesc": MessageLookupByLibrary.simpleMessage(
+      "Free Cloudflare WARP profiles, valid for 90 days",
+    ),
+    "warpJunkCount": MessageLookupByLibrary.simpleMessage("Junk packets (Jc)"),
+    "warpJunkMax": MessageLookupByLibrary.simpleMessage("Junk max size (Jmax)"),
+    "warpJunkMin": MessageLookupByLibrary.simpleMessage("Junk min size (Jmin)"),
+    "warpKeepalive": MessageLookupByLibrary.simpleMessage("Keepalive"),
+    "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "warpRandomize": MessageLookupByLibrary.simpleMessage("Pick another"),
+    "warpRegenerate": MessageLookupByLibrary.simpleMessage("Regenerate"),
+    "warpVariant": MessageLookupByLibrary.simpleMessage("Protocol"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "WebDAV configuration",
     ),
@@ -1780,8 +1810,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Write to system also sets the system clock; Android ignores it.",
     ),
-    "yearsAgo": m72,
-    "yearsAgoShort": m73,
+    "yearsAgo": m73,
+    "yearsAgoShort": m74,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };

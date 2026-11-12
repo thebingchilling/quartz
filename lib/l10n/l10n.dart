@@ -7586,6 +7586,168 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `WARP generator`
+  String get warpGenerator {
+    return Intl.message(
+      'WARP generator',
+      name: 'warpGenerator',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Free Cloudflare WARP profiles, valid for 90 days`
+  String get warpGeneratorDesc {
+    return Intl.message(
+      'Free Cloudflare WARP profiles, valid for 90 days',
+      name: 'warpGeneratorDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Generate`
+  String get warpGenerate {
+    return Intl.message('Generate', name: 'warpGenerate', desc: '', args: []);
+  }
+
+  /// `Regenerate`
+  String get warpRegenerate {
+    return Intl.message(
+      'Regenerate',
+      name: 'warpRegenerate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Protocol`
+  String get warpVariant {
+    return Intl.message('Protocol', name: 'warpVariant', desc: '', args: []);
+  }
+
+  /// `Endpoint`
+  String get warpEndpoint {
+    return Intl.message('Endpoint', name: 'warpEndpoint', desc: '', args: []);
+  }
+
+  /// `Cloudflare's default`
+  String get warpEndpointAuto {
+    return Intl.message(
+      'Cloudflare\'s default',
+      name: 'warpEndpointAuto',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Random`
+  String get warpEndpointRandom {
+    return Intl.message(
+      'Random',
+      name: 'warpEndpointRandom',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pick another`
+  String get warpRandomize {
+    return Intl.message(
+      'Pick another',
+      name: 'warpRandomize',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MTU`
+  String get warpMtu {
+    return Intl.message('MTU', name: 'warpMtu', desc: '', args: []);
+  }
+
+  /// `DNS`
+  String get warpDns {
+    return Intl.message('DNS', name: 'warpDns', desc: '', args: []);
+  }
+
+  /// `Keepalive`
+  String get warpKeepalive {
+    return Intl.message('Keepalive', name: 'warpKeepalive', desc: '', args: []);
+  }
+
+  /// `Junk packets (Jc)`
+  String get warpJunkCount {
+    return Intl.message(
+      'Junk packets (Jc)',
+      name: 'warpJunkCount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Junk min size (Jmin)`
+  String get warpJunkMin {
+    return Intl.message(
+      'Junk min size (Jmin)',
+      name: 'warpJunkMin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Junk max size (Jmax)`
+  String get warpJunkMax {
+    return Intl.message(
+      'Junk max size (Jmax)',
+      name: 'warpJunkMax',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Generated`
+  String get warpGenerated {
+    return Intl.message('Generated', name: 'warpGenerated', desc: '', args: []);
+  }
+
+  /// `No WARP profiles yet`
+  String get warpEmpty {
+    return Intl.message(
+      'No WARP profiles yet',
+      name: 'warpEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, =1{1 day left} other{{count} days left}}`
+  String warpDaysLeft(int count) {
+    return Intl.plural(
+      count,
+      one: '1 day left',
+      other: '$count days left',
+      name: 'warpDaysLeft',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Expired`
+  String get warpExpired {
+    return Intl.message('Expired', name: 'warpExpired', desc: '', args: []);
+  }
+
+  /// `AmneziaWG hides the WireGuard handshake from networks that block it`
+  String get warpAwgDesc {
+    return Intl.message(
+      'AmneziaWG hides the WireGuard handshake from networks that block it',
+      name: 'warpAwgDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

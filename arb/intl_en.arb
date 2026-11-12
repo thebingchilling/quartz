@@ -905,5 +905,32 @@
   "required": "Required",
   "ageSecretKey": "Age secret key",
   "ageEncryptedProfile": "Encrypted profile",
-  "ageSecretKeyRequiredTip": "This profile is encrypted with age and needs an age secret key to decrypt"
+  "ageSecretKeyRequiredTip": "This profile is encrypted with age and needs an age secret key to decrypt",
+  "warpGenerator": "WARP generator",
+  "warpGeneratorDesc": "Free Cloudflare WARP profiles, valid for 90 days",
+  "warpGenerate": "Generate",
+  "warpRegenerate": "Regenerate",
+  "warpVariant": "Protocol",
+  "warpEndpoint": "Endpoint",
+  "warpEndpointAuto": "Cloudflare's default",
+  "warpEndpointRandom": "Random",
+  "warpRandomize": "Pick another",
+  "warpMtu": "MTU",
+  "warpDns": "DNS",
+  "warpKeepalive": "Keepalive",
+  "warpJunkCount": "Junk packets (Jc)",
+  "warpJunkMin": "Junk min size (Jmin)",
+  "warpJunkMax": "Junk max size (Jmax)",
+  "warpGenerated": "Generated",
+  "warpEmpty": "No WARP profiles yet",
+  "warpDaysLeft": "{count, plural, =1{1 day left} other{{count} days left}}",
+  "@warpDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "warpExpired": "Expired",
+  "warpAwgDesc": "AmneziaWG hides the WireGuard handshake from networks that block it"
 }
