@@ -18,6 +18,9 @@ const _androidFlutterTarget = {
   'amd64': 'android-x64',
 };
 
+// x86_64 is left out: only emulators run it.
+const androidReleaseTargets = 'android-arm,android-arm64';
+
 const _hostPlatform = {
   'linux': 'linux',
   'macos': 'macos',
@@ -204,8 +207,8 @@ Future<int> _package(
       platform,
       '--targets',
       targets,
-      if (androidArch != null)
-        '--build-target-platform=${_androidFlutterTarget[androidArch]!}',
+      if (platform == 'android')
+        '--build-target-platform=${androidArch != null ? _androidFlutterTarget[androidArch]! : androidReleaseTargets}',
       if (flutterBuildArgs.isNotEmpty)
         '--flutter-build-args=${flutterBuildArgs.join(',')}',
       ...descriptionArgs,

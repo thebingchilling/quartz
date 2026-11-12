@@ -88,6 +88,11 @@ jobs:
           add-to-path: true
           link-to-sdk: true
 
+      # The run number is the build number the in-app updater compares.
+      - name: Build number
+        shell: bash
+        run: sed -i.bak -E "s/^version: ([0-9.]+)\+.*/version: \1+${{ github.run_number }}/" pubspec.yaml && rm pubspec.yaml.bak
+
       - name: Flutter dependencies
         run: |
           flutter --version
@@ -96,7 +101,7 @@ jobs:
       - name: Build
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
-        run: dart setup.dart ${{ matrix.platform }} --env pre -v
+        run: dart setup.dart ${{ matrix.platform }} --env stable -v
 
       - name: Upload
         uses: actions/upload-artifact@v4
