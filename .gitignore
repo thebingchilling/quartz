@@ -78,3 +78,7 @@ devtools_options.yaml
 .fvm/
 .fvmrc
 /coverage/lcov.info
+
+# Local core builds
+/core/*.exe
+/core/core
