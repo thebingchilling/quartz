@@ -10,35 +10,51 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.transformLatest
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+/** Rule apps by most recent use (newest first) still counted as open, and the tunnel wanted. */
+data class AppTunnelState(val recent: List<String> = emptyList(), val tunnelId: Int? = null)
+
 /**
  * Auto-tunnel by app (FORK.md §14). Wraps the snapshots upstream's AutoTunnelService feeds its
- * reconciler (one line): while an app with a rule is on screen, the snapshot is replaced by one in
+ * reconciler (one line): while an app with a rule is open, the snapshot is replaced by one in
  * which only that rule's tunnel qualifies, so upstream's own engine connects it (and stops any
- * other). Leaving the app restores the real snapshot and upstream's rules (Wi-Fi, mobile data,
+ * other). When it's closed, the real snapshot comes back and upstream's rules (Wi-Fi, mobile data,
  * trusted networks) decide again. Expired tunnels never qualify ([app.quartz.core.QuartzAutoTunnel]
  * already filters them from the snapshot's tunnels).
+ *
+ * "Open" means: on screen, or (main-profile apps, with usage access) still in the recent apps,
+ * i.e. not swiped away there or backed out of. Apps whose closing can't be seen (other profiles,
+ * no usage access) count as open only while on screen. With several rule apps open, the most
+ * recently used one wins.
  */
 object QuartzAppTunnel : KoinComponent {
     private val context: Context by inject()
     private val rules: AppRules by inject()
 
-    /** How long after leaving a rule's app its tunnel stays, so a share sheet or a quick switch doesn't flap. */
+    /** How long a tunnel stays after its app stops counting as open, so a quick switch doesn't flap. */
     val LINGER: Duration = 4.seconds
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     fun overlay(snapshots: Flow<AutoTunnelSnapshot>): Flow<AutoTunnelSnapshot> {
+        val inMainProfile = mutableMapOf<String, Boolean>()
+        val trackable = { pkg: String ->
+            inMainProfile.getOrPut(pkg) {
+                runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.isSuccess
+            }
+        }
         var first = true
         val ruleTunnel =
-            combine(ForegroundApp.current(context), rules.data) { app, data ->
-                    data.ruleFor(app)?.tunnelId
-                }
+            combine(ForegroundApp.activity(context), rules.data) { activity, data -> activity to data }
+                .scan(AppTunnelState()) { state, (activity, data) -> step(state, activity, data, trackable) }
+                .map { it.tunnelId }
                 .distinctUntilChanged()
                 .transformLatest { tunnelId ->
-                    // Only leaving a rule's app waits; the first value (auto-tunnel starting) doesn't.
+                    // Only losing the tunnel waits; the first value (auto-tunnel starting) doesn't.
                     if (tunnelId == null && !first) delay(LINGER)
                     first = false
                     emit(tunnelId)
@@ -46,6 +62,29 @@ object QuartzAppTunnel : KoinComponent {
                 .distinctUntilChanged()
         return combine(snapshots, ruleTunnel) { snapshot, tunnelId -> forApp(snapshot, tunnelId) }
             .distinctUntilChanged()
+    }
+
+    /**
+     * The next [AppTunnelState]: a rule app on screen moves to the front; apps no longer open drop
+     * out (closed from recents, or left, for apps whose closing can't be seen: [trackable] is
+     * false for apps outside the main profile); the newest remaining one's rule picks the tunnel.
+     */
+    fun step(
+        state: AppTunnelState,
+        activity: AppActivity,
+        data: AppRulesData,
+        trackable: (String) -> Boolean,
+    ): AppTunnelState {
+        val fg = activity.foreground
+        var recent = state.recent
+        if (fg != null && data.ruleFor(fg) != null) recent = listOf(fg) + (recent - fg)
+        val open = activity.open
+        recent =
+            recent.filter { pkg ->
+                data.ruleFor(pkg) != null &&
+                    (pkg == fg || (open != null && trackable(pkg) && pkg in open))
+            }
+        return AppTunnelState(recent, recent.firstOrNull()?.let { data.ruleFor(it)?.tunnelId })
     }
 
     /**

@@ -939,28 +939,41 @@ additions in separate composables called from a single line.
 
 ## 14. Tunnel by app — `quartz/android/apprules`
 
-Auto-tunnel → **Tunnel by app**: rules of a tunnel and a set of apps. While
-one of a rule's apps is on screen, auto-tunnel connects that rule's tunnel
-(stopping any other); about 4 s after leaving it (so a share sheet or a quick
-switch doesn't flap), upstream's own rules (Wi-Fi, mobile data, Ethernet,
-trusted networks) decide again. Auto-tunnel must be on.
+Auto-tunnel → **Tunnel by app**: rules of a tunnel and a set of apps. When
+one of a rule's apps opens, auto-tunnel connects that rule's tunnel (stopping
+any other). **It stays on until the app is closed from the recent apps**
+(swiped away in the task switcher, or backed out of); then upstream's own
+rules (Wi-Fi, mobile data, Ethernet, trusted networks) decide again. With
+several rule apps open, the most recently used one wins (a stack: close it
+and the next one's tunnel takes over). Auto-tunnel must be on.
 
 - **How it plugs in:** upstream's `AutoTunnelReconciler` (in
   `com.wgtunnel:backend`) acts on snapshots of network + policy + tunnels.
   `QuartzAppTunnel.overlay` wraps that flow (one line in `AutoTunnelService`):
-  while a rule app is on screen, the snapshot becomes "on Ethernet, Ethernet
+  while a rule app is open, the snapshot becomes "on Ethernet, Ethernet
   tunnel = the rule's tunnel", which upstream's engine turns into exactly
   that tunnel. Its network key changes, which clears a manual override as any
-  network change does; leaving the app changes it back. Not applied without a
+  network change does; closing the app changes it back. Not applied without a
   usable network, on a captive portal auto-tunnel is told to avoid, or when
-  the rule's tunnel isn't a candidate (deleted, expired). Unit-tested against
-  upstream's real `AutoTunnelEngine`.
-- **Detecting the app on screen** (`ForegroundApp`): **app detection**
-  (`QuartzAppWatcherService`, an accessibility service listening only to
-  window-state changes, no window content) is instant and sees apps in every
-  profile, since they share the screen. Without it, **usage access** is
-  polled every 2 s while the screen is on, main profile only. The screen links
-  to both system settings and shows which is on.
+  the rule's tunnel isn't a candidate (deleted, expired). A tunnel lingers
+  4 s after its app stops counting as open. `QuartzAppTunnel.step` (the
+  stack) and `forApp` (the swap, against upstream's real `AutoTunnelEngine`)
+  are unit-tested.
+- **Open or closed** (`ForegroundApp`, `OpenApps`): Android doesn't report
+  recents removal directly. With **usage access**, Quartz reads usage events
+  every 2 s while the screen is on (incrementally; 6 h of history at start):
+  each screen (activity) is alive from resume until destroyed, and swiping an
+  app away in recents destroys its screens. An app counts as open while any
+  screen is alive. Main profile only, Android 10+ (no "destroyed" events
+  before), and only trusted once a "destroyed" event has been seen (a phone
+  that never reports them would otherwise keep tunnels on forever).
+- **On screen:** **app detection** (`QuartzAppWatcherService`, an
+  accessibility service listening only to window-state changes, no window
+  content) is instant and sees apps in every profile, since they share the
+  screen; without it usage events give the app on screen too.
+- **Apps whose closing can't be seen** (work profile, private space, Secure
+  Folder; or no usage access) count as open only while on screen, so their
+  tunnel stops a few seconds after leaving them. The screen says so.
 - **Picking apps** (`AppCatalog`): the main profile's apps, plus every profile
   `LauncherApps` shows Quartz, labelled Work profile, Secure Folder (Samsung
   user 150+), Dual apps (user 95) or Private space (Android 15's user type).
@@ -972,8 +985,9 @@ trusted networks) decide again. Auto-tunnel must be on.
   to an app installed in several profiles in any of them. A VPN carries only
   its own profile's traffic: for work profile, private space and Secure
   Folder apps the tunnel connects when they open, but their traffic uses it
-  only if that profile routes through the same VPN (the screen says so).
+  only if that profile routes through the same VPN. An app killed without
+  its screens being destroyed (rare: force stop) still counts as open until
+  it's opened and closed again.
 - Rules live in `files/app_rules.json` (`AppRules`), go into backups as
   `quartz/app_rules.json`, and lose rules whose tunnel was deleted.
 - Not tested on a device yet.
-

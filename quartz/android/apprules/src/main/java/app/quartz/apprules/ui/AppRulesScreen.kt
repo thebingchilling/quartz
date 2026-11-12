@@ -159,11 +159,8 @@ fun AppRulesScreen(
                     description = {
                         DescriptionText(
                             stringResource(
-                                when {
-                                    watcherOn -> R.string.quartz_apps_usage_unused
-                                    usageOn -> R.string.quartz_apps_usage_on
-                                    else -> R.string.quartz_apps_usage_off
-                                }
+                                if (usageOn) R.string.quartz_apps_usage_on
+                                else R.string.quartz_apps_usage_off
                             )
                         )
                     },
