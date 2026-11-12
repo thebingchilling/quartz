@@ -429,6 +429,7 @@ enum HotAction {
 enum ProxiesIconStyle { filled, plain, hidden }
 
 enum FontFamily {
+  googleSansFlex('GoogleSansFlex'),
   twEmoji('Twemoji'),
   jetBrainsMono('JetBrainsMono');
 

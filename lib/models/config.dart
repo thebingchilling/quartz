@@ -85,7 +85,7 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyleProps = ProxiesStyleProps();
 const defaultWindowProps = WindowProps();
 const defaultAccessControlProps = AccessControlProps();
-const defaultThemeProps = ThemeProps(primaryColor: defaultPrimaryColor);
+const defaultThemeProps = ThemeProps();
 
 HotKeyAction _defaultHotKeyAction(HotAction action, PhysicalKeyboardKey key) {
   return HotKeyAction(
@@ -189,7 +189,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(TabAnimation.slide)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
-    @Default(true) bool floatingNavigationBar,
+    @Default(false) bool floatingNavigationBar,
     @Default(true) bool autoCheckUpdate,
     @Default(true)
     @JsonKey(readValue: _readSidebarExpanded)
@@ -371,8 +371,8 @@ abstract class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
     int? primaryColor,
     @Default(defaultPrimaryColors) List<int> primaryColors,
-    @Default(ThemeMode.dark) ThemeMode themeMode,
-    @Default(DynamicSchemeVariant.content) DynamicSchemeVariant schemeVariant,
+    @Default(ThemeMode.system) ThemeMode themeMode,
+    @Default(DynamicSchemeVariant.tonalSpot) DynamicSchemeVariant schemeVariant,
     @Default(false) bool pureBlack,
     @Default(true) bool sidebarBlur,
     @Default(TextScale()) TextScale textScale,

@@ -36,7 +36,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
         _readTabAnimation(json, 'tabAnimation'),
       ) ??
       TabAnimation.slide,
-  floatingNavigationBar: json['floatingNavigationBar'] as bool? ?? true,
+  floatingNavigationBar: json['floatingNavigationBar'] as bool? ?? false,
   autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
   sidebarExpanded:
       _readSidebarExpanded(json, 'sidebarExpanded') as bool? ?? true,
@@ -352,13 +352,13 @@ _ThemeProps _$ThemePropsFromJson(Map<String, dynamic> json) => _ThemeProps(
       defaultPrimaryColors,
   themeMode:
       $enumDecodeNullable(_$ThemeModeEnumMap, json['themeMode']) ??
-      ThemeMode.dark,
+      ThemeMode.system,
   schemeVariant:
       $enumDecodeNullable(
         _$DynamicSchemeVariantEnumMap,
         json['schemeVariant'],
       ) ??
-      DynamicSchemeVariant.content,
+      DynamicSchemeVariant.tonalSpot,
   pureBlack: json['pureBlack'] as bool? ?? false,
   sidebarBlur: json['sidebarBlur'] as bool? ?? true,
   textScale: json['textScale'] == null

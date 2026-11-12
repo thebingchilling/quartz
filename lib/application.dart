@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -173,13 +174,15 @@ class ApplicationState extends ConsumerState<Application> {
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
+        final fontFamily =
+            themeProps.fontFamily ?? FontFamily.googleSansFlex.value;
         final fontFamilyFallback = appFontFamilyFallback(
           platform: defaultTargetPlatform,
           locales: [
             ?getLocaleForString(locale),
             ...WidgetsBinding.instance.platformDispatcher.locales,
           ],
-          fontFamily: themeProps.fontFamily,
+          fontFamily: fontFamily,
         );
         return MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -207,7 +210,7 @@ class ApplicationState extends ConsumerState<Application> {
             pageTransitionsTheme: _pageTransitionsTheme,
             actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.light),
-            fontFamily: themeProps.fontFamily,
+            fontFamily: fontFamily,
             fontFamilyFallback: fontFamilyFallback,
           ).withAppShapes,
           darkTheme: ThemeData(
@@ -215,7 +218,7 @@ class ApplicationState extends ConsumerState<Application> {
             pageTransitionsTheme: _pageTransitionsTheme,
             actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.dark),
-            fontFamily: themeProps.fontFamily,
+            fontFamily: fontFamily,
             fontFamilyFallback: fontFamilyFallback,
           ).withAppShapes,
           home: KeyboardInsetHold(child: child!),
