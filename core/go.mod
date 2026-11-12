@@ -2,13 +2,11 @@ module core
 
 go 1.27.0
 
-replace github.com/metacubex/mihomo => ./Clash.Meta
-
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/dlclark/regexp2 v1.12.0
 	github.com/metacubex/http v0.1.8
-	github.com/metacubex/mihomo v0.0.0-00010101000000-000000000000
+	github.com/metacubex/mihomo v1.19.32
 	github.com/metacubex/tls v0.1.8
 	github.com/miekg/dns v1.1.63
 	go.yaml.in/yaml/v3 v3.0.5
