@@ -115,6 +115,9 @@ void main() {
       );
       addTearDown(container.dispose);
       globalState.container = container;
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(floatingNavigationBar: true));
       container.read(viewSizeProvider.notifier).value = const Size(1200, 800);
 
       await tester.pumpWidget(
@@ -370,6 +373,9 @@ void main() {
       );
       addTearDown(container.dispose);
       globalState.container = container;
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(floatingNavigationBar: true));
       container.read(viewSizeProvider.notifier).value = const Size(500, 800);
       container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
 
@@ -674,6 +680,9 @@ void main() {
     );
     addTearDown(container.dispose);
     globalState.container = container;
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(floatingNavigationBar: true));
     container.read(viewSizeProvider.notifier).value = const Size(500, 800);
 
     await tester.pumpWidget(
@@ -767,6 +776,9 @@ void main() {
     );
     addTearDown(container.dispose);
     globalState.container = container;
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(floatingNavigationBar: true));
     container.read(viewSizeProvider.notifier).value = const Size(500, 800);
     final items = container.read(_navigationItemsProvider.notifier)
       ..set([dashboard, proxies, profiles]);

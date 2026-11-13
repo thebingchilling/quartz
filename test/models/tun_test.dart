@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
+import '../helpers/mihomo_source.dart';
 
 Set<String> _keysOf(String path, String struct, String tag) {
   final source = File(path).readAsStringSync();
@@ -21,7 +22,7 @@ void main() {
 
   test('every Tun key is a key of the core TUN section', () {
     expect(
-      _keysOf('core/Clash.Meta/config/config.go', 'RawTun', 'yaml'),
+      _keysOf('$mihomoSource/config/config.go', 'RawTun', 'yaml'),
       containsAll(tunKeys),
     );
   });

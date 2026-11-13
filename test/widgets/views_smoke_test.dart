@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:fl_clash/features/form/form.dart';
+import 'package:fl_clash/common/ip_details.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/ip_details.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/advanced.dart';
@@ -86,6 +90,7 @@ void main() {
           globalRulesProvider.overrideWith(TestGlobalRules.new),
           iconSetsProvider.overrideWith(TestIconSets.new),
           clashProvidersProvider.overrideWith(TestClashProviders.new),
+          ipDetailsProvider.overrideWith(_NoLookup.new),
         ],
       );
       addTearDown(container.dispose);
@@ -522,4 +527,10 @@ class _TestProxyGroups extends ProxyGroups {
 
   @override
   void order(int oldIndex, int newIndex) {}
+}
+
+/// The dashboard's Network card would go to the internet.
+class _NoLookup extends IpDetailsNotifier {
+  @override
+  Future<IpDetails> build() => Completer<IpDetails>().future;
 }

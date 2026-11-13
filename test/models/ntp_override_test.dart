@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
+import '../helpers/mihomo_source.dart';
 
 ProfileOverrides _decode(Map<String, Object?> json) {
   return ProfileOverrides.fromJson(
@@ -13,7 +14,7 @@ ProfileOverrides _decode(Map<String, Object?> json) {
 
 void main() {
   test('NtpOverrideKey names every key of the core NTP section', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
+    final source = File('$mihomoSource/config/config.go').readAsStringSync();
     final body = RegExp(
       'type RawNTP struct {([^}]*)}',
     ).firstMatch(source)!.group(1)!;
@@ -25,7 +26,7 @@ void main() {
   });
 
   test('the model defaults match the core\'s', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
+    final source = File('$mihomoSource/config/config.go').readAsStringSync();
     final body = RegExp(
       r'NTP: RawNTP\{([^}]*)\}',
     ).firstMatch(source)!.group(1)!;

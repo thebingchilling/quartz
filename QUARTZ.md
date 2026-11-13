@@ -36,18 +36,47 @@ Dropped (VPN-only use doesn't need them):
   (`relaxCertVerify` is unused).
 - Live delay pushes from mihomo's own URL tests; the core's delay tests return results.
 
-## Firebase removed
+## Quartz changes
 
-FlClash's Firebase Analytics and Crashlytics (its developer's project) are gone from the
-Android build: no `google-services.json`, no Firebase plugins or libraries, and
-`GlobalState.setCrashlytics` does nothing. The Dart settings toggle and disclaimer text
-for it are still there, to be removed.
+- **Name:** Quartz, `app.quartz` on Android, `Quartz.exe` on Windows; FlClash's logo stays.
+  Kotlin packages and internal names (`FlClashCore`, `FlClashHelperService`) are unchanged.
+- **No Firebase, no forced disclaimer:** no `google-services.json`, Firebase plugins or
+  libraries; the Crashlytics setting, the data-collection tip and the disclaimer that had to
+  be accepted at first launch are gone (`lib/views/disclaimer.dart` is no longer reachable).
+- **Updater** (`lib/common/updater.dart`): reads the latest release of
+  `thebingchilling/quartz`, compares its build number (the `-<run>` of
+  `quartz-flclash-<version>-<run>`, which CI also writes as the app's build number) and
+  downloads the APK for the device's ABI (opened with the system installer, permission
+  `REQUEST_INSTALL_PACKAGES`) or the Windows installer (run with `/SILENT`).
+- **Defaults:** system theme, dynamic colour, tonal spot, docked navigation bar, Google Sans
+  Flex (`assets/fonts`, OFL) as the app font; picking "Default" in the font list uses it.
+- **Network card** (`lib/views/dashboard/widgets/network_detection.dart`): two rows high,
+  flag, country, IP, city/region and ISP, from ipwho.is, then ipapi.co, then ip-api.com
+  (`lib/common/ip_details.dart`). Requests go the way the app's own traffic goes, so it
+  answers whether or not the proxy runs; it looks again on connect/disconnect, a node
+  switch, or a tap.
+- **WARP generator** (Tools → WARP generator, `lib/features/warp`): registers with
+  Cloudflare's WARP API (X25519 keys in Dart, API versions tried in turn), WireGuard or
+  AmneziaWG (junk Jc/Jmin/Jmax; I1 from `assets/data/warp-awg-payloads.txt`), endpoint
+  default/random/custom, MTU, DNS, keepalive. Each one becomes a Clash profile with a
+  `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
+  TTL) with regenerate (new registration into the same profile) and delete (revokes it).
+- **Auto-tunnel** (Android, Tools → Auto-tunnel): `AutoTunnelService` (foreground,
+  `specialUse`) watches the network under the VPN and starts/stops it through
+  `ServiceState` like the tile: Wi-Fi by name as a blacklist ("every Wi-Fi except these")
+  or whitelist ("only these"), mobile data on every SIM or chosen ones (dual SIM), Ethernet.
+  It acts when the network or the rules change, so a manual toggle holds until then.
+  Wi-Fi names need location access, all the time for the background; Android doesn't let
+  apps list saved networks, so the picker offers nearby ones or a typed name. Rules live in
+  native preferences (`AutoTunnel`), and the service comes back after a reboot. Windows has
+  no auto-tunnel yet.
 
 ## Builds
 
 `.github/workflows/quartz-clash.yml` builds Android and Windows (x64) in one run on pushes
-to `main` and by hand, with FlClash's own `setup.dart`, and publishes both as a Quartz
-release `quartz-flclash-0.9.0-<run>`.
+to `main` and by hand, with FlClash's own `setup.dart` (`--env stable`, so no PRE label;
+arm and arm64 APKs only), and publishes both as the latest Quartz release
+`quartz-flclash-0.9.0-<run>`; the release needs both builds.
 Android builds are signed with the committed debug key `.github/signing/debug.keystore`.
 FlClash's own `build.yaml` only runs by hand.
 

@@ -10,6 +10,7 @@ import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../helpers/test_profiles.dart';
+import '../helpers/mihomo_source.dart';
 
 class _TestClashProviders extends ClashProviders {
   final List<ClashProvider> initial;
@@ -809,7 +810,7 @@ void main() {
   });
 
   test('customProxyTypes lists every type the core parses', () {
-    final source = File('core/Clash.Meta/adapter/parser.go').readAsStringSync();
+    final source = File('$mihomoSource/adapter/parser.go').readAsStringSync();
     expect(customProxyTypes, [
       for (final match in RegExp(
         r'^\tcase "([^"]+)":',
@@ -820,7 +821,7 @@ void main() {
   });
 
   group('proxy fields follow the option structs of the core', () {
-    const root = 'core/Clash.Meta/adapter';
+    final root = '$mihomoSource/adapter';
     final structs = {
       for (final file in Directory(
         '$root/outbound',
@@ -972,7 +973,7 @@ void main() {
           'transport',
         ])
           for (final file in Directory(
-            'core/Clash.Meta/$directory',
+            '$mihomoSource/$directory',
           ).listSync(recursive: true).whereType<File>())
             if (file.path.endsWith('.go') && !file.path.endsWith('_test.go'))
               file.readAsStringSync().toLowerCase(),

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
+import '../helpers/mihomo_source.dart';
 
 PatchClashConfig _decode(Map<String, Object?> json) {
   return PatchClashConfig.fromJson(
@@ -13,7 +14,7 @@ PatchClashConfig _decode(Map<String, Object?> json) {
 
 void main() {
   test('DnsOverrideKey names every key of the core DNS section', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
+    final source = File('$mihomoSource/config/config.go').readAsStringSync();
     Iterable<String> yamlKeysOf(String struct) {
       final body = RegExp(
         'type $struct struct {([^}]*)}',
@@ -32,7 +33,7 @@ void main() {
   });
 
   test('the model defaults match the core\'s, GeoIP code aside', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
+    final source = File('$mihomoSource/config/config.go').readAsStringSync();
     final body = RegExp(
       r'DNS: RawDNS\{([\s\S]*?)\n\t\t\},',
     ).firstMatch(source)!.group(1)!;

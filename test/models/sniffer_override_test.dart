@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
+import '../helpers/mihomo_source.dart';
 
 ProfileOverrides _decode(Map<String, Object?> json) {
   return ProfileOverrides.fromJson(
@@ -13,15 +14,13 @@ ProfileOverrides _decode(Map<String, Object?> json) {
 
 void main() {
   test('SnifferOverrideKey names every current key of the core sniffer', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
+    final source = File('$mihomoSource/config/config.go').readAsStringSync();
     final body = RegExp(
       'type RawSniffer struct {([^}]*)}',
     ).firstMatch(source)!.group(1)!;
     final protocols = RegExp(r'List = \[\]Type\{([^}]*)\}')
         .firstMatch(
-          File(
-            'core/Clash.Meta/constant/sniffer/sniffer.go',
-          ).readAsStringSync(),
+          File('$mihomoSource/constant/sniffer/sniffer.go').readAsStringSync(),
         )!
         .group(1)!
         .split(',')
@@ -39,7 +38,7 @@ void main() {
   });
 
   test('the model defaults match the ones the core parses', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
+    final source = File('$mihomoSource/config/config.go').readAsStringSync();
     final body = RegExp(
       r'Sniffer: RawSniffer\{([\s\S]*?)\n\s*\},',
     ).firstMatch(source)!.group(1)!;

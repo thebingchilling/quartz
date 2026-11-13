@@ -706,7 +706,7 @@ void main() {
         .read(themeSettingProvider.notifier)
         .update(
           (state) =>
-              state.copyWith(schemeVariant: DynamicSchemeVariant.tonalSpot),
+              state.copyWith(schemeVariant: DynamicSchemeVariant.content),
         );
     expect(container.read(provider), isNot(same(first)));
   });

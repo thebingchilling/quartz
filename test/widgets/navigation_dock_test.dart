@@ -85,6 +85,10 @@ Future<ProviderContainer> _pumpHome(
   addTearDown(container.dispose);
   globalState.container = container;
   container.read(viewSizeProvider.notifier).value = _mobileSize;
+  // These cover the floating bar; Quartz docks it by default.
+  container
+      .read(appSettingProvider.notifier)
+      .update((state) => state.copyWith(floatingNavigationBar: true));
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,

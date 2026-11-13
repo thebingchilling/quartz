@@ -52,10 +52,10 @@ void main() {
   ThemeProps readTheme() => container.read(themeSettingProvider);
 
   group('theme mode', () {
-    testWidgets('defaults to the dark theme', (tester) async {
+    testWidgets('defaults to the system theme', (tester) async {
       await pumpThemeView(tester);
 
-      expect(readTheme().themeMode, ThemeMode.dark);
+      expect(readTheme().themeMode, ThemeMode.system);
     });
 
     testWidgets('switches to light and back to dark', (tester) async {
@@ -148,15 +148,15 @@ void main() {
     testWidgets('picks a floating or docked bottom bar', (tester) async {
       await pumpThemeView(tester);
 
-      expect(readSetting().floatingNavigationBar, isTrue);
-
-      await tester.tap(find.text('Docked'));
-      await tester.pumpAndSettle();
       expect(readSetting().floatingNavigationBar, isFalse);
 
       await tester.tap(find.text('Floating'));
       await tester.pumpAndSettle();
       expect(readSetting().floatingNavigationBar, isTrue);
+
+      await tester.tap(find.text('Docked'));
+      await tester.pumpAndSettle();
+      expect(readSetting().floatingNavigationBar, isFalse);
     });
 
     testWidgets('picks a sliding or fading tab switch', (tester) async {
