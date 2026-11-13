@@ -944,5 +944,21 @@
   "autoTunnelLocation": "位置信息，用于读取 Wi-Fi 名称",
   "autoTunnelBackgroundLocation": "始终允许位置信息，用于后台",
   "autoTunnelPhone": "电话，用于区分 SIM 卡",
-  "autoTunnelGrant": "允许"
+  "autoTunnelGrant": "允许",
+  "windscribe": "Windscribe",
+  "windscribeDesc": "将 Windscribe 的服务器添加为 OpenVPN 配置",
+  "windscribeUsername": "OpenVPN 用户名",
+  "windscribePassword": "OpenVPN 密码",
+  "windscribeCredentialsDesc": "来自 Windscribe 的配置生成器，而不是账户登录。保存在本设备上。",
+  "windscribeSave": "保存",
+  "windscribeCredentials": "OpenVPN 凭据",
+  "windscribeChange": "更改凭据",
+  "windscribeProtocol": "协议",
+  "windscribePort": "端口",
+  "windscribePro": "Pro 服务器",
+  "windscribeProDesc": "需要有效的 Pro 套餐",
+  "windscribeUpdate": "更新服务器列表",
+  "windscribeStatus": "{count} 台服务器 · 更新于 {date}",
+  "windscribeNotAdded": "尚未添加",
+  "windscribeListDesc": "Quartz 启动时，如果列表超过 6 小时会自动更新。在 Windscribe 配置的 Windscribe 组中选择服务器。"
 }

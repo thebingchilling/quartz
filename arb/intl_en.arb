@@ -951,5 +951,31 @@
   "autoTunnelLocation": "Location, to read Wi-Fi names",
   "autoTunnelBackgroundLocation": "Location all the time, for the background",
   "autoTunnelPhone": "Phone, to tell SIM cards apart",
-  "autoTunnelGrant": "Allow"
+  "autoTunnelGrant": "Allow",
+  "windscribe": "Windscribe",
+  "windscribeDesc": "Windscribe's servers as an OpenVPN profile",
+  "windscribeUsername": "OpenVPN username",
+  "windscribePassword": "OpenVPN password",
+  "windscribeCredentialsDesc": "From Windscribe's config generator, not your account login. Saved on this device.",
+  "windscribeSave": "Save",
+  "windscribeCredentials": "OpenVPN credentials",
+  "windscribeChange": "Change credentials",
+  "windscribeProtocol": "Protocol",
+  "windscribePort": "Port",
+  "windscribePro": "Pro servers",
+  "windscribeProDesc": "Need an active Pro plan",
+  "windscribeUpdate": "Update server list",
+  "windscribeStatus": "{count} servers · updated {date}",
+  "@windscribeStatus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "windscribeNotAdded": "Not added yet",
+  "windscribeListDesc": "The list updates when Quartz starts if it's over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile."
 }

@@ -7928,6 +7928,151 @@ class AppLocalizations {
   String get autoTunnelGrant {
     return Intl.message('Allow', name: 'autoTunnelGrant', desc: '', args: []);
   }
+
+  /// `Windscribe`
+  String get windscribe {
+    return Intl.message('Windscribe', name: 'windscribe', desc: '', args: []);
+  }
+
+  /// `Windscribe's servers as an OpenVPN profile`
+  String get windscribeDesc {
+    return Intl.message(
+      'Windscribe\'s servers as an OpenVPN profile',
+      name: 'windscribeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `OpenVPN username`
+  String get windscribeUsername {
+    return Intl.message(
+      'OpenVPN username',
+      name: 'windscribeUsername',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `OpenVPN password`
+  String get windscribePassword {
+    return Intl.message(
+      'OpenVPN password',
+      name: 'windscribePassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `From Windscribe's config generator, not your account login. Saved on this device.`
+  String get windscribeCredentialsDesc {
+    return Intl.message(
+      'From Windscribe\'s config generator, not your account login. Saved on this device.',
+      name: 'windscribeCredentialsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Save`
+  String get windscribeSave {
+    return Intl.message('Save', name: 'windscribeSave', desc: '', args: []);
+  }
+
+  /// `OpenVPN credentials`
+  String get windscribeCredentials {
+    return Intl.message(
+      'OpenVPN credentials',
+      name: 'windscribeCredentials',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Change credentials`
+  String get windscribeChange {
+    return Intl.message(
+      'Change credentials',
+      name: 'windscribeChange',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Protocol`
+  String get windscribeProtocol {
+    return Intl.message(
+      'Protocol',
+      name: 'windscribeProtocol',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Port`
+  String get windscribePort {
+    return Intl.message('Port', name: 'windscribePort', desc: '', args: []);
+  }
+
+  /// `Pro servers`
+  String get windscribePro {
+    return Intl.message(
+      'Pro servers',
+      name: 'windscribePro',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Need an active Pro plan`
+  String get windscribeProDesc {
+    return Intl.message(
+      'Need an active Pro plan',
+      name: 'windscribeProDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update server list`
+  String get windscribeUpdate {
+    return Intl.message(
+      'Update server list',
+      name: 'windscribeUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} servers · updated {date}`
+  String windscribeStatus(int count, String date) {
+    return Intl.message(
+      '$count servers · updated $date',
+      name: 'windscribeStatus',
+      desc: '',
+      args: [count, date],
+    );
+  }
+
+  /// `Not added yet`
+  String get windscribeNotAdded {
+    return Intl.message(
+      'Not added yet',
+      name: 'windscribeNotAdded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The list updates when Quartz starts if it's over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.`
+  String get windscribeListDesc {
+    return Intl.message(
+      'The list updates when Quartz starts if it\'s over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.',
+      name: 'windscribeListDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

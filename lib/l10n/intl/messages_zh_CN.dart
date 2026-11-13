@@ -176,9 +176,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m72(count) => "剩余 ${count} 天";
 
-  static String m73(count) => "${count} 年前";
+  static String m73(count, date) => "${count} 台服务器 · 更新于 ${date}";
 
   static String m74(count) => "${count} 年前";
+
+  static String m75(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1421,12 +1423,34 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpVariant": MessageLookupByLibrary.simpleMessage("协议"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
+    "windscribe": MessageLookupByLibrary.simpleMessage("Windscribe"),
+    "windscribeChange": MessageLookupByLibrary.simpleMessage("更改凭据"),
+    "windscribeCredentials": MessageLookupByLibrary.simpleMessage("OpenVPN 凭据"),
+    "windscribeCredentialsDesc": MessageLookupByLibrary.simpleMessage(
+      "来自 Windscribe 的配置生成器，而不是账户登录。保存在本设备上。",
+    ),
+    "windscribeDesc": MessageLookupByLibrary.simpleMessage(
+      "将 Windscribe 的服务器添加为 OpenVPN 配置",
+    ),
+    "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
+      "Quartz 启动时，如果列表超过 6 小时会自动更新。在 Windscribe 配置的 Windscribe 组中选择服务器。",
+    ),
+    "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("尚未添加"),
+    "windscribePassword": MessageLookupByLibrary.simpleMessage("OpenVPN 密码"),
+    "windscribePort": MessageLookupByLibrary.simpleMessage("端口"),
+    "windscribePro": MessageLookupByLibrary.simpleMessage("Pro 服务器"),
+    "windscribeProDesc": MessageLookupByLibrary.simpleMessage("需要有效的 Pro 套餐"),
+    "windscribeProtocol": MessageLookupByLibrary.simpleMessage("协议"),
+    "windscribeSave": MessageLookupByLibrary.simpleMessage("保存"),
+    "windscribeStatus": m73,
+    "windscribeUpdate": MessageLookupByLibrary.simpleMessage("更新服务器列表"),
+    "windscribeUsername": MessageLookupByLibrary.simpleMessage("OpenVPN 用户名"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "写入系统会同时设置系统时钟，Android 上不生效。",
     ),
-    "yearsAgo": m73,
-    "yearsAgoShort": m74,
+    "yearsAgo": m74,
+    "yearsAgoShort": m75,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
   };

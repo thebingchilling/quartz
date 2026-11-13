@@ -14,3 +14,4 @@ export 'proxies/proxies.dart';
 export 'resources.dart';
 export 'tools.dart';
 export 'warp.dart';
+export 'windscribe.dart';

@@ -201,10 +201,12 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m72(count) =>
       "${Intl.plural(count, one: '1 day left', other: '${count} days left')}";
 
-  static String m73(count) =>
+  static String m73(count, date) => "${count} servers · updated ${date}";
+
+  static String m74(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
-  static String m74(count) => "${Intl.plural(count, other: '${count}y ago')}";
+  static String m75(count) => "${Intl.plural(count, other: '${count}y ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1847,12 +1849,46 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
+    "windscribe": MessageLookupByLibrary.simpleMessage("Windscribe"),
+    "windscribeChange": MessageLookupByLibrary.simpleMessage(
+      "Change credentials",
+    ),
+    "windscribeCredentials": MessageLookupByLibrary.simpleMessage(
+      "OpenVPN credentials",
+    ),
+    "windscribeCredentialsDesc": MessageLookupByLibrary.simpleMessage(
+      "From Windscribe\'s config generator, not your account login. Saved on this device.",
+    ),
+    "windscribeDesc": MessageLookupByLibrary.simpleMessage(
+      "Windscribe\'s servers as an OpenVPN profile",
+    ),
+    "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
+      "The list updates when Quartz starts if it\'s over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.",
+    ),
+    "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("Not added yet"),
+    "windscribePassword": MessageLookupByLibrary.simpleMessage(
+      "OpenVPN password",
+    ),
+    "windscribePort": MessageLookupByLibrary.simpleMessage("Port"),
+    "windscribePro": MessageLookupByLibrary.simpleMessage("Pro servers"),
+    "windscribeProDesc": MessageLookupByLibrary.simpleMessage(
+      "Need an active Pro plan",
+    ),
+    "windscribeProtocol": MessageLookupByLibrary.simpleMessage("Protocol"),
+    "windscribeSave": MessageLookupByLibrary.simpleMessage("Save"),
+    "windscribeStatus": m73,
+    "windscribeUpdate": MessageLookupByLibrary.simpleMessage(
+      "Update server list",
+    ),
+    "windscribeUsername": MessageLookupByLibrary.simpleMessage(
+      "OpenVPN username",
+    ),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("Write to system"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Write to system also sets the system clock; Android ignores it.",
     ),
-    "yearsAgo": m73,
-    "yearsAgoShort": m74,
+    "yearsAgo": m74,
+    "yearsAgoShort": m75,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };

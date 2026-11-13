@@ -61,15 +61,33 @@ Dropped (VPN-only use doesn't need them):
   default/random/custom, MTU, DNS, keepalive. Each one becomes a Clash profile with a
   `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
   TTL) with regenerate (new registration into the same profile) and delete (revokes it).
-- **Auto-tunnel** (Android, Tools → Auto-tunnel): `AutoTunnelService` (foreground,
-  `specialUse`) watches the network under the VPN and starts/stops it through
-  `ServiceState` like the tile: Wi-Fi by name as a blacklist ("every Wi-Fi except these")
-  or whitelist ("only these"), mobile data on every SIM or chosen ones (dual SIM), Ethernet.
-  It acts when the network or the rules change, so a manual toggle holds until then.
-  Wi-Fi names need location access, all the time for the background; Android doesn't let
-  apps list saved networks, so the picker offers nearby ones or a typed name. Rules live in
-  native preferences (`AutoTunnel`), and the service comes back after a reboot. Windows has
-  no auto-tunnel yet.
+- **Auto-tunnel** (Tools → Auto-tunnel, Android and Windows). The same rules on both:
+  Wi-Fi by name as a blacklist ("every Wi-Fi except these") or whitelist ("only these"),
+  mobile data (on Android every SIM or chosen ones), Ethernet. They act when the network or
+  the rules change, so a manual toggle holds until then (`decideAutoTunnel` in Dart,
+  `AutoTunnelRules` in Kotlin; keep them the same).
+  - Android: `AutoTunnelService` (foreground, `specialUse`) watches the network under the
+    VPN and starts/stops it through `ServiceState` like the tile, with the app closed, and
+    comes back after a reboot. Wi-Fi names need location access, all the time for the
+    background; Android doesn't let apps list saved networks, so the picker offers nearby
+    ones or a typed name.
+  - Windows: `DesktopAutoTunnel` watches connectivity while Quartz runs (it lives in the
+    tray) and starts/stops the proxy; the picker offers the current Wi-Fi or a typed name.
+- **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): asks once for the OpenVPN
+  credentials from Windscribe's config generator (saved locally; "Change credentials" asks
+  again), reads the public server list (`WebsiteStatus`, no account login) and writes a
+  "Windscribe" profile: every online server as a mihomo `openvpn` proxy (stock mihomo has
+  this outbound, so no separate OpenVPN process), a Windscribe group with an auto group
+  and one group per country. Protocol/port (Windscribe's port map) and Pro servers are
+  options; changing one rebuilds the list. The list updates at startup when over 6 hours
+  old, or on demand. The CA and tls-auth key are Windscribe's public ones, the same for
+  every server.
+
+## Android and Windows ship together (standing rule)
+
+Every feature lands on both apps, and every release carries both: the workflow builds them
+in one run and publishes only when both succeed. Where a platform can't do something (SIM
+choice on Windows), the feature still ships there without that part.
 
 ## Builds
 

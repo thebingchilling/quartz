@@ -944,5 +944,21 @@
   "autoTunnelLocation": "Местоположение, чтобы видеть имена Wi-Fi",
   "autoTunnelBackgroundLocation": "Местоположение всегда, для фона",
   "autoTunnelPhone": "Телефон, чтобы различать SIM",
-  "autoTunnelGrant": "Разрешить"
+  "autoTunnelGrant": "Разрешить",
+  "windscribe": "Windscribe",
+  "windscribeDesc": "Серверы Windscribe как профиль OpenVPN",
+  "windscribeUsername": "Имя пользователя OpenVPN",
+  "windscribePassword": "Пароль OpenVPN",
+  "windscribeCredentialsDesc": "Из генератора конфигураций Windscribe, а не логин аккаунта. Хранятся на этом устройстве.",
+  "windscribeSave": "Сохранить",
+  "windscribeCredentials": "Данные OpenVPN",
+  "windscribeChange": "Изменить данные",
+  "windscribeProtocol": "Протокол",
+  "windscribePort": "Порт",
+  "windscribePro": "Серверы Pro",
+  "windscribeProDesc": "Нужен активный план Pro",
+  "windscribeUpdate": "Обновить список серверов",
+  "windscribeStatus": "Серверов: {count} · обновлено {date}",
+  "windscribeNotAdded": "Ещё не добавлено",
+  "windscribeListDesc": "Список обновляется при запуске Quartz, если ему больше 6 часов. Серверы выбираются в группе Windscribe профиля Windscribe."
 }

@@ -179,9 +179,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m72(count) => "残り ${count} 日";
 
-  static String m73(count) => "${count} 年前";
+  static String m73(count, date) => "${count} 台 · ${date} に更新";
 
   static String m74(count) => "${count} 年前";
+
+  static String m75(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1578,12 +1580,36 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpVariant": MessageLookupByLibrary.simpleMessage("プロトコル"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
+    "windscribe": MessageLookupByLibrary.simpleMessage("Windscribe"),
+    "windscribeChange": MessageLookupByLibrary.simpleMessage("認証情報を変更"),
+    "windscribeCredentials": MessageLookupByLibrary.simpleMessage(
+      "OpenVPN 認証情報",
+    ),
+    "windscribeCredentialsDesc": MessageLookupByLibrary.simpleMessage(
+      "アカウントのログインではなく、Windscribe の設定ジェネレーターのもの。この端末に保存されます。",
+    ),
+    "windscribeDesc": MessageLookupByLibrary.simpleMessage(
+      "Windscribe のサーバーを OpenVPN プロファイルとして追加",
+    ),
+    "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
+      "Quartz 起動時、一覧が 6 時間以上前なら更新します。Windscribe プロファイルの Windscribe グループでサーバーを選びます。",
+    ),
+    "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("まだ追加されていません"),
+    "windscribePassword": MessageLookupByLibrary.simpleMessage("OpenVPN パスワード"),
+    "windscribePort": MessageLookupByLibrary.simpleMessage("ポート"),
+    "windscribePro": MessageLookupByLibrary.simpleMessage("Pro サーバー"),
+    "windscribeProDesc": MessageLookupByLibrary.simpleMessage("有効な Pro プランが必要"),
+    "windscribeProtocol": MessageLookupByLibrary.simpleMessage("プロトコル"),
+    "windscribeSave": MessageLookupByLibrary.simpleMessage("保存"),
+    "windscribeStatus": m73,
+    "windscribeUpdate": MessageLookupByLibrary.simpleMessage("サーバー一覧を更新"),
+    "windscribeUsername": MessageLookupByLibrary.simpleMessage("OpenVPN ユーザー名"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムに書き込む"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "システムに書き込むを有効にするとシステムクロックも設定します。Android では無視されます。",
     ),
-    "yearsAgo": m73,
-    "yearsAgoShort": m74,
+    "yearsAgo": m74,
+    "yearsAgoShort": m75,
     "yes": MessageLookupByLibrary.simpleMessage("はい"),
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };

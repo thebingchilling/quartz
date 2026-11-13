@@ -203,10 +203,12 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m72(count) =>
       "${Intl.plural(count, one: 'Остался ${count} день', few: 'Осталось ${count} дня', other: 'Осталось ${count} дней')}";
 
-  static String m73(count) =>
-      "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
+  static String m73(count, date) => "Серверов: ${count} · обновлено ${date}";
 
   static String m74(count) =>
+      "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
+
+  static String m75(count) =>
       "${Intl.plural(count, one: '${count} г. назад', few: '${count} г. назад', many: '${count} л. назад', other: '${count} г. назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -1942,14 +1944,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
+    "windscribe": MessageLookupByLibrary.simpleMessage("Windscribe"),
+    "windscribeChange": MessageLookupByLibrary.simpleMessage("Изменить данные"),
+    "windscribeCredentials": MessageLookupByLibrary.simpleMessage(
+      "Данные OpenVPN",
+    ),
+    "windscribeCredentialsDesc": MessageLookupByLibrary.simpleMessage(
+      "Из генератора конфигураций Windscribe, а не логин аккаунта. Хранятся на этом устройстве.",
+    ),
+    "windscribeDesc": MessageLookupByLibrary.simpleMessage(
+      "Серверы Windscribe как профиль OpenVPN",
+    ),
+    "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
+      "Список обновляется при запуске Quartz, если ему больше 6 часов. Серверы выбираются в группе Windscribe профиля Windscribe.",
+    ),
+    "windscribeNotAdded": MessageLookupByLibrary.simpleMessage(
+      "Ещё не добавлено",
+    ),
+    "windscribePassword": MessageLookupByLibrary.simpleMessage(
+      "Пароль OpenVPN",
+    ),
+    "windscribePort": MessageLookupByLibrary.simpleMessage("Порт"),
+    "windscribePro": MessageLookupByLibrary.simpleMessage("Серверы Pro"),
+    "windscribeProDesc": MessageLookupByLibrary.simpleMessage(
+      "Нужен активный план Pro",
+    ),
+    "windscribeProtocol": MessageLookupByLibrary.simpleMessage("Протокол"),
+    "windscribeSave": MessageLookupByLibrary.simpleMessage("Сохранить"),
+    "windscribeStatus": m73,
+    "windscribeUpdate": MessageLookupByLibrary.simpleMessage(
+      "Обновить список серверов",
+    ),
+    "windscribeUsername": MessageLookupByLibrary.simpleMessage(
+      "Имя пользователя OpenVPN",
+    ),
     "writeToSystem": MessageLookupByLibrary.simpleMessage(
       "Записывать в систему",
     ),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "«Записывать в систему» также устанавливает системные часы; Android это игнорирует.",
     ),
-    "yearsAgo": m73,
-    "yearsAgoShort": m74,
+    "yearsAgo": m74,
+    "yearsAgoShort": m75,
     "yes": MessageLookupByLibrary.simpleMessage("Да"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
   };

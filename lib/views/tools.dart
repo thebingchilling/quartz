@@ -19,6 +19,7 @@ import 'developer.dart';
 import 'theme.dart';
 import 'auto_tunnel.dart';
 import 'warp.dart';
+import 'windscribe.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
   const ToolsView({super.key});
@@ -59,7 +60,8 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _AdvancedConfigItem(),
         const _CustomResourcesItem(),
         const _WarpItem(),
-        if (system.isAndroid) const _AutoTunnelItem(),
+        const _WindscribeItem(),
+        if (system.isAndroid || system.isWindows) const _AutoTunnelItem(),
         const _GeneralItem(),
       ],
     );
@@ -244,6 +246,20 @@ class _WarpItem extends StatelessWidget {
       title: Text(context.appLocalizations.warpGenerator),
       subtitle: Text(context.appLocalizations.warpGeneratorDesc),
       widget: const WarpView(),
+    );
+  }
+}
+
+class _WindscribeItem extends StatelessWidget {
+  const _WindscribeItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.cloudDownload),
+      title: Text(context.appLocalizations.windscribe),
+      subtitle: Text(context.appLocalizations.windscribeDesc),
+      widget: const WindscribeView(),
     );
   }
 }

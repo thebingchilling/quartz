@@ -944,5 +944,21 @@
   "autoTunnelLocation": "位置情報（Wi-Fi 名の取得）",
   "autoTunnelBackgroundLocation": "常に位置情報（バックグラウンド用）",
   "autoTunnelPhone": "電話（SIM の識別）",
-  "autoTunnelGrant": "許可"
+  "autoTunnelGrant": "許可",
+  "windscribe": "Windscribe",
+  "windscribeDesc": "Windscribe のサーバーを OpenVPN プロファイルとして追加",
+  "windscribeUsername": "OpenVPN ユーザー名",
+  "windscribePassword": "OpenVPN パスワード",
+  "windscribeCredentialsDesc": "アカウントのログインではなく、Windscribe の設定ジェネレーターのもの。この端末に保存されます。",
+  "windscribeSave": "保存",
+  "windscribeCredentials": "OpenVPN 認証情報",
+  "windscribeChange": "認証情報を変更",
+  "windscribeProtocol": "プロトコル",
+  "windscribePort": "ポート",
+  "windscribePro": "Pro サーバー",
+  "windscribeProDesc": "有効な Pro プランが必要",
+  "windscribeUpdate": "サーバー一覧を更新",
+  "windscribeStatus": "{count} 台 · {date} に更新",
+  "windscribeNotAdded": "まだ追加されていません",
+  "windscribeListDesc": "Quartz 起動時、一覧が 6 時間以上前なら更新します。Windscribe プロファイルの Windscribe グループでサーバーを選びます。"
 }
