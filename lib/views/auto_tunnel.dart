@@ -8,6 +8,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wifi_ssid/wifi_ssid.dart';
 
 /// Auto-tunnel rules (Android): Wi-Fi by name as a blacklist or whitelist,
 /// mobile data per SIM, and Ethernet.
@@ -46,6 +47,7 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
   }
 
   Future<void> _refresh() async {
+    if (!system.isAndroid) return;
     try {
       final permissions = await _platform.permissions();
       final sims = permissions.phone ? await _platform.simCards() : <SimCard>[];
@@ -69,9 +71,9 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
   }
 
   Future<void> _addNetwork(AppLocalizations l) async {
-    final nearby = await _platform.wifiNetworks().catchError(
-      (_) => const <String>[],
-    );
+    final nearby = system.isAndroid
+        ? await _platform.wifiNetworks().catchError((_) => const <String>[])
+        : [?await WifiSsidManager.instance.getSsid().catchError((_) => null)];
     final listed = ref.read(autoTunnelProvider).ssids;
     final choices = [
       for (final ssid in nearby)
@@ -220,7 +222,7 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
                 ),
               ],
             ],
-            footer: l.autoTunnelWifiDesc,
+            footer: system.isAndroid ? l.autoTunnelWifiDesc : null,
           ),
           generateSectionV3(
             items: [

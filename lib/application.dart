@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/auto_tunnel/desktop_auto_tunnel.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -31,7 +32,7 @@ Widget buildManagerStack({
   required Widget child,
 }) {
   final platformApp = isDesktop
-      ? WindowHeaderContainer(child: child)
+      ? WindowHeaderContainer(child: DesktopAutoTunnel(child: child))
       : VpnManager(child: child);
   final state = AppStateManager(
     child: CoreManager(

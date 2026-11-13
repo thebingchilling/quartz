@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/services.dart';
@@ -158,10 +159,39 @@ class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
     state = change(state);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, jsonEncode(state.toJson()));
+    // Windows watches networks in Dart (DesktopAutoTunnel); Android natively.
+    if (!Platform.isAndroid) return;
     try {
       await platform.update(state);
     } on PlatformException catch (error) {
       commonPrint.log('Auto-tunnel update failed: $error');
     }
+  }
+}
+
+enum NetworkKind { wifi, mobile, ethernet, none }
+
+/// The network under the VPN: [ssid] is null when the system hides it.
+typedef NetworkSnapshot = ({NetworkKind kind, String? ssid, int? simId});
+
+/// True to connect, false to disconnect, null to leave the tunnel as it is.
+/// Android's `AutoTunnelRules` makes the same call natively.
+bool? decideAutoTunnel(AutoTunnelSettings settings, NetworkSnapshot network) {
+  switch (network.kind) {
+    case NetworkKind.none:
+      return null;
+    case NetworkKind.ethernet:
+      return settings.ethernetEnabled;
+    case NetworkKind.mobile:
+      return settings.mobileEnabled &&
+          (settings.simIds.isEmpty || settings.simIds.contains(network.simId));
+    case NetworkKind.wifi:
+      if (!settings.wifiEnabled) return false;
+      final ssid = network.ssid;
+      final listed = ssid != null && settings.ssids.contains(ssid);
+      return switch (settings.wifiMode) {
+        WifiRuleMode.blacklist => ssid == null ? null : !listed,
+        WifiRuleMode.whitelist => listed,
+      };
   }
 }
