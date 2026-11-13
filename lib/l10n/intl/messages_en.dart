@@ -324,6 +324,47 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
       "Auto-set system DNS",
     ),
+    "autoTunnel": MessageLookupByLibrary.simpleMessage("Auto-tunnel"),
+    "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("Add network"),
+    "autoTunnelAllSims": MessageLookupByLibrary.simpleMessage("Every SIM"),
+    "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
+      "Location all the time, for the background",
+    ),
+    "autoTunnelBlacklist": MessageLookupByLibrary.simpleMessage(
+      "Every Wi-Fi except these",
+    ),
+    "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
+      "Connects and disconnects by itself as you change networks. A manual connect or disconnect holds until the network changes.",
+    ),
+    "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Type a name"),
+    "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Allow"),
+    "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
+      "Location, to read Wi-Fi names",
+    ),
+    "autoTunnelNetworks": MessageLookupByLibrary.simpleMessage(
+      "Wi-Fi networks",
+    ),
+    "autoTunnelNoNetworks": MessageLookupByLibrary.simpleMessage(
+      "No networks listed",
+    ),
+    "autoTunnelOnEthernet": MessageLookupByLibrary.simpleMessage("On Ethernet"),
+    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage(
+      "On mobile data",
+    ),
+    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage("On Wi-Fi"),
+    "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage(
+      "Permissions",
+    ),
+    "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
+      "Phone, to tell SIM cards apart",
+    ),
+    "autoTunnelWhitelist": MessageLookupByLibrary.simpleMessage(
+      "Only these Wi-Fi",
+    ),
+    "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
+      "Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can\'t be listed: pick a nearby one or type its name.",
+    ),
+    "autoTunnelWifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi rule"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Auto update"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Auto-update interval (minutes)",

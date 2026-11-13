@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auto_tunnel_channel">Auto-tunnel</string>
+    <string name="auto_tunnel_title">Auto-tunnel</string>
+    <string name="auto_tunnel_text">Connects and disconnects as you change networks</string>
+</resources>

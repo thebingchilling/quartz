@@ -17,6 +17,7 @@ import 'config/advanced.dart';
 import 'config/custom_resources.dart';
 import 'developer.dart';
 import 'theme.dart';
+import 'auto_tunnel.dart';
 import 'warp.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -58,6 +59,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _AdvancedConfigItem(),
         const _CustomResourcesItem(),
         const _WarpItem(),
+        if (system.isAndroid) const _AutoTunnelItem(),
         const _GeneralItem(),
       ],
     );
@@ -242,6 +244,19 @@ class _WarpItem extends StatelessWidget {
       title: Text(context.appLocalizations.warpGenerator),
       subtitle: Text(context.appLocalizations.warpGeneratorDesc),
       widget: const WarpView(),
+    );
+  }
+}
+
+class _AutoTunnelItem extends StatelessWidget {
+  const _AutoTunnelItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.wifi),
+      title: Text(context.appLocalizations.autoTunnel),
+      widget: const AutoTunnelView(),
     );
   }
 }

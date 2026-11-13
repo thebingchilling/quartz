@@ -932,5 +932,24 @@
     }
   },
   "warpExpired": "Expired",
-  "warpAwgDesc": "AmneziaWG hides the WireGuard handshake from networks that block it"
+  "warpAwgDesc": "AmneziaWG hides the WireGuard handshake from networks that block it",
+  "autoTunnel": "Auto-tunnel",
+  "autoTunnelDesc": "Connects and disconnects by itself as you change networks. A manual connect or disconnect holds until the network changes.",
+  "autoTunnelOnWifi": "On Wi-Fi",
+  "autoTunnelWifiMode": "Wi-Fi rule",
+  "autoTunnelBlacklist": "Every Wi-Fi except these",
+  "autoTunnelWhitelist": "Only these Wi-Fi",
+  "autoTunnelNetworks": "Wi-Fi networks",
+  "autoTunnelNoNetworks": "No networks listed",
+  "autoTunnelAddNetwork": "Add network",
+  "autoTunnelEnterName": "Type a name",
+  "autoTunnelWifiDesc": "Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can't be listed: pick a nearby one or type its name.",
+  "autoTunnelOnMobile": "On mobile data",
+  "autoTunnelAllSims": "Every SIM",
+  "autoTunnelOnEthernet": "On Ethernet",
+  "autoTunnelPermissions": "Permissions",
+  "autoTunnelLocation": "Location, to read Wi-Fi names",
+  "autoTunnelBackgroundLocation": "Location all the time, for the background",
+  "autoTunnelPhone": "Phone, to tell SIM cards apart",
+  "autoTunnelGrant": "Allow"
 }

@@ -1,6 +1,7 @@
 package com.follow.clash
 
 import com.follow.clash.plugins.AppPlugin
+import com.follow.clash.plugins.AutoTunnelPlugin
 import com.follow.clash.plugins.BatteryPlugin
 import com.follow.clash.plugins.ServicePlugin
 import com.follow.clash.plugins.TilePlugin
@@ -14,6 +15,7 @@ class MainActivity : FlutterActivity() {
         flutterEngine.plugins.add(BatteryPlugin())
         flutterEngine.plugins.add(ServicePlugin())
         flutterEngine.plugins.add(TilePlugin())
+        flutterEngine.plugins.add(AutoTunnelPlugin())
         ServiceState.attachFlutterEngine(flutterEngine)
     }
 

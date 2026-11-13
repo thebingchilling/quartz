@@ -1,5 +1,6 @@
 export 'about.dart';
 export 'access.dart';
+export 'auto_tunnel.dart';
 export 'backup_and_restore.dart';
 export 'connection/connections.dart';
 export 'connection/requests.dart';

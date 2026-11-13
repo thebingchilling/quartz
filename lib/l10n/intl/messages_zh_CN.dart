@@ -174,6 +174,8 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m71(label) => "${label}必须为URL";
 
+  static String m72(count) => "剩余 ${count} 天";
+
   static String m73(count) => "${count} 年前";
 
   static String m74(count) => "${count} 年前";
@@ -262,6 +264,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoRun": MessageLookupByLibrary.simpleMessage("自动运行"),
     "autoRunDesc": MessageLookupByLibrary.simpleMessage("自动运行会在打开应用时启动代理。"),
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("自动设置系统DNS"),
+    "autoTunnel": MessageLookupByLibrary.simpleMessage("自动隧道"),
+    "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("添加网络"),
+    "autoTunnelAllSims": MessageLookupByLibrary.simpleMessage("所有 SIM 卡"),
+    "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
+      "始终允许位置信息，用于后台",
+    ),
+    "autoTunnelBlacklist": MessageLookupByLibrary.simpleMessage(
+      "除这些以外的所有 Wi-Fi",
+    ),
+    "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
+      "切换网络时自动连接或断开。手动连接或断开会保持到网络变化为止。",
+    ),
+    "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("输入名称"),
+    "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("允许"),
+    "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
+      "位置信息，用于读取 Wi-Fi 名称",
+    ),
+    "autoTunnelNetworks": MessageLookupByLibrary.simpleMessage("Wi-Fi 网络"),
+    "autoTunnelNoNetworks": MessageLookupByLibrary.simpleMessage("未列出网络"),
+    "autoTunnelOnEthernet": MessageLookupByLibrary.simpleMessage("以太网下"),
+    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage("移动数据下"),
+    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi 下"),
+    "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("权限"),
+    "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("电话，用于区分 SIM 卡"),
+    "autoTunnelWhitelist": MessageLookupByLibrary.simpleMessage("仅这些 Wi-Fi"),
+    "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
+      "Android 只向有位置权限的应用显示 Wi-Fi 名称，Quartz 在后台时需要“始终允许”。无法读取已保存的网络：请选择附近的网络或输入名称。",
+    ),
+    "autoTunnelWifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi 规则"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自动更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自动更新间隔（分钟）"),
     "back": MessageLookupByLibrary.simpleMessage("返回"),
@@ -1364,6 +1395,30 @@ class MessageLookup extends MessageLookupByLibrary {
       "VPN 通过 VpnService 自动路由系统所有流量。",
     ),
     "vpnTip": MessageLookupByLibrary.simpleMessage("重启VPN后改变生效"),
+    "warpAwgDesc": MessageLookupByLibrary.simpleMessage(
+      "AmneziaWG 可向封锁 WireGuard 的网络隐藏其握手",
+    ),
+    "warpDaysLeft": m72,
+    "warpDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "warpEmpty": MessageLookupByLibrary.simpleMessage("还没有 WARP 配置"),
+    "warpEndpoint": MessageLookupByLibrary.simpleMessage("端点"),
+    "warpEndpointAuto": MessageLookupByLibrary.simpleMessage("Cloudflare 默认"),
+    "warpEndpointRandom": MessageLookupByLibrary.simpleMessage("随机"),
+    "warpExpired": MessageLookupByLibrary.simpleMessage("已过期"),
+    "warpGenerate": MessageLookupByLibrary.simpleMessage("生成"),
+    "warpGenerated": MessageLookupByLibrary.simpleMessage("已生成"),
+    "warpGenerator": MessageLookupByLibrary.simpleMessage("WARP 生成器"),
+    "warpGeneratorDesc": MessageLookupByLibrary.simpleMessage(
+      "免费的 Cloudflare WARP 配置，有效期 90 天",
+    ),
+    "warpJunkCount": MessageLookupByLibrary.simpleMessage("垃圾包数量 (Jc)"),
+    "warpJunkMax": MessageLookupByLibrary.simpleMessage("垃圾包最大长度 (Jmax)"),
+    "warpJunkMin": MessageLookupByLibrary.simpleMessage("垃圾包最小长度 (Jmin)"),
+    "warpKeepalive": MessageLookupByLibrary.simpleMessage("保活"),
+    "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "warpRandomize": MessageLookupByLibrary.simpleMessage("换一个"),
+    "warpRegenerate": MessageLookupByLibrary.simpleMessage("重新生成"),
+    "warpVariant": MessageLookupByLibrary.simpleMessage("协议"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),

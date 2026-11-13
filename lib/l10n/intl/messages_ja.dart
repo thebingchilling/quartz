@@ -177,6 +177,8 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m71(label) => "${label}はURLである必要があります";
 
+  static String m72(count) => "残り ${count} 日";
+
   static String m73(count) => "${count} 年前";
 
   static String m74(count) => "${count} 年前";
@@ -271,6 +273,39 @@ class MessageLookup extends MessageLookupByLibrary {
       "自動実行はアプリを開いたときにプロキシを開始します。",
     ),
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを自動設定"),
+    "autoTunnel": MessageLookupByLibrary.simpleMessage("自動トンネル"),
+    "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("ネットワークを追加"),
+    "autoTunnelAllSims": MessageLookupByLibrary.simpleMessage("すべての SIM"),
+    "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
+      "常に位置情報（バックグラウンド用）",
+    ),
+    "autoTunnelBlacklist": MessageLookupByLibrary.simpleMessage(
+      "これら以外のすべての Wi-Fi",
+    ),
+    "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
+      "ネットワークを切り替えると自動で接続・切断します。手動の接続や切断はネットワークが変わるまで維持されます。",
+    ),
+    "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("名前を入力"),
+    "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("許可"),
+    "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
+      "位置情報（Wi-Fi 名の取得）",
+    ),
+    "autoTunnelNetworks": MessageLookupByLibrary.simpleMessage("Wi-Fi ネットワーク"),
+    "autoTunnelNoNetworks": MessageLookupByLibrary.simpleMessage(
+      "ネットワークがありません",
+    ),
+    "autoTunnelOnEthernet": MessageLookupByLibrary.simpleMessage("イーサネットで"),
+    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage("モバイルデータで"),
+    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi で"),
+    "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),
+    "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("電話（SIM の識別）"),
+    "autoTunnelWhitelist": MessageLookupByLibrary.simpleMessage(
+      "これらの Wi-Fi のみ",
+    ),
+    "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
+      "Android は位置情報へのアクセスを持つアプリにのみ Wi-Fi 名を表示し、Quartz がバックグラウンドのときは常時アクセスが必要です。保存済みネットワークは一覧できないため、近くのものを選ぶか名前を入力してください。",
+    ),
+    "autoTunnelWifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi のルール"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分）"),
     "back": MessageLookupByLibrary.simpleMessage("戻る"),
@@ -1517,6 +1552,30 @@ class MessageLookup extends MessageLookupByLibrary {
       "VPN は VpnService でシステムの全トラフィックを自動的にルーティングします。",
     ),
     "vpnTip": MessageLookupByLibrary.simpleMessage("変更はVPNの再起動後に有効になります"),
+    "warpAwgDesc": MessageLookupByLibrary.simpleMessage(
+      "AmneziaWG はブロックするネットワークから WireGuard のハンドシェイクを隠します",
+    ),
+    "warpDaysLeft": m72,
+    "warpDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "warpEmpty": MessageLookupByLibrary.simpleMessage("WARP プロファイルはまだありません"),
+    "warpEndpoint": MessageLookupByLibrary.simpleMessage("エンドポイント"),
+    "warpEndpointAuto": MessageLookupByLibrary.simpleMessage("Cloudflare の既定"),
+    "warpEndpointRandom": MessageLookupByLibrary.simpleMessage("ランダム"),
+    "warpExpired": MessageLookupByLibrary.simpleMessage("期限切れ"),
+    "warpGenerate": MessageLookupByLibrary.simpleMessage("生成"),
+    "warpGenerated": MessageLookupByLibrary.simpleMessage("生成済み"),
+    "warpGenerator": MessageLookupByLibrary.simpleMessage("WARP ジェネレーター"),
+    "warpGeneratorDesc": MessageLookupByLibrary.simpleMessage(
+      "無料の Cloudflare WARP プロファイル（90 日間有効）",
+    ),
+    "warpJunkCount": MessageLookupByLibrary.simpleMessage("ジャンクパケット数 (Jc)"),
+    "warpJunkMax": MessageLookupByLibrary.simpleMessage("ジャンク最大サイズ (Jmax)"),
+    "warpJunkMin": MessageLookupByLibrary.simpleMessage("ジャンク最小サイズ (Jmin)"),
+    "warpKeepalive": MessageLookupByLibrary.simpleMessage("キープアライブ"),
+    "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "warpRandomize": MessageLookupByLibrary.simpleMessage("別のものを選ぶ"),
+    "warpRegenerate": MessageLookupByLibrary.simpleMessage("再生成"),
+    "warpVariant": MessageLookupByLibrary.simpleMessage("プロトコル"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムに書き込む"),

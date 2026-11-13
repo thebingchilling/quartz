@@ -7748,6 +7748,186 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Auto-tunnel`
+  String get autoTunnel {
+    return Intl.message('Auto-tunnel', name: 'autoTunnel', desc: '', args: []);
+  }
+
+  /// `Connects and disconnects by itself as you change networks. A manual connect or disconnect holds until the network changes.`
+  String get autoTunnelDesc {
+    return Intl.message(
+      'Connects and disconnects by itself as you change networks. A manual connect or disconnect holds until the network changes.',
+      name: 'autoTunnelDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `On Wi-Fi`
+  String get autoTunnelOnWifi {
+    return Intl.message(
+      'On Wi-Fi',
+      name: 'autoTunnelOnWifi',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wi-Fi rule`
+  String get autoTunnelWifiMode {
+    return Intl.message(
+      'Wi-Fi rule',
+      name: 'autoTunnelWifiMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Every Wi-Fi except these`
+  String get autoTunnelBlacklist {
+    return Intl.message(
+      'Every Wi-Fi except these',
+      name: 'autoTunnelBlacklist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only these Wi-Fi`
+  String get autoTunnelWhitelist {
+    return Intl.message(
+      'Only these Wi-Fi',
+      name: 'autoTunnelWhitelist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wi-Fi networks`
+  String get autoTunnelNetworks {
+    return Intl.message(
+      'Wi-Fi networks',
+      name: 'autoTunnelNetworks',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No networks listed`
+  String get autoTunnelNoNetworks {
+    return Intl.message(
+      'No networks listed',
+      name: 'autoTunnelNoNetworks',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add network`
+  String get autoTunnelAddNetwork {
+    return Intl.message(
+      'Add network',
+      name: 'autoTunnelAddNetwork',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Type a name`
+  String get autoTunnelEnterName {
+    return Intl.message(
+      'Type a name',
+      name: 'autoTunnelEnterName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can't be listed: pick a nearby one or type its name.`
+  String get autoTunnelWifiDesc {
+    return Intl.message(
+      'Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can\'t be listed: pick a nearby one or type its name.',
+      name: 'autoTunnelWifiDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `On mobile data`
+  String get autoTunnelOnMobile {
+    return Intl.message(
+      'On mobile data',
+      name: 'autoTunnelOnMobile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Every SIM`
+  String get autoTunnelAllSims {
+    return Intl.message(
+      'Every SIM',
+      name: 'autoTunnelAllSims',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `On Ethernet`
+  String get autoTunnelOnEthernet {
+    return Intl.message(
+      'On Ethernet',
+      name: 'autoTunnelOnEthernet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Permissions`
+  String get autoTunnelPermissions {
+    return Intl.message(
+      'Permissions',
+      name: 'autoTunnelPermissions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Location, to read Wi-Fi names`
+  String get autoTunnelLocation {
+    return Intl.message(
+      'Location, to read Wi-Fi names',
+      name: 'autoTunnelLocation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Location all the time, for the background`
+  String get autoTunnelBackgroundLocation {
+    return Intl.message(
+      'Location all the time, for the background',
+      name: 'autoTunnelBackgroundLocation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Phone, to tell SIM cards apart`
+  String get autoTunnelPhone {
+    return Intl.message(
+      'Phone, to tell SIM cards apart',
+      name: 'autoTunnelPhone',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allow`
+  String get autoTunnelGrant {
+    return Intl.message('Allow', name: 'autoTunnelGrant', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

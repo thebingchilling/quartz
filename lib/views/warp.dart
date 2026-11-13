@@ -214,7 +214,7 @@ class _WarpViewState extends ConsumerState<WarpView> {
                 : () => _run(() async {
                     await store.generate(_options);
                   }),
-            icon: const GlyphIcon(AppGlyphs.add),
+            icon: const GlyphIcon(AppGlyphs.add, fill: 1),
             label: Text(l.warpGenerate),
           ),
           const SizedBox(height: 8),

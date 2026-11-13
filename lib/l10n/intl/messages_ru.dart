@@ -200,6 +200,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m71(label) => "Значение «${label}» должно быть URL";
 
+  static String m72(count) =>
+      "${Intl.plural(count, one: 'Остался ${count} день', few: 'Осталось ${count} дня', other: 'Осталось ${count} дней')}";
+
   static String m73(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
 
@@ -334,6 +337,43 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage(
       "Автонастройка системного DNS",
     ),
+    "autoTunnel": MessageLookupByLibrary.simpleMessage("Автотуннель"),
+    "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage(
+      "Добавить сеть",
+    ),
+    "autoTunnelAllSims": MessageLookupByLibrary.simpleMessage("Любая SIM"),
+    "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
+      "Местоположение всегда, для фона",
+    ),
+    "autoTunnelBlacklist": MessageLookupByLibrary.simpleMessage(
+      "Все Wi-Fi, кроме этих",
+    ),
+    "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
+      "Подключается и отключается сам при смене сети. Ручное подключение или отключение действует до смены сети.",
+    ),
+    "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Ввести имя"),
+    "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Разрешить"),
+    "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
+      "Местоположение, чтобы видеть имена Wi-Fi",
+    ),
+    "autoTunnelNetworks": MessageLookupByLibrary.simpleMessage("Сети Wi-Fi"),
+    "autoTunnelNoNetworks": MessageLookupByLibrary.simpleMessage("Сетей нет"),
+    "autoTunnelOnEthernet": MessageLookupByLibrary.simpleMessage("В Ethernet"),
+    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage(
+      "В мобильной сети",
+    ),
+    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage("В Wi-Fi"),
+    "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("Разрешения"),
+    "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
+      "Телефон, чтобы различать SIM",
+    ),
+    "autoTunnelWhitelist": MessageLookupByLibrary.simpleMessage(
+      "Только эти Wi-Fi",
+    ),
+    "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
+      "Android показывает имена Wi-Fi только приложениям с доступом к местоположению, а в фоне — с доступом «всегда». Сохранённые сети получить нельзя: выберите ближайшую или введите имя.",
+    ),
+    "autoTunnelWifiMode": MessageLookupByLibrary.simpleMessage("Правило Wi-Fi"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Автообновление"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал автообновления (минуты)",
@@ -1864,6 +1904,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage(
       "Изменения вступят в силу после перезапуска VPN",
     ),
+    "warpAwgDesc": MessageLookupByLibrary.simpleMessage(
+      "AmneziaWG скрывает рукопожатие WireGuard от сетей, которые его блокируют",
+    ),
+    "warpDaysLeft": m72,
+    "warpDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "warpEmpty": MessageLookupByLibrary.simpleMessage("Профилей WARP пока нет"),
+    "warpEndpoint": MessageLookupByLibrary.simpleMessage("Конечная точка"),
+    "warpEndpointAuto": MessageLookupByLibrary.simpleMessage(
+      "По умолчанию Cloudflare",
+    ),
+    "warpEndpointRandom": MessageLookupByLibrary.simpleMessage("Случайная"),
+    "warpExpired": MessageLookupByLibrary.simpleMessage("Истёк"),
+    "warpGenerate": MessageLookupByLibrary.simpleMessage("Создать"),
+    "warpGenerated": MessageLookupByLibrary.simpleMessage("Созданные"),
+    "warpGenerator": MessageLookupByLibrary.simpleMessage("Генератор WARP"),
+    "warpGeneratorDesc": MessageLookupByLibrary.simpleMessage(
+      "Бесплатные профили Cloudflare WARP на 90 дней",
+    ),
+    "warpJunkCount": MessageLookupByLibrary.simpleMessage(
+      "Мусорные пакеты (Jc)",
+    ),
+    "warpJunkMax": MessageLookupByLibrary.simpleMessage(
+      "Макс. размер мусора (Jmax)",
+    ),
+    "warpJunkMin": MessageLookupByLibrary.simpleMessage(
+      "Мин. размер мусора (Jmin)",
+    ),
+    "warpKeepalive": MessageLookupByLibrary.simpleMessage("Keepalive"),
+    "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "warpRandomize": MessageLookupByLibrary.simpleMessage("Выбрать другую"),
+    "warpRegenerate": MessageLookupByLibrary.simpleMessage("Пересоздать"),
+    "warpVariant": MessageLookupByLibrary.simpleMessage("Протокол"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "Настройка WebDAV",
     ),
