@@ -87,16 +87,25 @@ class Request {
 
   /// A JSON GET that goes the way the app's own traffic goes: through the core
   /// while it runs, direct otherwise.
+  /// Capped as a whole: Dio's per-request timeouts leave connecting unbounded.
   Future<Map<String, dynamic>> getJsonThroughApp(String url) async {
-    final response = await _clashDio.get<Map<String, dynamic>>(
-      url,
-      options: Options(
-        responseType: ResponseType.json,
-        sendTimeout: const Duration(seconds: 8),
-        receiveTimeout: const Duration(seconds: 8),
-        headers: {'Accept': 'application/json'},
-      ),
-    );
+    final cancelToken = CancelToken();
+    final response = await _clashDio
+        .get<Map<String, dynamic>>(
+          url,
+          cancelToken: cancelToken,
+          options: Options(
+            responseType: ResponseType.json,
+            headers: {'Accept': 'application/json'},
+          ),
+        )
+        .timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            cancelToken.cancel();
+            throw TimeoutException('No answer from $url');
+          },
+        );
     return response.data!;
   }
 

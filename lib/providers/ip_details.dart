@@ -12,7 +12,7 @@ final ipDetailsProvider = AsyncNotifierProvider<IpDetailsNotifier, IpDetails>(
 
 class IpDetailsNotifier extends AsyncNotifier<IpDetails> {
   /// A tunnel that just came up can drop the first request.
-  static const _settle = Duration(milliseconds: 800);
+  static const _settle = Duration(milliseconds: 300);
 
   @override
   Future<IpDetails> build() async {

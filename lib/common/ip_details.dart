@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 /// Where this connection reaches the internet from.
@@ -72,18 +74,20 @@ class IpDetails {
     );
   }
 
-  static IpDetails? fromIpApiCo(Map<String, dynamic> json) {
+  static IpDetails? fromIpInfo(Map<String, dynamic> json) {
     final ip = _text(json['ip']);
-    final code = _text(json['country_code']);
-    if (json['error'] == true || ip == null || code == null) return null;
+    final code = _text(json['country']);
+    if (json['bogon'] == true || ip == null || code == null) return null;
+    final org = _text(json['org']);
+    final asn = org == null ? null : RegExp(r'^AS\d+').firstMatch(org)?[0];
+    final isp = asn == null ? org : _text(org!.substring(asn.length));
     return IpDetails(
       ip: ip,
       countryCode: code,
-      country: _text(json['country_name']),
       city: _text(json['city']),
       region: _text(json['region']),
-      isp: _text(json['org']),
-      details: _pick(json, const {'asn': 'ASN', 'version': 'IP type'}),
+      isp: isp,
+      details: {'ASN': ?asn},
     );
   }
 
@@ -103,27 +107,39 @@ class IpDetails {
   }
 }
 
-/// Lookup services in order of preference: all free and keyless, each with
-/// country, city and ISP. ip-api.com is plain HTTP on its free plan.
+/// Free, keyless lookups with country, city and ISP. ip-api.com is plain
+/// HTTP on its free plan; its HTTPS endpoint needs a paid key.
 const ipDetailsSources = <(String, IpDetails? Function(Map<String, dynamic>))>[
-  ('https://ipwho.is/', IpDetails.fromIpWhoIs),
-  ('https://ipapi.co/json/', IpDetails.fromIpApiCo),
   ('http://ip-api.com/json/?fields=66846719', IpDetails.fromIpApiCom),
+  ('https://ipinfo.io/json', IpDetails.fromIpInfo),
+  ('https://ipwho.is/', IpDetails.fromIpWhoIs),
 ];
 
-/// The first source that answers; throws the last failure when none does.
+/// Asks every source at once and takes the first usable answer, so one slow
+/// or blocked service never holds the card up; throws the last failure when
+/// none answers.
 Future<IpDetails> lookupIpDetails(
   Future<Map<String, dynamic>> Function(String url) getJson,
-) async {
-  Exception lastError = const FormatException('No IP lookup source');
+) {
+  final result = Completer<IpDetails>();
+  var pending = ipDetailsSources.length;
+  Object lastError = const FormatException('No IP lookup source');
   for (final (url, parse) in ipDetailsSources) {
-    try {
-      final details = parse(await getJson(url));
-      if (details != null) return details;
-      lastError = FormatException('No location in the answer', url);
-    } on Exception catch (error) {
-      lastError = error;
-    }
+    unawaited(() async {
+      try {
+        final details = parse(await getJson(url));
+        if (details != null) {
+          if (!result.isCompleted) result.complete(details);
+          return;
+        }
+        lastError = FormatException('No location in the answer', url);
+      } catch (error) {
+        lastError = error;
+      }
+      if (--pending == 0 && !result.isCompleted) {
+        result.completeError(lastError);
+      }
+    }());
   }
-  throw lastError;
+  return result.future;
 }
