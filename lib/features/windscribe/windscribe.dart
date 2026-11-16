@@ -108,6 +108,11 @@ String _quote(String value) =>
 String _block(String text, String indent) =>
     text.trim().split('\n').map((line) => '$indent${line.trim()}').join('\n');
 
+const windscribeGroupName = 'Windscribe';
+
+/// Listed first in the Windscribe group, so it is what a new profile selects.
+const windscribeHomeCountryCode = 'NZ';
+
 /// Every server as a mihomo `openvpn` proxy, grouped by country.
 String buildWindscribeProfile({
   required List<WindscribeServer> servers,
@@ -127,7 +132,10 @@ String buildWindscribeProfile({
 
   final named = [for (final server in servers) (server, unique(server.label))];
   final countries = <String, List<String>>{};
-  for (final (server, name) in named) {
+  for (final (server, name) in [
+    ...named.where((e) => e.$1.countryCode == windscribeHomeCountryCode),
+    ...named.where((e) => e.$1.countryCode != windscribeHomeCountryCode),
+  ]) {
     countries.putIfAbsent(server.country, () => []).add(name);
   }
   final lines = <String>['proxies:'];
@@ -153,7 +161,7 @@ String buildWindscribeProfile({
   }
   lines.addAll([
     'proxy-groups:',
-    '  - name: Windscribe',
+    '  - name: $windscribeGroupName',
     '    type: select',
     '    proxies: [${countries.keys.map(_quote).join(', ')}]',
     for (final MapEntry(key: country, value: names) in countries.entries) ...[
@@ -162,7 +170,7 @@ String buildWindscribeProfile({
       '    proxies: [${names.map(_quote).join(', ')}]',
     ],
     'rules:',
-    '  - MATCH,Windscribe',
+    '  - MATCH,$windscribeGroupName',
   ]);
   return '${lines.join('\n')}\n';
 }

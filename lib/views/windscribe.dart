@@ -167,6 +167,7 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
             generateSectionV3(
               items: [
                 ListItem(

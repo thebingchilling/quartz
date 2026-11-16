@@ -41,6 +41,19 @@ final _status = {
           },
         ],
       },
+      '3': {
+        'name': 'New Zealand',
+        'country_code': 'NZ',
+        'pops': [
+          {
+            'status': 1,
+            'datacenter_id': 99,
+            'iata_code': 'AKL',
+            'name': 'Auckland - Hauraki',
+            'is_premium': 1,
+          },
+        ],
+      },
     },
   },
 };
@@ -67,7 +80,7 @@ void main() {
   test('reads the list though the API labels its JSON as HTML', () async {
     final dio = Dio()..httpClientAdapter = _HtmlLabelledJson();
     final servers = await WindscribeApi(dio).servers();
-    expect(servers, hasLength(2));
+    expect(servers, hasLength(3));
   });
 
   test('reads the online servers and their hostnames', () {
@@ -75,6 +88,7 @@ void main() {
     expect(servers.map((s) => s.host), [
       'tia-283.whiskergalaxy.com',
       'adl-354.whiskergalaxy.com',
+      'akl-99.whiskergalaxy.com',
     ]);
     expect(servers.first.premium, isTrue);
   });
@@ -92,10 +106,7 @@ void main() {
     expect(yaml, contains('port: 8080'));
     expect(yaml, contains('-----BEGIN CERTIFICATE-----'));
     expect(yaml, contains('-----BEGIN OpenVPN Static key V1-----'));
-    expect(
-      yaml,
-      contains('proxies: ["Albania", "Australia"]'),
-    );
+    expect(yaml, contains('proxies: ["New Zealand", "Albania", "Australia"]'));
     expect(yaml, contains('  - MATCH,Windscribe'));
     expect(yaml, isNot(contains('url-test')));
   });
