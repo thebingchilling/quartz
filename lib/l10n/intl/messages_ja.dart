@@ -1579,6 +1579,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "TUN の権限を取得できなかったため、オフにしました。",
     ),
     "tunDesc": MessageLookupByLibrary.simpleMessage("TUN は管理者モードでのみ有効です。"),
+    "tunOfferEnable": MessageLookupByLibrary.simpleMessage("TUN を使う"),
+    "tunOfferLater": MessageLookupByLibrary.simpleMessage("後で"),
+    "tunOfferMessage": MessageLookupByLibrary.simpleMessage(
+      "TUN なしでは Quartz はシステムプロキシとして動き、ブラウザや多くのアプリは使いますが、プロキシを無視するアプリ（多くのゲーム、音声通話、一部のツール）はトンネルを通りません。TUN は通常の VPN のようにすべてを通し、キルスイッチにも必要です。Windows が一度だけ管理者権限を求めて Quartz のヘルパーサービスをインストールし、以後は確認なしで起動します。後で TUN から変更できます。",
+    ),
+    "tunOfferTitle": MessageLookupByLibrary.simpleMessage(
+      "すべてのアプリをトンネルに通しますか？",
+    ),
     "turnOff": MessageLookupByLibrary.simpleMessage("オフにする"),
     "turnOn": MessageLookupByLibrary.simpleMessage("オンにする"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP リレーモード"),

@@ -8368,6 +8368,36 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Send every app through the tunnel?`
+  String get tunOfferTitle {
+    return Intl.message(
+      'Send every app through the tunnel?',
+      name: 'tunOfferTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Without TUN, Quartz works as a system proxy: browsers and most apps use it, but apps that ignore the proxy (many games, voice chat, some tools) go around the tunnel. TUN catches everything, like a normal VPN, and is needed for the kill switch. Windows asks once for admin rights to install Quartz's helper service; after that it starts without prompts. You can change this later under TUN.`
+  String get tunOfferMessage {
+    return Intl.message(
+      'Without TUN, Quartz works as a system proxy: browsers and most apps use it, but apps that ignore the proxy (many games, voice chat, some tools) go around the tunnel. TUN catches everything, like a normal VPN, and is needed for the kill switch. Windows asks once for admin rights to install Quartz\'s helper service; after that it starts without prompts. You can change this later under TUN.',
+      name: 'tunOfferMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use TUN`
+  String get tunOfferEnable {
+    return Intl.message('Use TUN', name: 'tunOfferEnable', desc: '', args: []);
+  }
+
+  /// `Not now`
+  String get tunOfferLater {
+    return Intl.message('Not now', name: 'tunOfferLater', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

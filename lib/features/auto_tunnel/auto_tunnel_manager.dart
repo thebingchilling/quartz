@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
 import 'auto_tunnel.dart';
@@ -100,6 +101,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   static const _settle = Duration(seconds: 2);
   static const _appPoll = Duration(seconds: 2);
   static const _linger = Duration(seconds: 4);
+  static const _tunOfferedKey = 'quartz.tunOffered';
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   List<ConnectivityResult> _results = const [];
@@ -144,6 +146,27 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
       unawaited(_syncFirewall());
     });
     _appTimer = Timer.periodic(_appPoll, (_) => unawaited(_pollApps()));
+    if (system.isWindows) runAfterFrame(() => unawaited(_offerTun()));
+  }
+
+  /// Once, on the first run: TUN sends every app through the tunnel, and
+  /// costs one admin prompt to install the Helper.
+  Future<void> _offerTun() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_tunOfferedKey) ?? false) return;
+    await prefs.setBool(_tunOfferedKey, true);
+    if (!mounted || ref.read(patchClashConfigProvider).tun.enable) return;
+    final l = currentAppLocalizations;
+    final enable = await dialogs.showMessage(
+      title: l.tunOfferTitle,
+      message: TextSpan(text: l.tunOfferMessage),
+      confirmText: l.tunOfferEnable,
+      cancelText: l.tunOfferLater,
+    );
+    if (enable != true || !mounted) return;
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith.tun(enable: true));
   }
 
   Future<void> _pollApps() async {

@@ -130,10 +130,12 @@ class CommonAction extends _$CommonAction {
   /// Downloads this device's file from the release and hands it to the system
   /// installer; anything it can't install opens the release page instead.
   Future<void> _installUpdate(Map<String, dynamic> release) async {
+    final portable = Platform.environment[portableExeEnv];
     final asset = updateAssetFor(
       release,
       os: Platform.operatingSystem,
       dartPlatform: Platform.version,
+      portable: portable != null,
     );
     if (asset == null) {
       await launchUrl(
@@ -149,6 +151,18 @@ class CommonAction extends _$CommonAction {
     if (file == null) return;
     if (system.isAndroid) {
       await app?.installApk(file.path);
+    } else if (Platform.isWindows && portable != null) {
+      // The launcher exited after unpacking, so its file is free to replace;
+      // the new one starts once this instance has let go of its lock.
+      await file.copy(portable);
+      await Process.start('powershell', [
+        '-NoProfile',
+        '-WindowStyle',
+        'Hidden',
+        '-Command',
+        "Start-Sleep -Seconds 2; Start-Process -FilePath '${portable.replaceAll("'", "''")}'",
+      ], mode: ProcessStartMode.detached);
+      await ref.read(systemActionProvider.notifier).handleExit();
     } else if (Platform.isWindows) {
       // The installer replaces the running files and starts Quartz again.
       await Process.start(file.path, const [

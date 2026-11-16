@@ -98,6 +98,13 @@ Dropped (VPN-only use doesn't need them):
   instead of hiding, and opens every field the lookup returned on tap. Its IP is green while
   no tunnel runs.
 - **Windows updates** install silently and start Quartz again, like Android's.
+- **Standalone Windows EXE** (`Quartz-<version>-windows-amd64-portable.exe`,
+  `services/launcher`): one file that embeds the release zip, unpacks it on first run to
+  `%LOCALAPPDATA%\Quartz\app\<hash>` (keeping the two newest versions), and starts
+  `Quartz.exe` with `QUARTZ_PORTABLE_EXE` set to its own path; the updater then swaps that
+  file for the new EXE and restarts. It runs without admin as a system proxy; TUN (every app
+  through the tunnel, needed for the kill switch) is offered once at first run on Windows and
+  costs one admin prompt to install the Helper service.
 - **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): asks once for the OpenVPN
   credentials from Windscribe's config generator (saved locally; "Change credentials" asks
   again), reads the public server list (`WebsiteStatus`, no account login) and writes a

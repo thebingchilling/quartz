@@ -66,6 +66,7 @@ docs/
 /libclash/
 /android/app/src/main/jniLibs/
 /services/helper/target
+/services/launcher/target
 /macos/**/Package.resolved
 /macos/build/
 /env.json

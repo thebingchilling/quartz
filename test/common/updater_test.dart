@@ -14,6 +14,7 @@ void main() {
         {'name': 'Quartz-0.9.0-android-armeabi-v7a.apk'},
         {'name': 'Quartz-0.9.0-windows-amd64-setup.exe'},
         {'name': 'Quartz-0.9.0-windows-amd64.zip'},
+        {'name': 'Quartz-0.9.0-windows-amd64-portable.exe'},
       ],
     };
 
@@ -35,6 +36,18 @@ void main() {
     test('picks the Windows installer, nothing elsewhere', () {
       expect(pick('windows', ''), 'Quartz-0.9.0-windows-amd64-setup.exe');
       expect(pick('linux', ''), isNull);
+    });
+
+    test('the standalone EXE updates to the standalone EXE', () {
+      expect(
+        updateAssetFor(
+          release,
+          os: 'windows',
+          dartPlatform: '',
+          portable: true,
+        )?['name'],
+        'Quartz-0.9.0-windows-amd64-portable.exe',
+      );
     });
   });
 }

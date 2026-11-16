@@ -11,18 +11,24 @@ int? releaseBuildNumber(String tag) {
   return match == null ? null : int.tryParse(match.group(1)!);
 }
 
+/// Set by the standalone EXE's launcher to its own path.
+const portableExeEnv = 'QUARTZ_PORTABLE_EXE';
+
 /// The release file this device installs: the APK for its ABI, or the Windows
-/// installer. Null on other platforms, or when the release lacks it.
+/// installer (the standalone EXE when [portable]). Null on other platforms, or
+/// when the release lacks it.
 Map<String, dynamic>? updateAssetFor(
   Map<String, dynamic> release, {
   required String os,
   required String dartPlatform,
+  bool portable = false,
 }) {
   final suffix = switch (os) {
     'android' =>
       dartPlatform.contains('arm64')
           ? '-android-arm64-v8a.apk'
           : '-android-armeabi-v7a.apk',
+    'windows' when portable => '-windows-amd64-portable.exe',
     'windows' => '-windows-amd64-setup.exe',
     _ => null,
   };

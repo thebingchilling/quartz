@@ -1048,9 +1048,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
@@ -1937,6 +1938,14 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tunDesc": MessageLookupByLibrary.simpleMessage(
       "TUN работает только в режиме администратора.",
+    ),
+    "tunOfferEnable": MessageLookupByLibrary.simpleMessage("Использовать TUN"),
+    "tunOfferLater": MessageLookupByLibrary.simpleMessage("Не сейчас"),
+    "tunOfferMessage": MessageLookupByLibrary.simpleMessage(
+      "Без TUN Quartz работает как системный прокси: браузеры и большинство приложений им пользуются, но приложения, игнорирующие прокси (многие игры, голосовые чаты, некоторые утилиты), идут мимо туннеля. TUN перехватывает всё, как обычный VPN, и нужен для kill switch. Windows один раз запросит права администратора, чтобы установить службу-помощник Quartz; дальше запуск без запросов. Это можно изменить позже в настройках TUN.",
+    ),
+    "tunOfferTitle": MessageLookupByLibrary.simpleMessage(
+      "Пускать все приложения через туннель?",
     ),
     "turnOff": MessageLookupByLibrary.simpleMessage("Выключить"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Включить"),
