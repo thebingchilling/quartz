@@ -2,6 +2,8 @@
 /// configs into mihomo proxies, so any of them runs as a Clash profile.
 library;
 
+import 'dart:io';
+
 class ConvertException implements Exception {
   const ConvertException(this.message);
 
@@ -137,6 +139,10 @@ ConvertedConfig convertWireGuard(String text, {required String name}) {
   ).map((a) => a.split('/').first).toList();
   final v4 = addresses.where((a) => !a.contains(':')).firstOrNull;
   final v6 = addresses.where((a) => a.contains(':')).firstOrNull;
+  final dns = [
+    for (final entry in _split(iface['dns'] ?? ''))
+      if (InternetAddress.tryParse(entry) != null) entry,
+  ];
 
   List<String> peerLines(Map<String, String> peer, String indent) {
     final endpoint = peer['endpoint'];
@@ -165,6 +171,11 @@ ConvertedConfig convertWireGuard(String text, {required String name}) {
     if (v6 != null) '    ipv6: ${quoteYaml(v6)}',
     '    private-key: ${quoteYaml(iface['privatekey']!)}',
     if (int.tryParse(iface['mtu'] ?? '') case final mtu?) '    mtu: $mtu',
+    // Search domains share the DNS line; only the servers are resolvers.
+    if (dns.isNotEmpty) ...[
+      '    remote-dns-resolve: true',
+      '    dns: ${_list(dns)}',
+    ],
     if (int.tryParse(peers.first['persistentkeepalive'] ?? '')
         case final keepalive? when keepalive > 0)
       '    persistent-keepalive: $keepalive',

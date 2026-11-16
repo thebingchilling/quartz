@@ -53,6 +53,26 @@ void main() {
     expect(yaml, contains('i1: "<b 0x01>"'));
   });
 
+  test('WireGuard resolves through the tunnel with its DNS servers', () {
+    final yaml = convertConfig('''
+[Interface]
+PrivateKey = priv=
+Address = 10.0.0.2/32
+DNS = 1.1.1.1, 2606:4700:4700::1111, corp.example
+
+[Peer]
+PublicKey = peer=
+Endpoint = vpn.example.com:51820
+''', name: 'Home').proxies.single;
+    expect(yaml, contains('remote-dns-resolve: true'));
+    expect(yaml, contains('dns: ["1.1.1.1", "2606:4700:4700::1111"]'));
+  });
+
+  test('WireGuard without a DNS line keeps local resolution', () {
+    final yaml = convertConfig(_wg, name: 'Home').proxies.single;
+    expect(yaml, isNot(contains('remote-dns-resolve')));
+  });
+
   test('OpenVPN: one proxy per remote, protocol and key direction', () {
     final config = convertConfig(_ovpn, name: 'Work');
     expect(config.names, ['Work 1', 'Work 2']);
