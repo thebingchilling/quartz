@@ -65,13 +65,9 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private val vpnPrepareCallback = PendingCallback<Boolean>()
 
-    private val requestNotificationCallback = PendingCallback<Boolean>()
-
     private val requestInstalledAppsCallback = PendingCallback<Boolean>()
 
     private val requestLocalNetworkCallback = PendingCallback<Boolean>()
-
-    private var isRequestingNotificationPermission = false
 
     private var isRequestingLocalNetworkPermission = false
 
@@ -102,8 +98,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             channel.invokeMethod("packagesChanged", null)
         }
     }
-
-    private var skipNotificationPermissionRequest = false
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -298,38 +292,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         task?.setExcludeFromRecents(value ?: false)
     }
 
-    fun requestNotificationPermission(callback: (Boolean) -> Unit) = onMainThread {
-        requestNotificationCallback.replace(callback, supersededValue = false)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val permission = ContextCompat.checkSelfPermission(
-                GlobalState.application,
-                Manifest.permission.POST_NOTIFICATIONS,
-            )
-            if (permission == PackageManager.PERMISSION_GRANTED || skipNotificationPermissionRequest) {
-                invokeRequestNotificationCallback(true)
-                return@onMainThread
-            }
-            if (isRequestingNotificationPermission) {
-                return@onMainThread
-            }
-            isRequestingNotificationPermission = true
-            activity?.let {
-                ActivityCompat.requestPermissions(
-                    it,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    NOTIFICATION_PERMISSION_REQUEST_CODE,
-                )
-            } ?: invokeRequestNotificationCallback(true)
-            return@onMainThread
-        }
-        invokeRequestNotificationCallback(true)
-    }
-
-    private fun invokeRequestNotificationCallback(shouldStart: Boolean) {
-        isRequestingNotificationPermission = false
-        requestNotificationCallback.resolve(shouldStart)
-    }
-
     fun requestLocalNetworkPermission(callback: (Boolean) -> Unit) = onMainThread {
         requestLocalNetworkCallback.replace(callback, supersededValue = false)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN || hasLocalNetworkPermission()) {
@@ -446,7 +408,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         channel.setMethodCallHandler(null)
         scope.cancel()
         invokeVpnPrepareCallback(false)
-        invokeRequestNotificationCallback(false)
         invokeRequestLocalNetworkCallback(false)
         invokeRequestInstalledAppsCallback(false)
     }
@@ -483,7 +444,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         channel.invokeMethod("exit", null)
         detachFromActivity()
         invokeVpnPrepareCallback(false)
-        invokeRequestNotificationCallback(false)
         invokeRequestLocalNetworkCallback(false)
         invokeRequestInstalledAppsCallback(false)
     }
@@ -501,12 +461,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         permissions: Array<String>,
         grantResults: IntArray,
     ): Boolean = when (requestCode) {
-        NOTIFICATION_PERMISSION_REQUEST_CODE -> {
-            skipNotificationPermissionRequest = true
-            invokeRequestNotificationCallback(true)
-            true
-        }
-
         INSTALLED_APPS_PERMISSION_REQUEST_CODE -> {
             invokeRequestInstalledAppsCallback(
                 grantResults.isNotEmpty() &&
@@ -530,7 +484,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     private companion object {
         val SHORTCUT_ORDER = listOf(QuickAction.START, QuickAction.STOP, QuickAction.TOGGLE)
         const val VPN_PERMISSION_REQUEST_CODE = 1001
-        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
         const val INSTALLED_APPS_PERMISSION_REQUEST_CODE = 1003
         const val LOCAL_NETWORK_PERMISSION_REQUEST_CODE = 1004
     }

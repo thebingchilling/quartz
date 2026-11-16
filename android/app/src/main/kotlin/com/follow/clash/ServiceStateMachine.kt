@@ -168,13 +168,7 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
         }
         val app = host.app()
         if (app != null) {
-            app.requestNotificationPermission { permitted ->
-                if (permitted) {
-                    app.requestLocalNetworkPermission { launch(true) }
-                } else {
-                    launch(false)
-                }
-            }
+            app.requestLocalNetworkPermission { launch(true) }
         } else {
             launch(true)
         }

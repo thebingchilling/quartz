@@ -63,8 +63,6 @@ internal fun interface TileGateway {
 }
 
 internal interface AppGateway {
-    fun requestNotificationPermission(callback: (Boolean) -> Unit)
-
     fun requestLocalNetworkPermission(callback: (Boolean) -> Unit)
 
     fun prepareVpn(enable: Boolean, callback: (Boolean) -> Unit)
@@ -125,9 +123,6 @@ internal object AndroidServiceStateHost : ServiceStateHost {
 
     override fun app(): AppGateway? = flutterEngine?.plugin<AppPlugin>()?.let { plugin ->
         object : AppGateway {
-            override fun requestNotificationPermission(callback: (Boolean) -> Unit) =
-                plugin.requestNotificationPermission(callback)
-
             override fun requestLocalNetworkPermission(callback: (Boolean) -> Unit) =
                 plugin.requestLocalNetworkPermission(callback)
 

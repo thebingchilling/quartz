@@ -115,6 +115,10 @@ Dropped (VPN-only use doesn't need them):
   from settings, the dashboard and the tray. Windows turns TUN back on at every launch; if
   the admin prompt for the Helper is declined, Quartz stops instead of running as a proxy.
   Android's VPN is always on, never declares an HTTP proxy and doesn't let apps bypass it.
+- **No notification prompt to run (standing rule):** starting never asks for notification
+  permission or waits on one. Android runs the VPN's foreground service without it and only
+  hides the notification; `POST_NOTIFICATIONS` stays declared so it can be turned on in
+  system settings.
 - **Per-app bypass** (Settings → Quartz → Access control, Android and Windows): a blacklist
   (listed apps go around the tunnel) or a whitelist (only listed apps use it). Android uses
   FlClash's own access control in the VPN service; Windows stores program paths in the same

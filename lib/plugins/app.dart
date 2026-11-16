@@ -73,10 +73,6 @@ class App {
     return packageNamesRaw.map((e) => e.toString()).toList();
   }
 
-  Future<bool?> requestNotificationsPermission() async {
-    return methodChannel.invokeMethod<bool>('requestNotificationsPermission');
-  }
-
   /// Opens the system installer for an APK; the first time, Android asks to
   /// allow installs from Quartz and this answers false.
   Future<bool> installApk(String path) async {

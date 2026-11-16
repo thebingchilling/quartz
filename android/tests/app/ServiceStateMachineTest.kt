@@ -52,7 +52,6 @@ private class FakeTile : TileGateway {
 }
 
 private class FakeApp(
-    private val notificationGranted: Boolean = true,
     private val localNetworkGranted: Boolean = true,
     private val vpnGranted: Boolean = true,
     private val holdVpnPreparation: Boolean = false,
@@ -62,9 +61,6 @@ private class FakeApp(
     var localNetworkRequests = 0
 
     private var heldCallback: ((Boolean) -> Unit)? = null
-
-    override fun requestNotificationPermission(callback: (Boolean) -> Unit) =
-        callback(notificationGranted)
 
     override fun requestLocalNetworkPermission(callback: (Boolean) -> Unit) {
         localNetworkRequests++
@@ -267,26 +263,13 @@ class ServiceStateMachineTest {
     }
 
     @Test
-    fun `a denied notification permission cancels the start`() = runTest {
-        val host = FakeHost(backgroundScope)
-        host.app = FakeApp(notificationGranted = false)
-        val machine = ServiceStateMachine(host)
-        machine.syncSharedState(configuredState())
-
-        assertFalse(machine.requestStart().await())
-        assertEquals(0, host.startCalls)
-        assertEquals(RunState.STOPPED, machine.runState.value)
-        assertEquals(1, host.stoppedNotifications)
-    }
-
-    @Test
     fun `a start repeated on a settled run asks for nothing and keeps the service`() = runTest {
         val host = FakeHost(backgroundScope)
         val machine = ServiceStateMachine(host)
         machine.syncSharedState(configuredState())
         machine.requestStart().await()
         val token = machine.captureRequestToken()
-        val app = FakeApp(notificationGranted = false)
+        val app = FakeApp()
         host.app = app
 
         assertTrue(machine.requestStart().await())
