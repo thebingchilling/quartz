@@ -4,6 +4,8 @@ use crate::service::peer::{process_sid, serve_until};
 use anyhow::{bail, Context, Result};
 use once_cell::sync::OnceCell;
 use std::ffi::{OsStr, OsString};
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
@@ -24,6 +26,9 @@ use windows_service::{
 };
 
 const SERVICE_NAME: &str = "FlClashHelperService";
+/// Mirrored by `windowsSharedHelperDir` in lib/core/desktop/helper_client.dart.
+const SHARED_DIR_NAME: &str = "Quartz Helper";
+const COPY_ATTEMPTS: u32 = 50;
 const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
 const SERVICE_OPERATION_TIMEOUT: Duration = Duration::from_secs(10);
 const SERVICE_POLL_INTERVAL: Duration = Duration::from_millis(100);
@@ -154,7 +159,7 @@ fn install_service(owner_pid: u32) -> Result<()> {
     .context("open Windows service manager")?;
     remove_existing_service(&manager)?;
 
-    let executable_path = std::env::current_exe().context("resolve helper executable path")?;
+    let executable_path = install_shared_copy()?;
     let service_info = ServiceInfo {
         name: OsString::from(SERVICE_NAME),
         display_name: OsString::from(SERVICE_NAME),
@@ -182,6 +187,51 @@ fn install_service(owner_pid: u32) -> Result<()> {
         }
     }
     wait_for_running(&service)
+}
+
+/// The installed and the portable app both register the Helper from one folder,
+/// so either finds it, and a pruned portable version never held it. Program
+/// Files only takes writes from administrators, as a SYSTEM service's files must.
+fn shared_dir() -> Result<PathBuf> {
+    let base = std::env::var_os("ProgramW6432")
+        .or_else(|| std::env::var_os("ProgramFiles"))
+        .context("locate Program Files")?;
+    Ok(PathBuf::from(base).join(SHARED_DIR_NAME))
+}
+
+/// The Helper only starts the Core beside it, so the two move together.
+fn install_shared_copy() -> Result<PathBuf> {
+    let helper = std::env::current_exe().context("resolve helper executable path")?;
+    let source = helper
+        .parent()
+        .context("helper executable has no parent directory")?;
+    let target = shared_dir()?;
+    fs::create_dir_all(&target).context("create the shared Helper folder")?;
+    let helper_name = helper
+        .file_name()
+        .context("helper executable has no file name")?;
+    if fs::canonicalize(source).ok() != fs::canonicalize(&target).ok() {
+        for name in [helper_name, OsStr::new(env!("CORE_NAME"))] {
+            copy_when_free(&source.join(name), &target.join(name))?;
+        }
+    }
+    Ok(target.join(helper_name))
+}
+
+/// A Core the stopped service ran can hold its file for a moment longer.
+fn copy_when_free(from: &Path, to: &Path) -> Result<()> {
+    let mut attempt = 1;
+    loop {
+        match fs::copy(from, to) {
+            Ok(_) => return Ok(()),
+            Err(_) if attempt < COPY_ATTEMPTS => sleep(SERVICE_POLL_INTERVAL),
+            Err(error) => {
+                return Err(error)
+                    .with_context(|| format!("copy {} to {}", from.display(), to.display()))
+            }
+        }
+        attempt += 1;
+    }
 }
 
 /// The SCM side of the Linux unit's `Restart=on-failure`; a clean stop stays stopped.

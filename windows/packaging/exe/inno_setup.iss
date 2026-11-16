@@ -33,12 +33,21 @@ begin
   end;
 end;
 
+// The Helper installs itself here whichever copy registered it, the
+// installed or the standalone one: SHARED_DIR_NAME in the Helper's windows.rs.
+function SharedHelperDir: String;
+begin
+  Result := ExpandConstant('{commonpf64}\\Quartz Helper');
+end;
+
 procedure UnregisterHelperService;
 var
   HelperPath: String;
   ResultCode: Integer;
 begin
-  HelperPath := ExpandConstant('{app}\\FlClashHelperService.exe');
+  HelperPath := SharedHelperDir + '\\FlClashHelperService.exe';
+  if not FileExists(HelperPath) then
+    HelperPath := ExpandConstant('{app}\\FlClashHelperService.exe');
   if FileExists(HelperPath) then
   begin
     Exec(HelperPath, 'uninstall', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
@@ -114,6 +123,7 @@ begin
   if CurUninstallStep = usPostUninstall then
   begin
     RemoveUserRegistrations;
+    DelTree(SharedHelperDir, True, True, True);
   end;
 end;
 

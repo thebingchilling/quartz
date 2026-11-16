@@ -16,6 +16,23 @@ const _coreSha256 =
     '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 void main() {
+  test(
+    'the Windows Helper lives in one Program Files folder for every copy',
+    () {
+      expect(
+        windowsSharedHelperDir({
+          'ProgramW6432': r'C:\Program Files',
+          'ProgramFiles': r'C:\Program Files (x86)',
+        }),
+        r'C:\Program Files\Quartz Helper',
+      );
+      expect(
+        windowsSharedHelperDir({'ProgramFiles': r'D:\Apps'}),
+        r'D:\Apps\Quartz Helper',
+      );
+    },
+  );
+
   test('reads the port from the key the Windows service publishes it in', () {
     final peer = File('services/helper/src/service/peer.rs').readAsStringSync();
 

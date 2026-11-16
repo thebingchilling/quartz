@@ -149,9 +149,12 @@ final class HelperClient {
 
   static String _defaultHelperPath() {
     final context = _pathContext;
+    if (Platform.isWindows) {
+      return context.join(windowsSharedHelperDir(), '$appHelperService.exe');
+    }
     return context.join(
       context.dirname(Platform.resolvedExecutable),
-      Platform.isWindows ? '$appHelperService.exe' : appHelperService,
+      appHelperService,
     );
   }
 
@@ -619,3 +622,13 @@ final class HelperCoreLease implements CoreProcessLease {
 }
 
 final helperClient = HelperClient();
+
+/// Where the Helper's `install` copies itself and the Core on Windows, so the
+/// installed and the portable app share one registration. Mirrors
+/// `shared_dir` in services/helper/src/service/windows.rs.
+String windowsSharedHelperDir([Map<String, String>? environment]) {
+  final env = environment ?? Platform.environment;
+  final base =
+      env['ProgramW6432'] ?? env['ProgramFiles'] ?? r'C:\Program Files';
+  return p.windows.join(base, 'Quartz Helper');
+}

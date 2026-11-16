@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:win32_registry/win32_registry.dart';
 
 import 'print.dart';
+import 'updater.dart';
 
 const protocolSchemes = ['clash', 'clashmeta', 'flclash'];
 
@@ -84,7 +85,7 @@ class Protocol {
   void register(String scheme) {
     final plan = ProtocolRegistrationPlan(
       scheme: scheme,
-      executable: Platform.resolvedExecutable,
+      executable: appLaunchPath,
     );
     final regKey = CURRENT_USER.create(plan.protocolKey);
     try {

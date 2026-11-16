@@ -14,6 +14,11 @@ int? releaseBuildNumber(String tag) {
 /// Set by the standalone EXE's launcher to its own path.
 const portableExeEnv = 'QUARTZ_PORTABLE_EXE';
 
+/// What autostart and link handlers start: the standalone EXE outlives the
+/// versioned folder it unpacks into, which a later version prunes.
+String get appLaunchPath =>
+    Platform.environment[portableExeEnv] ?? Platform.resolvedExecutable;
+
 /// The release file this device installs: the APK for its ABI, or the Windows
 /// installer (the standalone EXE when [portable]). Null on other platforms, or
 /// when the release lacks it.

@@ -1,17 +1,17 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 
 import 'constant.dart';
 import 'system.dart';
+import 'updater.dart';
 
 class AutoLaunch {
   static AutoLaunch? _instance;
 
   AutoLaunch._internal() {
-    launcher.setup(appName: appName, appPath: Platform.resolvedExecutable);
+    launcher.setup(appName: appName, appPath: appLaunchPath);
   }
 
   factory AutoLaunch() {

@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_color_utilities/palettes/tonal_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Bootstrap {
   static Bootstrap? _instance;
@@ -95,6 +96,19 @@ class Bootstrap {
     );
   }
 
+  /// One build forced and saved global mode; hand the choice back once.
+  Future<PatchClashConfig> _undoForcedGlobalMode(
+    PatchClashConfig patchClashConfig,
+  ) async {
+    const key = 'quartz.globalModeUndone';
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(key) ?? false) return patchClashConfig;
+    await prefs.setBool(key, true);
+    return patchClashConfig.mode == Mode.global
+        ? patchClashConfig.copyWith(mode: Mode.rule)
+        : patchClashConfig;
+  }
+
   Future<ProviderContainer> _initData(
     int version,
     DynamicColorSeeds dynamicColor,
@@ -110,7 +124,8 @@ class Bootstrap {
       config = config.copyWith(currentProfileId: null);
       await preferences.saveConfig(config);
     }
-    final patchClashConfig = config.patchClashConfig.ensureControllerSecret();
+    var patchClashConfig = config.patchClashConfig.ensureControllerSecret();
+    patchClashConfig = await _undoForcedGlobalMode(patchClashConfig);
     if (patchClashConfig != config.patchClashConfig) {
       config = config.copyWith(patchClashConfig: patchClashConfig);
       await preferences.saveConfig(config);

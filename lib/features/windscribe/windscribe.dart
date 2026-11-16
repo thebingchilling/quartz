@@ -130,7 +130,6 @@ String buildWindscribeProfile({
   for (final (server, name) in named) {
     countries.putIfAbsent(server.country, () => []).add(name);
   }
-  const auto = 'Windscribe Auto';
   final lines = <String>['proxies:'];
   for (final (server, name) in named) {
     lines.addAll([
@@ -156,13 +155,7 @@ String buildWindscribeProfile({
     'proxy-groups:',
     '  - name: Windscribe',
     '    type: select',
-    '    proxies: [${[auto, ...countries.keys].map(_quote).join(', ')}]',
-    '  - name: $auto',
-    '    type: url-test',
-    '    url: https://cp.cloudflare.com/generate_204',
-    '    interval: 600',
-    '    lazy: true',
-    '    proxies: [${named.map((entry) => _quote(entry.$2)).join(', ')}]',
+    '    proxies: [${countries.keys.map(_quote).join(', ')}]',
     for (final MapEntry(key: country, value: names) in countries.entries) ...[
       '  - name: ${_quote(country)}',
       '    type: select',

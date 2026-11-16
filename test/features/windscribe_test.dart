@@ -94,8 +94,9 @@ void main() {
     expect(yaml, contains('-----BEGIN OpenVPN Static key V1-----'));
     expect(
       yaml,
-      contains('proxies: ["Windscribe Auto", "Albania", "Australia"]'),
+      contains('proxies: ["Albania", "Australia"]'),
     );
     expect(yaml, contains('  - MATCH,Windscribe'));
+    expect(yaml, isNot(contains('url-test')));
   });
 }

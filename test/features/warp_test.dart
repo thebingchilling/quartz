@@ -69,6 +69,7 @@ void main() {
     expect(yaml, contains('ip: 172.16.0.2'));
     expect(yaml, contains('ipv6: "fd01::2"'));
     expect(yaml, contains('remote-dns-resolve: true'));
+    expect(yaml, contains('persistent-keepalive: 25'));
     expect(yaml, contains('dns: ["1.1.1.1", "1.0.0.1"]'));
     expect(yaml, contains('reserved: [1, 2, 3]'));
     expect(yaml, contains('amnezia-wg-option:'));

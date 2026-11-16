@@ -51,7 +51,7 @@ class WarpOptions {
     this.endpoint = '',
     this.mtu = 1280,
     this.dns = '1.1.1.1, 1.0.0.1',
-    this.keepalive = 0,
+    this.keepalive = 25,
     this.junk = const WarpJunk(),
   });
 
@@ -101,7 +101,7 @@ class WarpOptions {
     endpoint: json['endpoint'] as String? ?? '',
     mtu: json['mtu'] as int? ?? 1280,
     dns: json['dns'] as String? ?? '1.1.1.1, 1.0.0.1',
-    keepalive: json['keepalive'] as int? ?? 0,
+    keepalive: json['keepalive'] as int? ?? 25,
     junk: WarpJunk.fromJson(
       (json['junk'] as Map?)?.cast<String, dynamic>() ?? const {},
     ),
@@ -466,6 +466,8 @@ String buildWarpProfile({
       '    remote-dns-resolve: true',
       '    dns: [${dns.map(_quote).join(', ')}]',
     ],
+    // wireguard-go only handshakes on interface up when a keepalive is set;
+    // otherwise the first packet is lost and the first connection waits 5 s.
     if (options.keepalive > 0) '    persistent-keepalive: ${options.keepalive}',
     '    udp: true',
     if (options.variant == WarpVariant.awg && awg != null) ...[

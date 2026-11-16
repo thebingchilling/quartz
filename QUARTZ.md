@@ -103,6 +103,13 @@ Dropped (VPN-only use doesn't need them):
   `%LOCALAPPDATA%\Quartz\app\<hash>` (keeping the two newest versions), and starts
   `Quartz.exe` with `QUARTZ_PORTABLE_EXE` set to its own path; the updater then swaps that
   file for the new EXE and restarts.
+- **Installer and standalone EXE coexist:** they share the data directory (one runs at a
+  time, the single-instance lock sends the other away) and one Helper service. The Helper's
+  `install` copies itself and the Core to `%ProgramFiles%\Quartz Helper` and registers from
+  there, so either copy finds it, a pruned standalone version never held it, and no
+  SYSTEM service runs from user-writable app data; only a Core change asks for admin again.
+  Autostart and `clash://` links point at the standalone EXE itself (`appLaunchPath`), not
+  the versioned folder it unpacks into. Uninstalling removes the service and that folder.
 - **Always a full VPN, never a system proxy:** the system proxy is never set (`proxyState`
   reports it off, which also clears one an older version left), and its switches are gone
   from settings, the dashboard and the tray. Windows turns TUN back on at every launch; if
