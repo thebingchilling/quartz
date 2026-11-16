@@ -22,12 +22,14 @@ const defaultProfileTun = ProfileTun();
 const baselineDnsOverrideKeys = {
   DnsOverrideKey.enable,
   DnsOverrideKey.enhancedMode,
+  DnsOverrideKey.defaultNameserver,
   DnsOverrideKey.nameserver,
 };
 const baselineDns = Dns(
   enable: true,
   enhancedMode: DnsMode.fakeIp,
-  nameserver: ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'],
+  defaultNameserver: ['system://'],
+  nameserver: ['system://'],
 );
 const defaultGeoXUrl = {
   GeoResource.MMDB:

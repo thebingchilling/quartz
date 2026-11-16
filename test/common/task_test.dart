@@ -397,7 +397,7 @@ void main() {
     final config = loadYaml(result.yaml) as YamlMap;
 
     expect(config['dns']['enable'], true);
-    expect(config['dns']['nameserver'], isNot(contains('system://')));
+    expect(config['dns']['nameserver'], ['system://']);
     expect(config['proxy-groups'], hasLength(1));
     expect(config['proxy-groups'][0].keys, ['name', 'type', 'proxies']);
     expect(config['proxy-groups'][0]['type'], 'select');
@@ -441,7 +441,7 @@ void main() {
     expect(config['dns']['proxy-server-nameserver-policy'], {
       'www.example.com': ['8.8.8.8'],
     });
-    expect(config['dns']['nameserver'], isNot(contains('system://')));
+    expect(config['dns']['nameserver'], ['system://']);
     expect(
       config['proxy-providers']['first']['path'],
       isNot(config['proxy-providers']['second']['path']),

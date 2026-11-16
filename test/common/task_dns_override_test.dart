@@ -84,6 +84,7 @@ void main() {
       expect(dns, {
         'enable': true,
         'enhanced-mode': 'fake-ip',
+        'default-nameserver': ['system://'],
         'nameserver': ['1.1.1.1'],
         'ipv6': true,
         'fallback-filter': {'geoip': true},
