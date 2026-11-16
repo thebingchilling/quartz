@@ -46,18 +46,20 @@ class NetworkDetection extends ConsumerWidget {
   void _showDetails(BuildContext context, WidgetRef ref, IpDetails info) {
     final l = context.appLocalizations;
     dialogs.showCommonDialog<void>(
-      child: CommonDialog(
-        title: l.networkDetection,
-        actions: [
-          TextButton(
-            onPressed: () {
-              ref.read(ipDetailsProvider.notifier).refresh();
-              Navigator.of(context).pop();
-            },
-            child: Text(l.retry),
-          ),
-        ],
-        child: _DetailsList(info: info),
+      child: Builder(
+        builder: (dialogContext) => CommonDialog(
+          title: l.networkDetection,
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                ref.read(ipDetailsProvider.notifier).refresh();
+              },
+              child: Text(l.retry),
+            ),
+          ],
+          child: _DetailsList(info: info),
+        ),
       ),
     );
   }

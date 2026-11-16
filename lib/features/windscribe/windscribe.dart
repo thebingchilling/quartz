@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import 'windscribe_keys.dart';
@@ -47,16 +49,21 @@ class WindscribeApi {
 
   static const _url = 'https://api.windscribe.com/WebsiteStatus';
 
+  /// The endpoint labels its JSON `text/html`, which Dio will not decode.
   Future<List<WindscribeServer>> servers() async {
-    final response = await _dio.get<Map<String, dynamic>>(
+    final response = await _dio.get<String>(
       _url,
       options: Options(
         headers: {'Authorization': 'Bearer 1234'},
-        responseType: ResponseType.json,
+        responseType: ResponseType.plain,
         receiveTimeout: const Duration(seconds: 20),
       ),
     );
-    return parseServers(response.data ?? const {});
+    final json = jsonDecode(response.data ?? '');
+    if (json is! Map<String, dynamic>) {
+      throw const FormatException('Unexpected server list response');
+    }
+    return parseServers(json);
   }
 
   static List<WindscribeServer> parseServers(Map<String, dynamic> json) {

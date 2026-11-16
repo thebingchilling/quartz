@@ -3,20 +3,36 @@ import 'package:fl_clash/views/dashboard/widget_registry.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Picks a card's width (a quarter to the full row) and height (one to four
-/// rows); a quarter wide and one row high is a square tile.
+/// Picks a card's width in cells of the grid it is shown in, and its rows.
 class DashboardResizeDialog extends StatefulWidget {
-  const DashboardResizeDialog({super.key, required this.initial});
+  const DashboardResizeDialog({
+    super.key,
+    required this.initial,
+    required this.gridColumns,
+  });
 
   final DashboardCardDimensions initial;
+  final int gridColumns;
 
   @override
   State<DashboardResizeDialog> createState() => _DashboardResizeDialogState();
 }
 
 class _DashboardResizeDialogState extends State<DashboardResizeDialog> {
-  late int _columns = widget.initial.columns;
+  late final _widths = dashboardCardColumnsFor(widget.gridColumns);
+  late int _columns = _nearest(widget.initial.columns);
   late int _rows = widget.initial.rows;
+
+  int _nearest(int columns) => _widths.reduce(
+    (a, b) => (a - columns).abs() <= (b - columns).abs() ? a : b,
+  );
+
+  String _fraction(int columns) {
+    final divisor = columns.gcd(widget.gridColumns);
+    final top = columns ~/ divisor;
+    final bottom = widget.gridColumns ~/ divisor;
+    return bottom == 1 ? '1' : '$top/$bottom';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,17 +54,24 @@ class _DashboardResizeDialogState extends State<DashboardResizeDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.dashboardWidth, style: context.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          SegmentedButton<int>(
-            segments: [
-              for (final columns in dashboardCardColumns)
-                ButtonSegment(value: columns, label: Text('$columns/8')),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.dashboardWidth,
+                  style: context.textTheme.labelLarge,
+                ),
+              ),
+              Text(_fraction(_columns), style: context.textTheme.labelLarge),
             ],
-            selected: {_columns},
-            showSelectedIcon: false,
-            onSelectionChanged: (value) =>
-                setState(() => _columns = value.first),
+          ),
+          Slider(
+            value: _widths.indexOf(_columns).toDouble(),
+            max: (_widths.length - 1).toDouble(),
+            divisions: _widths.length - 1,
+            label: _fraction(_columns),
+            onChanged: (value) =>
+                setState(() => _columns = _widths[value.round()]),
           ),
           const SizedBox(height: 16),
           Text(l.dashboardHeight, style: context.textTheme.labelLarge),

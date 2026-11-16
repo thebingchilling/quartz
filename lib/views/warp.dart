@@ -198,14 +198,16 @@ class _WarpViewState extends ConsumerState<WarpView> {
                 : l.warpGeneratorDesc,
           ),
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: isLoading
-                ? null
-                : () => _run(() async {
-                    await store.generate(_options);
-                  }),
-            icon: const GlyphIcon(AppGlyphs.add, fill: 1),
-            label: Text(l.warpGenerate),
+          PageAction(
+            child: FilledButton.icon(
+              onPressed: isLoading
+                  ? null
+                  : () => _run(() async {
+                      await store.generate(_options);
+                    }),
+              icon: const GlyphIcon(AppGlyphs.add, fill: 1),
+              label: Text(l.warpGenerate),
+            ),
           ),
           const SizedBox(height: 8),
           generateSectionV3(

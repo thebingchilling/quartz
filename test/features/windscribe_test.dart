@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:fl_clash/features/windscribe/windscribe.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -42,7 +45,31 @@ final _status = {
   },
 };
 
+class _HtmlLabelledJson implements HttpClientAdapter {
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<List<int>>? requestStream,
+    Future<void>? cancelFuture,
+  ) async => ResponseBody.fromString(
+    jsonEncode(_status),
+    200,
+    headers: {
+      Headers.contentTypeHeader: ['text/html; charset=UTF-8'],
+    },
+  );
+
+  @override
+  void close({bool force = false}) {}
+}
+
 void main() {
+  test('reads the list though the API labels its JSON as HTML', () async {
+    final dio = Dio()..httpClientAdapter = _HtmlLabelledJson();
+    final servers = await WindscribeApi(dio).servers();
+    expect(servers, hasLength(2));
+  });
+
   test('reads the online servers and their hostnames', () {
     final servers = WindscribeApi.parseServers(_status);
     expect(servers.map((s) => s.host), [

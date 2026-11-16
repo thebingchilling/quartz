@@ -150,10 +150,13 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     _isEditNotifier.value = false;
   }
 
-  Future<void> _resize(DashboardWidget item) async {
+  Future<void> _resize(DashboardWidget item, int gridColumns) async {
     final sizes = ref.read(appSettingProvider).dashboardWidgetSizes;
     final picked = await dialogs.showCommonDialog<DashboardCardDimensions>(
-      child: DashboardResizeDialog(initial: item.sizeIn(sizes)),
+      child: DashboardResizeDialog(
+        initial: item.sizeIn(sizes),
+        gridColumns: gridColumns,
+      ),
     );
     if (picked == null) return;
     ref
@@ -233,6 +236,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                                 onChanged: _saveDashboardWidgets,
                                 onResize: (key) => _resize(
                                   (key as ValueKey<DashboardWidget>).value,
+                                  columns,
                                 ),
                                 revealPadding: padding.copyWith(
                                   left: 0,

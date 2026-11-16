@@ -171,6 +171,7 @@ class WarpRegistration {
     required this.peerPublicKey,
     required this.endpointHost,
     required this.addressV4,
+    this.addressV6,
     this.clientId,
     this.createdAt,
     this.ttlAt,
@@ -183,6 +184,10 @@ class WarpRegistration {
   final String peerPublicKey;
   final String endpointHost;
   final String addressV4;
+
+  /// Without it mihomo's tunnel has no IPv6 source address, so every
+  /// connection to an IPv6 destination fails.
+  final String? addressV6;
 
   /// Three base64 bytes WARP expects in WireGuard's reserved field.
   final String? clientId;
@@ -206,6 +211,7 @@ class WarpRegistration {
     'peerPublicKey': peerPublicKey,
     'endpointHost': endpointHost,
     'addressV4': addressV4,
+    'addressV6': addressV6,
     'clientId': clientId,
     'createdAt': createdAt?.toIso8601String(),
     'ttlAt': ttlAt?.toIso8601String(),
@@ -220,6 +226,7 @@ class WarpRegistration {
         peerPublicKey: json['peerPublicKey'] as String,
         endpointHost: json['endpointHost'] as String,
         addressV4: json['addressV4'] as String,
+        addressV6: json['addressV6'] as String?,
         clientId: json['clientId'] as String?,
         createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
         ttlAt: DateTime.tryParse(json['ttlAt'] as String? ?? ''),
@@ -247,6 +254,7 @@ class WarpRegistration {
     if (peer == null) throw const WarpException('No peer');
     final addresses = obj(obj(config['interface'])?['addresses']);
     final v4 = str(addresses?['v4'])?.split('/').first;
+    final v6 = str(addresses?['v6'])?.split('/').first;
     final ttl = DateTime.tryParse(str(obj(root['account'])?['ttl']) ?? '');
     return WarpRegistration(
       id: str(root['id']) ?? (throw const WarpException('No id')),
@@ -258,6 +266,7 @@ class WarpRegistration {
       endpointHost:
           str(obj(peer['endpoint'])?['host']) ?? WarpEndpoints.defaultHost,
       addressV4: v4 ?? (throw const WarpException('No IPv4 address')),
+      addressV6: v6,
       clientId: str(config['client_id']),
       createdAt: DateTime.tryParse(str(root['created']) ?? ''),
       // An unset TTL comes back as 0001-01-01: only a future time counts.
@@ -428,8 +437,8 @@ String buildWarpProfile({
     '    type: wireguard',
     '    server: ${_quote(server.replaceAll(RegExp(r'^\[|\]$'), ''))}',
     '    port: ${port ?? 2408}',
-    // IPv4 only: WARP's IPv6 range often geolocates far from the user.
     '    ip: ${registration.addressV4}',
+    if (registration.addressV6 case final v6?) '    ipv6: ${_quote(v6)}',
     '    private-key: ${_quote(registration.privateKey)}',
     '    public-key: ${_quote(registration.peerPublicKey)}',
     '    allowed-ips: ["0.0.0.0/0", "::/0"]',

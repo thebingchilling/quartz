@@ -97,10 +97,16 @@ const _defaultRows = {
   DashboardWidget.proxyGroups: 2,
 };
 
-/// A resize: [columns] in eighths of the phone grid, [rows] in card rows.
+/// A resize: [columns] in grid cells, the unit of a card's default
+/// `crossAxisCellCount`, and [rows] in card rows.
 typedef DashboardCardDimensions = ({int columns, int rows});
 
-const dashboardCardColumns = [2, 4, 6, 8];
+/// The widths a card can take in a grid of [gridColumns]: every second cell,
+/// so a wider window offers wider cards rather than coarser steps.
+List<int> dashboardCardColumnsFor(int gridColumns) => [
+  for (var columns = 2; columns <= gridColumns; columns += 2) columns,
+];
+
 const dashboardCardRows = [1, 2, 3, 4];
 
 extension DashboardWidgetSize on DashboardWidget {
@@ -119,7 +125,7 @@ extension DashboardWidgetSize on DashboardWidget {
   GridItem sizedWidget(Map<String, String> sizes, int gridColumns) {
     final size = sizeIn(sizes);
     if (size == defaultSize) return widget;
-    final span = (size.columns * gridColumns / 8).round().clamp(1, gridColumns);
+    final span = size.columns.clamp(1, gridColumns);
     return GridItem(
       key: widget.key,
       crossAxisCellCount: span,

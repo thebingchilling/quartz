@@ -173,10 +173,12 @@ class _ConverterViewState extends ConsumerState<ConverterView> {
             ),
           ],
           const SizedBox(height: 12),
-          FilledButton.tonalIcon(
-            onPressed: _add,
-            icon: const GlyphIcon(AppGlyphs.add, fill: 1),
-            label: Text(l.converterAdd),
+          PageAction(
+            child: FilledButton.tonalIcon(
+              onPressed: _add,
+              icon: const GlyphIcon(AppGlyphs.add, fill: 1),
+              label: Text(l.converterAdd),
+            ),
           ),
           if (_converted.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -210,10 +212,12 @@ class _ConverterViewState extends ConsumerState<ConverterView> {
               decoration: InputDecoration(labelText: l.converterProfileName),
             ),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: isLoading ? null : _create,
-              icon: const GlyphIcon(AppGlyphs.check, fill: 1),
-              label: Text(l.converterCreate),
+            PageAction(
+              child: FilledButton.icon(
+                onPressed: isLoading ? null : _create,
+                icon: const GlyphIcon(AppGlyphs.check, fill: 1),
+                label: Text(l.converterCreate),
+              ),
             ),
           ],
         ],

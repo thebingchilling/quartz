@@ -88,9 +88,11 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
             ),
           ),
           const SizedBox(height: 12),
-          FilledButton(
-            onPressed: _saveCredentials,
-            child: Text(l.windscribeSave),
+          PageAction(
+            child: FilledButton(
+              onPressed: _saveCredentials,
+              child: Text(l.windscribeSave),
+            ),
           ),
         ],
       ),

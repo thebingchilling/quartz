@@ -47,6 +47,7 @@ void main() {
   test('reads a registration and its 90-day expiry', () {
     final registration = WarpRegistration.parse(response, 'v0a737', 'priv=');
     expect(registration.addressV4, '172.16.0.2');
+    expect(registration.addressV6, 'fd01::2');
     expect(registration.ttlAt, isNull);
     expect(registration.expiresAt(), DateTime.utc(2027, 1, 30));
   });
@@ -62,6 +63,8 @@ void main() {
     expect(yaml, contains('type: wireguard'));
     expect(yaml, contains('server: "engage.cloudflareclient.com"'));
     expect(yaml, contains('port: 2408'));
+    expect(yaml, contains('ip: 172.16.0.2'));
+    expect(yaml, contains('ipv6: "fd01::2"'));
     expect(yaml, contains('reserved: [1, 2, 3]'));
     expect(yaml, contains('amnezia-wg-option:'));
     expect(yaml, contains('i1: "<b 0x01>"'));

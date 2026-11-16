@@ -30,23 +30,25 @@ class _FakeDetails extends IpDetailsNotifier {
   }
 }
 
-Widget _app(_FakeDetails details) => TestApp(
+Widget _card() => Scaffold(
+  body: Center(
+    child: SizedBox(
+      width: 260,
+      child: DashboardWidgetMetrics(
+        unitHeight: 84,
+        child: const NetworkDetection(),
+      ),
+    ),
+  ),
+);
+
+Widget _app(_FakeDetails details, {Widget? child}) => TestApp(
   locale: const Locale('en'),
   overrides: [
     ipDetailsProvider.overrideWith(() => details),
     viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 900)),
   ],
-  child: Scaffold(
-    body: Center(
-      child: SizedBox(
-        width: 260,
-        child: DashboardWidgetMetrics(
-          unitHeight: 84,
-          child: const NetworkDetection(),
-        ),
-      ),
-    ),
-  ),
+  child: child ?? _card(),
 );
 
 void main() {
@@ -93,5 +95,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(calls, greaterThan(before));
+  });
+
+  testWidgets('retry closes the details, not the page under them', (
+    tester,
+  ) async {
+    final details = _FakeDetails(() async => _details);
+    final nested = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      _app(
+        details,
+        child: Navigator(
+          key: nested,
+          onGenerateRoute: (_) =>
+              MaterialPageRoute<void>(builder: (_) => const SizedBox()),
+        ),
+      ),
+    );
+    nested.currentState!.push(MaterialPageRoute<void>(builder: (_) => _card()));
+    await tester.pumpAndSettle();
+    final before = details.lookups;
+
+    await tester.tap(find.text('203.0.113.9'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ISP'), findsNothing);
+    expect(find.byType(NetworkDetection), findsOneWidget);
+    expect(details.lookups, greaterThan(before));
   });
 }
