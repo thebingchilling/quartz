@@ -960,5 +960,19 @@
   "windscribeUpdate": "サーバー一覧を更新",
   "windscribeStatus": "{count} 台 · {date} に更新",
   "windscribeNotAdded": "まだ追加されていません",
-  "windscribeListDesc": "Quartz 起動時、一覧が 6 時間以上前なら更新します。Windscribe プロファイルの Windscribe グループでサーバーを選びます。"
+  "windscribeListDesc": "Quartz 起動時、一覧が 6 時間以上前なら更新します。Windscribe プロファイルの Windscribe グループでサーバーを選びます。",
+  "dashboardResize": "サイズ変更",
+  "dashboardWidth": "幅",
+  "dashboardHeight": "高さ（行）",
+  "converter": "設定コンバーター",
+  "converterDesc": "WireGuard と OpenVPN の設定を Clash プロファイルに",
+  "converterHint": "WireGuard（.conf、AmneziaWG も可）または OpenVPN（.ovpn）の設定を貼り付けるか、ファイルを開きます。複数追加すると 1 つのプロファイルになります。",
+  "converterConfig": "設定",
+  "converterFromFile": "ファイルを開く",
+  "converterName": "名前",
+  "converterAdd": "追加",
+  "converterAdded": "追加済み",
+  "converterProfileName": "プロファイル名",
+  "converterCreate": "プロファイルを作成",
+  "converterDone": "プロファイル {name} を追加しました"
 }

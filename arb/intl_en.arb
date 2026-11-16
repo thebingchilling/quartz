@@ -977,5 +977,26 @@
     }
   },
   "windscribeNotAdded": "Not added yet",
-  "windscribeListDesc": "The list updates when Quartz starts if it's over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile."
+  "windscribeListDesc": "The list updates when Quartz starts if it's over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.",
+  "dashboardResize": "Resize",
+  "dashboardWidth": "Width",
+  "dashboardHeight": "Height (rows)",
+  "converter": "Config converter",
+  "converterDesc": "WireGuard and OpenVPN configs as a Clash profile",
+  "converterHint": "Paste a WireGuard (.conf, AmneziaWG too) or OpenVPN (.ovpn) config, or open the file. Add as many as you like; they become one profile.",
+  "converterConfig": "Config",
+  "converterFromFile": "Open a file",
+  "converterName": "Name",
+  "converterAdd": "Add",
+  "converterAdded": "Added",
+  "converterProfileName": "Profile name",
+  "converterCreate": "Create profile",
+  "converterDone": "Added the profile {name}",
+  "@converterDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

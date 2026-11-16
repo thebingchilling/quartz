@@ -960,5 +960,19 @@
   "windscribeUpdate": "更新服务器列表",
   "windscribeStatus": "{count} 台服务器 · 更新于 {date}",
   "windscribeNotAdded": "尚未添加",
-  "windscribeListDesc": "Quartz 启动时，如果列表超过 6 小时会自动更新。在 Windscribe 配置的 Windscribe 组中选择服务器。"
+  "windscribeListDesc": "Quartz 启动时，如果列表超过 6 小时会自动更新。在 Windscribe 配置的 Windscribe 组中选择服务器。",
+  "dashboardResize": "调整大小",
+  "dashboardWidth": "宽度",
+  "dashboardHeight": "高度（行）",
+  "converter": "配置转换器",
+  "converterDesc": "将 WireGuard 和 OpenVPN 配置转为 Clash 配置",
+  "converterHint": "粘贴 WireGuard（.conf，含 AmneziaWG）或 OpenVPN（.ovpn）配置，或打开文件。可添加多个，合并为一个配置。",
+  "converterConfig": "配置",
+  "converterFromFile": "打开文件",
+  "converterName": "名称",
+  "converterAdd": "添加",
+  "converterAdded": "已添加",
+  "converterProfileName": "配置名称",
+  "converterCreate": "创建配置",
+  "converterDone": "已添加配置 {name}"
 }

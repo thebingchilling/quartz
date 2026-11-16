@@ -8073,6 +8073,116 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Resize`
+  String get dashboardResize {
+    return Intl.message('Resize', name: 'dashboardResize', desc: '', args: []);
+  }
+
+  /// `Width`
+  String get dashboardWidth {
+    return Intl.message('Width', name: 'dashboardWidth', desc: '', args: []);
+  }
+
+  /// `Height (rows)`
+  String get dashboardHeight {
+    return Intl.message(
+      'Height (rows)',
+      name: 'dashboardHeight',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Config converter`
+  String get converter {
+    return Intl.message(
+      'Config converter',
+      name: 'converter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `WireGuard and OpenVPN configs as a Clash profile`
+  String get converterDesc {
+    return Intl.message(
+      'WireGuard and OpenVPN configs as a Clash profile',
+      name: 'converterDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Paste a WireGuard (.conf, AmneziaWG too) or OpenVPN (.ovpn) config, or open the file. Add as many as you like; they become one profile.`
+  String get converterHint {
+    return Intl.message(
+      'Paste a WireGuard (.conf, AmneziaWG too) or OpenVPN (.ovpn) config, or open the file. Add as many as you like; they become one profile.',
+      name: 'converterHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Config`
+  String get converterConfig {
+    return Intl.message('Config', name: 'converterConfig', desc: '', args: []);
+  }
+
+  /// `Open a file`
+  String get converterFromFile {
+    return Intl.message(
+      'Open a file',
+      name: 'converterFromFile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Name`
+  String get converterName {
+    return Intl.message('Name', name: 'converterName', desc: '', args: []);
+  }
+
+  /// `Add`
+  String get converterAdd {
+    return Intl.message('Add', name: 'converterAdd', desc: '', args: []);
+  }
+
+  /// `Added`
+  String get converterAdded {
+    return Intl.message('Added', name: 'converterAdded', desc: '', args: []);
+  }
+
+  /// `Profile name`
+  String get converterProfileName {
+    return Intl.message(
+      'Profile name',
+      name: 'converterProfileName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create profile`
+  String get converterCreate {
+    return Intl.message(
+      'Create profile',
+      name: 'converterCreate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Added the profile {name}`
+  String converterDone(String name) {
+    return Intl.message(
+      'Added the profile $name',
+      name: 'converterDone',
+      desc: '',
+      args: [name],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

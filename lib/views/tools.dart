@@ -20,6 +20,7 @@ import 'theme.dart';
 import 'auto_tunnel.dart';
 import 'warp.dart';
 import 'windscribe.dart';
+import 'converter.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
   const ToolsView({super.key});
@@ -59,10 +60,20 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (system.isAndroid) const _AccessItem(),
         const _AdvancedConfigItem(),
         const _CustomResourcesItem(),
+        const _GeneralItem(),
+      ],
+    );
+  }
+
+  /// Quartz's own tools, apart from FlClash's settings.
+  List<Widget> _getQuartzList() {
+    return generateSection(
+      title: appName,
+      items: [
+        if (system.isAndroid || system.isWindows) const _AutoTunnelItem(),
         const _WarpItem(),
         const _WindscribeItem(),
-        if (system.isAndroid || system.isWindows) const _AutoTunnelItem(),
-        const _GeneralItem(),
+        const _ConverterItem(),
       ],
     );
   }
@@ -89,6 +100,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           );
         },
       ),
+      ..._getQuartzList(),
       ..._getSettingList(),
       ..._getOtherList(appSetting.developerMode),
     ];
@@ -246,6 +258,20 @@ class _WarpItem extends StatelessWidget {
       title: Text(context.appLocalizations.warpGenerator),
       subtitle: Text(context.appLocalizations.warpGeneratorDesc),
       widget: const WarpView(),
+    );
+  }
+}
+
+class _ConverterItem extends StatelessWidget {
+  const _ConverterItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.importFile),
+      title: Text(context.appLocalizations.converter),
+      subtitle: Text(context.appLocalizations.converterDesc),
+      widget: const ConverterView(),
     );
   }
 }
