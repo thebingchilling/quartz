@@ -65,18 +65,9 @@ class IpDetails {
           ? _text(connection['isp']) ?? _text(connection['org'])
           : null,
       details: _pick(json, const {
-        'type': 'IP type',
-        'continent': 'Continent',
-        'postal': 'Postal code',
-        'latitude': 'Latitude',
-        'longitude': 'Longitude',
         'connection.asn': 'ASN',
         'connection.org': 'Organisation',
-        'connection.domain': 'Domain',
-        'timezone.id': 'Time zone',
-        'timezone.utc': 'UTC offset',
-        'calling_code': 'Calling code',
-        'capital': 'Capital',
+        'type': 'IP type',
       }),
     );
   }
@@ -92,19 +83,7 @@ class IpDetails {
       city: _text(json['city']),
       region: _text(json['region']),
       isp: _text(json['org']),
-      details: _pick(json, const {
-        'version': 'IP type',
-        'continent_code': 'Continent',
-        'postal': 'Postal code',
-        'latitude': 'Latitude',
-        'longitude': 'Longitude',
-        'asn': 'ASN',
-        'timezone': 'Time zone',
-        'utc_offset': 'UTC offset',
-        'country_calling_code': 'Calling code',
-        'country_capital': 'Capital',
-        'currency': 'Currency',
-      }),
+      details: _pick(json, const {'asn': 'ASN', 'version': 'IP type'}),
     );
   }
 
@@ -119,14 +98,7 @@ class IpDetails {
       city: _text(json['city']),
       region: _text(json['regionName']),
       isp: _text(json['isp']) ?? _text(json['org']),
-      details: _pick(json, const {
-        'zip': 'Postal code',
-        'lat': 'Latitude',
-        'lon': 'Longitude',
-        'as': 'ASN',
-        'org': 'Organisation',
-        'timezone': 'Time zone',
-      }),
+      details: _pick(json, const {'as': 'ASN', 'org': 'Organisation'}),
     );
   }
 }

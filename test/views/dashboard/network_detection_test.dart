@@ -70,15 +70,31 @@ void main() {
     expect(find.text('Check failed'), findsOneWidget);
   });
 
-  testWidgets('a tap shows every detail', (tester) async {
+  testWidgets('a long press shows the details, without a retry', (
+    tester,
+  ) async {
     await tester.pumpWidget(_app(_FakeDetails(() async => _details)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('203.0.113.9'));
+    await tester.longPress(find.text('203.0.113.9'));
     await tester.pumpAndSettle();
 
     expect(find.text('ISP'), findsOneWidget);
     expect(find.text('London'), findsOneWidget);
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets('a tap on a found address looks again', (tester) async {
+    final details = _FakeDetails(() async => _details);
+    await tester.pumpWidget(_app(details));
+    await tester.pumpAndSettle();
+    final before = details.lookups;
+
+    await tester.tap(find.text('203.0.113.9'));
+    await tester.pumpAndSettle();
+
+    expect(details.lookups, greaterThan(before));
+    expect(find.text('ISP'), findsNothing);
   });
 
   testWidgets('a failed lookup looks again on a tap', (tester) async {
@@ -95,34 +111,5 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(calls, greaterThan(before));
-  });
-
-  testWidgets('retry closes the details, not the page under them', (
-    tester,
-  ) async {
-    final details = _FakeDetails(() async => _details);
-    final nested = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(
-      _app(
-        details,
-        child: Navigator(
-          key: nested,
-          onGenerateRoute: (_) =>
-              MaterialPageRoute<void>(builder: (_) => const SizedBox()),
-        ),
-      ),
-    );
-    nested.currentState!.push(MaterialPageRoute<void>(builder: (_) => _card()));
-    await tester.pumpAndSettle();
-    final before = details.lookups;
-
-    await tester.tap(find.text('203.0.113.9'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Retry'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('ISP'), findsNothing);
-    expect(find.byType(NetworkDetection), findsOneWidget);
-    expect(details.lookups, greaterThan(before));
   });
 }

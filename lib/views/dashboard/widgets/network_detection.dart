@@ -10,7 +10,7 @@ import 'package:material_ui/material_ui.dart';
 
 /// Where the connection reaches the internet from: flag, address (green while
 /// no tunnel runs), country, place and ISP, wrapped to fit whatever size the
-/// card is given. A tap shows everything the lookup found.
+/// card is given. A tap looks again; a long press shows the details.
 class NetworkDetection extends ConsumerWidget {
   const NetworkDetection({super.key});
 
@@ -25,9 +25,8 @@ class NetworkDetection extends ConsumerWidget {
       height: DashboardWidgetMetrics.cardHeightOf(context, defaultRows),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
-        onPressed: info == null
-            ? () => ref.read(ipDetailsProvider.notifier).refresh()
-            : () => _showDetails(context, ref, info),
+        onPressed: () => ref.read(ipDetailsProvider.notifier).refresh(),
+        onLongPress: info == null ? null : () => _showDetails(context, info),
         child: Padding(
           padding: DashboardWidgetMetrics.paddingOf(context),
           child: FitWrapped(
@@ -43,23 +42,12 @@ class NetworkDetection extends ConsumerWidget {
     );
   }
 
-  void _showDetails(BuildContext context, WidgetRef ref, IpDetails info) {
-    final l = context.appLocalizations;
+  void _showDetails(BuildContext context, IpDetails info) {
     dialogs.showCommonDialog<void>(
-      child: Builder(
-        builder: (dialogContext) => CommonDialog(
-          title: l.networkDetection,
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                ref.read(ipDetailsProvider.notifier).refresh();
-              },
-              child: Text(l.retry),
-            ),
-          ],
-          child: _DetailsList(info: info),
-        ),
+      child: CommonDialog(
+        title: context.appLocalizations.networkDetection,
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        child: _DetailsList(info: info),
       ),
     );
   }
@@ -187,17 +175,25 @@ class _DetailsList extends StatelessWidget {
       children: [
         for (final (label, value) in rows)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Column(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                SizedBox(
+                  width: 84,
+                  child: Text(
+                    label,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-                SelectableText(value, style: context.textTheme.bodyLarge),
+                Expanded(
+                  child: SelectableText(
+                    value,
+                    style: context.textTheme.bodyMedium,
+                  ),
+                ),
               ],
             ),
           ),
