@@ -7754,71 +7754,11 @@ class AppLocalizations {
     return Intl.message('Auto-tunnel', name: 'autoTunnel', desc: '', args: []);
   }
 
-  /// `Connects and disconnects by itself as you change networks. A manual connect or disconnect holds until the network changes.`
+  /// `Switches tunnels by itself: rules for Wi-Fi, mobile data per SIM, Ethernet and apps each pick a tunnel or disconnect. A manual change holds until the network or an app changes.`
   String get autoTunnelDesc {
     return Intl.message(
-      'Connects and disconnects by itself as you change networks. A manual connect or disconnect holds until the network changes.',
+      'Switches tunnels by itself: rules for Wi-Fi, mobile data per SIM, Ethernet and apps each pick a tunnel or disconnect. A manual change holds until the network or an app changes.',
       name: 'autoTunnelDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `On Wi-Fi`
-  String get autoTunnelOnWifi {
-    return Intl.message(
-      'On Wi-Fi',
-      name: 'autoTunnelOnWifi',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Wi-Fi rule`
-  String get autoTunnelWifiMode {
-    return Intl.message(
-      'Wi-Fi rule',
-      name: 'autoTunnelWifiMode',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Every Wi-Fi except these`
-  String get autoTunnelBlacklist {
-    return Intl.message(
-      'Every Wi-Fi except these',
-      name: 'autoTunnelBlacklist',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Only these Wi-Fi`
-  String get autoTunnelWhitelist {
-    return Intl.message(
-      'Only these Wi-Fi',
-      name: 'autoTunnelWhitelist',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Wi-Fi networks`
-  String get autoTunnelNetworks {
-    return Intl.message(
-      'Wi-Fi networks',
-      name: 'autoTunnelNetworks',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `No networks listed`
-  String get autoTunnelNoNetworks {
-    return Intl.message(
-      'No networks listed',
-      name: 'autoTunnelNoNetworks',
       desc: '',
       args: [],
     );
@@ -7849,36 +7789,6 @@ class AppLocalizations {
     return Intl.message(
       'Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can\'t be listed: pick a nearby one or type its name.',
       name: 'autoTunnelWifiDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `On mobile data`
-  String get autoTunnelOnMobile {
-    return Intl.message(
-      'On mobile data',
-      name: 'autoTunnelOnMobile',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Every SIM`
-  String get autoTunnelAllSims {
-    return Intl.message(
-      'Every SIM',
-      name: 'autoTunnelAllSims',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `On Ethernet`
-  String get autoTunnelOnEthernet {
-    return Intl.message(
-      'On Ethernet',
-      name: 'autoTunnelOnEthernet',
       desc: '',
       args: [],
     );
@@ -8181,6 +8091,291 @@ class AppLocalizations {
       name: 'converterDone',
       desc: '',
       args: [name],
+    );
+  }
+
+  /// `Rules`
+  String get autoTunnelRules {
+    return Intl.message('Rules', name: 'autoTunnelRules', desc: '', args: []);
+  }
+
+  /// `An open app's rule wins, then the first network rule that matches, top to bottom.`
+  String get autoTunnelRulesDesc {
+    return Intl.message(
+      'An open app\'s rule wins, then the first network rule that matches, top to bottom.',
+      name: 'autoTunnelRulesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No rules yet`
+  String get autoTunnelNoRules {
+    return Intl.message(
+      'No rules yet',
+      name: 'autoTunnelNoRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add rule`
+  String get autoTunnelAddRule {
+    return Intl.message(
+      'Add rule',
+      name: 'autoTunnelAddRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit rule`
+  String get autoTunnelEditRule {
+    return Intl.message(
+      'Edit rule',
+      name: 'autoTunnelEditRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `When`
+  String get autoTunnelTrigger {
+    return Intl.message('When', name: 'autoTunnelTrigger', desc: '', args: []);
+  }
+
+  /// `Connect to`
+  String get autoTunnelTarget {
+    return Intl.message(
+      'Connect to',
+      name: 'autoTunnelTarget',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disconnect`
+  String get autoTunnelDisconnect {
+    return Intl.message(
+      'Disconnect',
+      name: 'autoTunnelDisconnect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wi-Fi`
+  String get autoTunnelWifi {
+    return Intl.message('Wi-Fi', name: 'autoTunnelWifi', desc: '', args: []);
+  }
+
+  /// `Mobile data`
+  String get autoTunnelMobile {
+    return Intl.message(
+      'Mobile data',
+      name: 'autoTunnelMobile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ethernet`
+  String get autoTunnelEthernet {
+    return Intl.message(
+      'Ethernet',
+      name: 'autoTunnelEthernet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App open`
+  String get autoTunnelApp {
+    return Intl.message('App open', name: 'autoTunnelApp', desc: '', args: []);
+  }
+
+  /// `any`
+  String get autoTunnelAny {
+    return Intl.message('any', name: 'autoTunnelAny', desc: '', args: []);
+  }
+
+  /// `Any Wi-Fi: add networks to limit it`
+  String get autoTunnelAnyWifi {
+    return Intl.message(
+      'Any Wi-Fi: add networks to limit it',
+      name: 'autoTunnelAnyWifi',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Any SIM`
+  String get autoTunnelAnySim {
+    return Intl.message(
+      'Any SIM',
+      name: 'autoTunnelAnySim',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Whenever a cable is connected`
+  String get autoTunnelEthernetDesc {
+    return Intl.message(
+      'Whenever a cable is connected',
+      name: 'autoTunnelEthernetDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No apps yet`
+  String get autoTunnelNoApps {
+    return Intl.message(
+      'No apps yet',
+      name: 'autoTunnelNoApps',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add app`
+  String get autoTunnelAddApp {
+    return Intl.message(
+      'Add app',
+      name: 'autoTunnelAddApp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Type a package name`
+  String get autoTunnelPackageName {
+    return Intl.message(
+      'Type a package name',
+      name: 'autoTunnelPackageName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Type a program, e.g. bank.exe`
+  String get autoTunnelExeName {
+    return Intl.message(
+      'Type a program, e.g. bank.exe',
+      name: 'autoTunnelExeName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Holds while the app is open: on screen, or until it's closed from the recent apps. Apps in the work profile or Secure Folder count while on screen.`
+  String get autoTunnelAppsDesc {
+    return Intl.message(
+      'Holds while the app is open: on screen, or until it\'s closed from the recent apps. Apps in the work profile or Secure Folder count while on screen.',
+      name: 'autoTunnelAppsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `When no rule matches`
+  String get autoTunnelFallback {
+    return Intl.message(
+      'When no rule matches',
+      name: 'autoTunnelFallback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leave the tunnel as it is`
+  String get autoTunnelFallbackKeep {
+    return Intl.message(
+      'Leave the tunnel as it is',
+      name: 'autoTunnelFallbackKeep',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connect to a tunnel`
+  String get autoTunnelFallbackTarget {
+    return Intl.message(
+      'Connect to a tunnel',
+      name: 'autoTunnelFallbackTarget',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Group`
+  String get autoTunnelGroup {
+    return Intl.message('Group', name: 'autoTunnelGroup', desc: '', args: []);
+  }
+
+  /// `Server`
+  String get autoTunnelServer {
+    return Intl.message('Server', name: 'autoTunnelServer', desc: '', args: []);
+  }
+
+  /// `Keep the selected server`
+  String get autoTunnelKeepServer {
+    return Intl.message(
+      'Keep the selected server',
+      name: 'autoTunnelKeepServer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Picks a server in one of the profile's groups, e.g. a Windscribe city.`
+  String get autoTunnelServerDesc {
+    return Intl.message(
+      'Picks a server in one of the profile\'s groups, e.g. a Windscribe city.',
+      name: 'autoTunnelServerDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App detection`
+  String get autoTunnelAppWatcher {
+    return Intl.message(
+      'App detection',
+      name: 'autoTunnelAppWatcher',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An accessibility service that only sees which app is on screen, in every profile`
+  String get autoTunnelAppWatcherDesc {
+    return Intl.message(
+      'An accessibility service that only sees which app is on screen, in every profile',
+      name: 'autoTunnelAppWatcherDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Usage access`
+  String get autoTunnelUsageAccess {
+    return Intl.message(
+      'Usage access',
+      name: 'autoTunnelUsageAccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tells when an app is closed from the recent apps`
+  String get autoTunnelUsageAccessDesc {
+    return Intl.message(
+      'Tells when an app is closed from the recent apps',
+      name: 'autoTunnelUsageAccessDesc',
+      desc: '',
+      args: [],
     );
   }
 }

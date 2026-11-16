@@ -61,26 +61,42 @@ Dropped (VPN-only use doesn't need them):
   default/random/custom, MTU, DNS, keepalive. Each one becomes a Clash profile with a
   `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
   TTL) with regenerate (new registration into the same profile) and delete (revokes it).
-- **Auto-tunnel** (Tools → Auto-tunnel, Android and Windows). The same rules on both:
-  Wi-Fi by name as a blacklist ("every Wi-Fi except these") or whitelist ("only these"),
-  mobile data (on Android every SIM or chosen ones), Ethernet. They act when the network or
-  the rules change, so a manual toggle holds until then (`decideAutoTunnel` in Dart,
-  `AutoTunnelRules` in Kotlin; keep them the same).
-  - Android: `AutoTunnelService` (foreground, `specialUse`) watches the network under the
-    VPN and starts/stops it through `ServiceState` like the tile, with the app closed, and
-    comes back after a reboot. Wi-Fi names need location access, all the time for the
-    background; Android doesn't let apps list saved networks, so the picker offers nearby
-    ones or a typed name.
-  - Windows: `DesktopAutoTunnel` watches connectivity while Quartz runs (it lives in the
-    tray) and starts/stops the proxy; the picker offers the current Wi-Fi or a typed name.
+- **Auto-tunnel** (Settings → Quartz → Auto-tunnel, Android and Windows). Rules, each with
+  a trigger and a target: Wi-Fi (any, or named networks), mobile data (any SIM, or chosen
+  ones; Android only), Ethernet, or an app being open. The target is "disconnect" or a
+  profile, optionally with one server picked in one of its groups (a Windscribe city, say).
+  An open app's rule wins (most recently used first), then the first network rule that
+  matches, then the fallback (leave it, disconnect, or a target). It acts only when the
+  network, the open rule apps or the rules change, so a manual change holds until then
+  (`decideAutoTunnel`/`stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin; keep them the same).
+  An app counts as open while on screen or until it's closed (removed from the recent apps
+  on Android, exited on Windows), with 4 s of grace so a quick switch doesn't flap.
+  - Android: `AutoTunnelService` (foreground, `specialUse`, back after a reboot) watches the
+    network and, through `AppWatcherService` (an accessibility service that only sees which
+    app is in front, in every profile: work profile, private space, Secure Folder) or usage
+    access, the apps. While Quartz's UI runs it asks Dart to switch (`apply` on the
+    `autotunnel` channel); otherwise it switches itself: Dart keeps each target's rendered
+    config in `files/autotunnel/<profile>.yaml` with the profile's selection, and the service
+    copies it to `config.yaml`, updates `sharedState` and restarts the VPN, leaving
+    `quartz.autoTunnel.applied` for Dart to adopt on its next start. Wi-Fi names need location
+    access, all the time for the background.
+  - Windows: `DesktopAutoTunnel` watches connectivity and the foreground window's program
+    (`windows_apps.dart`, polled every 2 s) while Quartz runs in the tray.
+- **Config converter** (Settings → Quartz → Config converter, `lib/features/converter`):
+  WireGuard/AmneziaWG `.conf` and OpenVPN `.ovpn` files (pasted or opened, several at once)
+  become one Clash profile with a PROXY group (and an auto group for more than one).
+- **Dashboard cards** resize to any width (2–8 of 8 columns) and height (1–4 rows) from
+  the edit mode's corner button; the network card defaults to one full-width row, wraps
+  instead of hiding, and opens every field the lookup returned on tap. Its IP is green while
+  no tunnel runs.
+- **Windows updates** install silently and start Quartz again, like Android's.
 - **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): asks once for the OpenVPN
   credentials from Windscribe's config generator (saved locally; "Change credentials" asks
   again), reads the public server list (`WebsiteStatus`, no account login) and writes a
   "Windscribe" profile: every online server as a mihomo `openvpn` proxy (stock mihomo has
   this outbound, so no separate OpenVPN process), a Windscribe group with an auto group
-  and one group per country. Protocol/port (Windscribe's port map) and Pro servers are
-  options; changing one rebuilds the list. The list updates at startup when over 6 hours
-  old, or on demand. The CA and tls-auth key are Windscribe's public ones, the same for
+  and one group per country. Protocol/port (Windscribe's port map) is an option; changing
+  it rebuilds the list. The list updates at startup when over 6 hours old, or on demand. The CA and tls-auth key are Windscribe's public ones, the same for
   every server.
 
 ## Android and Windows ship together (standing rule)
@@ -97,8 +113,3 @@ arm and arm64 APKs only), and publishes both as the latest Quartz release
 `quartz-flclash-0.9.0-<run>`; the release needs both builds.
 Android builds are signed with the committed debug key `.github/signing/debug.keystore`.
 FlClash's own `build.yaml` only runs by hand.
-
-## Next
-
-A WARP generator and auto-tunnel features (the earlier WG Tunnel-based Quartz had them; it is
-gone from this repository).

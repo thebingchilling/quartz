@@ -278,38 +278,73 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを自動設定"),
     "autoTunnel": MessageLookupByLibrary.simpleMessage("自動トンネル"),
+    "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage("アプリを追加"),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("ネットワークを追加"),
-    "autoTunnelAllSims": MessageLookupByLibrary.simpleMessage("すべての SIM"),
+    "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("ルールを追加"),
+    "autoTunnelAny": MessageLookupByLibrary.simpleMessage("すべて"),
+    "autoTunnelAnySim": MessageLookupByLibrary.simpleMessage("すべてのSIM"),
+    "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage(
+      "すべてのWi-Fi：ネットワークを追加して制限",
+    ),
+    "autoTunnelApp": MessageLookupByLibrary.simpleMessage("アプリ使用中"),
+    "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage("アプリ検出"),
+    "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
+      "画面上のアプリだけを確認するユーザー補助サービス（全プロファイル対応）",
+    ),
+    "autoTunnelAppsDesc": MessageLookupByLibrary.simpleMessage(
+      "アプリが開いている間（画面上、または最近のアプリから閉じるまで）保持されます。仕事用プロファイルやセキュアフォルダのアプリは画面上にある間のみ。",
+    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "常に位置情報（バックグラウンド用）",
     ),
-    "autoTunnelBlacklist": MessageLookupByLibrary.simpleMessage(
-      "これら以外のすべての Wi-Fi",
-    ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "ネットワークを切り替えると自動で接続・切断します。手動の接続や切断はネットワークが変わるまで維持されます。",
+      "自動でトンネルを切り替えます：Wi-Fi、SIMごとのモバイルデータ、イーサネット、アプリのルールがそれぞれトンネルまたは切断を選びます。手動の変更はネットワークかアプリが変わるまで保持されます。",
     ),
+    "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("切断"),
+    "autoTunnelEditRule": MessageLookupByLibrary.simpleMessage("ルールを編集"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("名前を入力"),
+    "autoTunnelEthernet": MessageLookupByLibrary.simpleMessage("イーサネット"),
+    "autoTunnelEthernetDesc": MessageLookupByLibrary.simpleMessage("ケーブル接続時"),
+    "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
+      "プログラム名を入力（例：bank.exe）",
+    ),
+    "autoTunnelFallback": MessageLookupByLibrary.simpleMessage(
+      "どのルールにも一致しない場合",
+    ),
+    "autoTunnelFallbackKeep": MessageLookupByLibrary.simpleMessage(
+      "トンネルをそのままにする",
+    ),
+    "autoTunnelFallbackTarget": MessageLookupByLibrary.simpleMessage("トンネルに接続"),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("許可"),
+    "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("グループ"),
+    "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage("選択中のサーバーを維持"),
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "位置情報（Wi-Fi 名の取得）",
     ),
-    "autoTunnelNetworks": MessageLookupByLibrary.simpleMessage("Wi-Fi ネットワーク"),
-    "autoTunnelNoNetworks": MessageLookupByLibrary.simpleMessage(
-      "ネットワークがありません",
-    ),
-    "autoTunnelOnEthernet": MessageLookupByLibrary.simpleMessage("イーサネットで"),
-    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage("モバイルデータで"),
-    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi で"),
+    "autoTunnelMobile": MessageLookupByLibrary.simpleMessage("モバイルデータ"),
+    "autoTunnelNoApps": MessageLookupByLibrary.simpleMessage("アプリはまだありません"),
+    "autoTunnelNoRules": MessageLookupByLibrary.simpleMessage("ルールはまだありません"),
+    "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("パッケージ名を入力"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("電話（SIM の識別）"),
-    "autoTunnelWhitelist": MessageLookupByLibrary.simpleMessage(
-      "これらの Wi-Fi のみ",
+    "autoTunnelRules": MessageLookupByLibrary.simpleMessage("ルール"),
+    "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "開いているアプリのルールが優先され、次に上から最初に一致するネットワークルールが適用されます。",
     ),
+    "autoTunnelServer": MessageLookupByLibrary.simpleMessage("サーバー"),
+    "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
+      "プロファイルのグループ内のサーバーを選びます（例：Windscribeの都市）。",
+    ),
+    "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("接続先"),
+    "autoTunnelTrigger": MessageLookupByLibrary.simpleMessage("条件"),
+    "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage("使用状況へのアクセス"),
+    "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "最近のアプリから閉じたことを検知します",
+    ),
+    "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
       "Android は位置情報へのアクセスを持つアプリにのみ Wi-Fi 名を表示し、Quartz がバックグラウンドのときは常時アクセスが必要です。保存済みネットワークは一覧できないため、近くのものを選ぶか名前を入力してください。",
     ),
-    "autoTunnelWifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi のルール"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分）"),
     "back": MessageLookupByLibrary.simpleMessage("戻る"),

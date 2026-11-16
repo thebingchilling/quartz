@@ -342,42 +342,101 @@ class MessageLookup extends MessageLookupByLibrary {
       "Автонастройка системного DNS",
     ),
     "autoTunnel": MessageLookupByLibrary.simpleMessage("Автотуннель"),
+    "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage(
+      "Добавить приложение",
+    ),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage(
       "Добавить сеть",
     ),
-    "autoTunnelAllSims": MessageLookupByLibrary.simpleMessage("Любая SIM"),
+    "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage(
+      "Добавить правило",
+    ),
+    "autoTunnelAny": MessageLookupByLibrary.simpleMessage("любая"),
+    "autoTunnelAnySim": MessageLookupByLibrary.simpleMessage("Любая SIM"),
+    "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage(
+      "Любая Wi-Fi: добавьте сети, чтобы ограничить",
+    ),
+    "autoTunnelApp": MessageLookupByLibrary.simpleMessage("Открыто приложение"),
+    "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage(
+      "Определение приложений",
+    ),
+    "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
+      "Служба специальных возможностей, видящая только приложение на экране, во всех профилях",
+    ),
+    "autoTunnelAppsDesc": MessageLookupByLibrary.simpleMessage(
+      "Действует, пока приложение открыто: на экране или пока его не закроют из недавних. Приложения рабочего профиля и защищённой папки — только пока на экране.",
+    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение всегда, для фона",
     ),
-    "autoTunnelBlacklist": MessageLookupByLibrary.simpleMessage(
-      "Все Wi-Fi, кроме этих",
-    ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Подключается и отключается сам при смене сети. Ручное подключение или отключение действует до смены сети.",
+      "Сам переключает туннели: правила для Wi-Fi, мобильных данных по SIM, Ethernet и приложений выбирают туннель или отключение. Ручное изменение действует, пока не сменится сеть или приложение.",
+    ),
+    "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Отключить"),
+    "autoTunnelEditRule": MessageLookupByLibrary.simpleMessage(
+      "Изменить правило",
     ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Ввести имя"),
+    "autoTunnelEthernet": MessageLookupByLibrary.simpleMessage("Ethernet"),
+    "autoTunnelEthernetDesc": MessageLookupByLibrary.simpleMessage(
+      "Когда подключён кабель",
+    ),
+    "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
+      "Введите программу, например bank.exe",
+    ),
+    "autoTunnelFallback": MessageLookupByLibrary.simpleMessage(
+      "Если ни одно правило не подходит",
+    ),
+    "autoTunnelFallbackKeep": MessageLookupByLibrary.simpleMessage(
+      "Оставить туннель как есть",
+    ),
+    "autoTunnelFallbackTarget": MessageLookupByLibrary.simpleMessage(
+      "Подключить туннель",
+    ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Разрешить"),
+    "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("Группа"),
+    "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage(
+      "Оставить выбранный сервер",
+    ),
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение, чтобы видеть имена Wi-Fi",
     ),
-    "autoTunnelNetworks": MessageLookupByLibrary.simpleMessage("Сети Wi-Fi"),
-    "autoTunnelNoNetworks": MessageLookupByLibrary.simpleMessage("Сетей нет"),
-    "autoTunnelOnEthernet": MessageLookupByLibrary.simpleMessage("В Ethernet"),
-    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage(
-      "В мобильной сети",
+    "autoTunnelMobile": MessageLookupByLibrary.simpleMessage(
+      "Мобильные данные",
     ),
-    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage("В Wi-Fi"),
+    "autoTunnelNoApps": MessageLookupByLibrary.simpleMessage(
+      "Приложений пока нет",
+    ),
+    "autoTunnelNoRules": MessageLookupByLibrary.simpleMessage(
+      "Правил пока нет",
+    ),
+    "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
+      "Введите имя пакета",
+    ),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("Разрешения"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Телефон, чтобы различать SIM",
     ),
-    "autoTunnelWhitelist": MessageLookupByLibrary.simpleMessage(
-      "Только эти Wi-Fi",
+    "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Правила"),
+    "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "Сначала правило открытого приложения, затем первое подходящее сетевое правило сверху вниз.",
     ),
+    "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Сервер"),
+    "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
+      "Выбирает сервер в группе профиля, например город Windscribe.",
+    ),
+    "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("Подключить"),
+    "autoTunnelTrigger": MessageLookupByLibrary.simpleMessage("Когда"),
+    "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
+      "Доступ к истории использования",
+    ),
+    "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "Определяет, когда приложение закрыто из недавних",
+    ),
+    "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
       "Android показывает имена Wi-Fi только приложениям с доступом к местоположению, а в фоне — с доступом «всегда». Сохранённые сети получить нельзя: выберите ближайшую или введите имя.",
     ),
-    "autoTunnelWifiMode": MessageLookupByLibrary.simpleMessage("Правило Wi-Fi"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Автообновление"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал автообновления (минуты)",

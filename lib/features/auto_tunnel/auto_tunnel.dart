@@ -1,76 +1,216 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum WifiRuleMode { blacklist, whitelist }
+enum TriggerKind { wifi, mobile, ethernet, app }
 
-/// When the VPN connects by itself (Android): per Wi-Fi name, per SIM on
-/// mobile data, and on Ethernet. The rules act when the network changes.
+/// No [profileId] means disconnect.
+class TunnelTarget {
+  const TunnelTarget({this.profileId, this.group, this.proxy});
+
+  const TunnelTarget.disconnect() : this();
+
+  final int? profileId;
+  final String? group;
+  final String? proxy;
+
+  bool get disconnects => profileId == null;
+
+  Map<String, String> get picks => {
+    if (group != null && proxy != null) group!: proxy!,
+  };
+
+  Map<String, dynamic> toJson() => {
+    'profileId': profileId,
+    'group': group,
+    'proxy': proxy,
+  };
+
+  factory TunnelTarget.fromJson(Map<String, dynamic>? json) => TunnelTarget(
+    profileId: json?['profileId'] as int?,
+    group: json?['group'] as String?,
+    proxy: json?['proxy'] as String?,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is TunnelTarget &&
+      other.profileId == profileId &&
+      other.group == group &&
+      other.proxy == proxy;
+
+  @override
+  int get hashCode => Object.hash(profileId, group, proxy);
+}
+
+/// Empty [ssids] or [simIds] match any Wi-Fi or SIM.
+class AutoTunnelRule {
+  const AutoTunnelRule({
+    required this.id,
+    required this.kind,
+    this.enabled = true,
+    this.ssids = const [],
+    this.simIds = const [],
+    this.apps = const [],
+    this.target = const TunnelTarget.disconnect(),
+  });
+
+  final String id;
+  final TriggerKind kind;
+  final bool enabled;
+  final List<String> ssids;
+  final List<int> simIds;
+  final List<String> apps;
+  final TunnelTarget target;
+
+  AutoTunnelRule copyWith({
+    TriggerKind? kind,
+    bool? enabled,
+    List<String>? ssids,
+    List<int>? simIds,
+    List<String>? apps,
+    TunnelTarget? target,
+  }) => AutoTunnelRule(
+    id: id,
+    kind: kind ?? this.kind,
+    enabled: enabled ?? this.enabled,
+    ssids: ssids ?? this.ssids,
+    simIds: simIds ?? this.simIds,
+    apps: apps ?? this.apps,
+    target: target ?? this.target,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'kind': kind.name,
+    'enabled': enabled,
+    'ssids': ssids,
+    'simIds': simIds,
+    'apps': apps,
+    'target': target.toJson(),
+  };
+
+  factory AutoTunnelRule.fromJson(Map<String, dynamic> json) => AutoTunnelRule(
+    id: json['id'] as String,
+    kind: TriggerKind.values.asNameMap()[json['kind']] ?? TriggerKind.wifi,
+    enabled: json['enabled'] as bool? ?? true,
+    ssids: (json['ssids'] as List?)?.cast<String>() ?? const [],
+    simIds: (json['simIds'] as List?)?.cast<int>() ?? const [],
+    apps: (json['apps'] as List?)?.cast<String>() ?? const [],
+    target: TunnelTarget.fromJson((json['target'] as Map?)?.cast()),
+  );
+}
+
+enum FallbackMode { keep, disconnect, target }
+
 class AutoTunnelSettings {
   const AutoTunnelSettings({
     this.enabled = false,
-    this.wifiEnabled = true,
-    this.wifiMode = WifiRuleMode.blacklist,
-    this.ssids = const [],
-    this.mobileEnabled = true,
-    this.simIds = const [],
-    this.ethernetEnabled = true,
+    this.rules = const [],
+    this.fallback = FallbackMode.keep,
+    this.fallbackTarget = const TunnelTarget.disconnect(),
   });
 
   final bool enabled;
-  final bool wifiEnabled;
-  final WifiRuleMode wifiMode;
-  final List<String> ssids;
-  final bool mobileEnabled;
-
-  /// Empty means every SIM.
-  final List<int> simIds;
-  final bool ethernetEnabled;
+  final List<AutoTunnelRule> rules;
+  final FallbackMode fallback;
+  final TunnelTarget fallbackTarget;
 
   AutoTunnelSettings copyWith({
     bool? enabled,
-    bool? wifiEnabled,
-    WifiRuleMode? wifiMode,
-    List<String>? ssids,
-    bool? mobileEnabled,
-    List<int>? simIds,
-    bool? ethernetEnabled,
+    List<AutoTunnelRule>? rules,
+    FallbackMode? fallback,
+    TunnelTarget? fallbackTarget,
   }) => AutoTunnelSettings(
     enabled: enabled ?? this.enabled,
-    wifiEnabled: wifiEnabled ?? this.wifiEnabled,
-    wifiMode: wifiMode ?? this.wifiMode,
-    ssids: ssids ?? this.ssids,
-    mobileEnabled: mobileEnabled ?? this.mobileEnabled,
-    simIds: simIds ?? this.simIds,
-    ethernetEnabled: ethernetEnabled ?? this.ethernetEnabled,
+    rules: rules ?? this.rules,
+    fallback: fallback ?? this.fallback,
+    fallbackTarget: fallbackTarget ?? this.fallbackTarget,
   );
 
   Map<String, dynamic> toJson() => {
     'enabled': enabled,
-    'wifiEnabled': wifiEnabled,
-    'wifiMode': wifiMode.name,
-    'ssids': ssids,
-    'mobileEnabled': mobileEnabled,
-    'simIds': simIds,
-    'ethernetEnabled': ethernetEnabled,
+    'rules': [for (final rule in rules) rule.toJson()],
+    'fallback': fallback.name,
+    'fallbackTarget': fallbackTarget.toJson(),
   };
 
   factory AutoTunnelSettings.fromJson(Map<String, dynamic> json) =>
       AutoTunnelSettings(
         enabled: json['enabled'] as bool? ?? false,
-        wifiEnabled: json['wifiEnabled'] as bool? ?? true,
-        wifiMode:
-            WifiRuleMode.values.asNameMap()[json['wifiMode']] ??
-            WifiRuleMode.blacklist,
-        ssids: (json['ssids'] as List?)?.cast<String>() ?? const [],
-        mobileEnabled: json['mobileEnabled'] as bool? ?? true,
-        simIds: (json['simIds'] as List?)?.cast<int>() ?? const [],
-        ethernetEnabled: json['ethernetEnabled'] as bool? ?? true,
+        rules: [
+          for (final rule in (json['rules'] as List?) ?? const [])
+            AutoTunnelRule.fromJson((rule as Map).cast()),
+        ],
+        fallback:
+            FallbackMode.values.asNameMap()[json['fallback']] ??
+            FallbackMode.keep,
+        fallbackTarget: TunnelTarget.fromJson(
+          (json['fallbackTarget'] as Map?)?.cast(),
+        ),
       );
+}
+
+enum NetworkKind { wifi, mobile, ethernet, none }
+
+typedef NetworkSnapshot = ({NetworkKind kind, String? ssid, int? simId});
+
+/// Null leaves the tunnel as it is. Mirrored by Android's `AutoTunnelRules`;
+/// keep both in step.
+(String, TunnelTarget)? decideAutoTunnel(
+  AutoTunnelSettings settings,
+  NetworkSnapshot network, {
+  List<String> openApps = const [],
+}) {
+  final rules = settings.rules.where((rule) => rule.enabled);
+  for (final app in openApps) {
+    for (final rule in rules) {
+      if (rule.kind == TriggerKind.app && rule.apps.contains(app)) {
+        return (rule.id, rule.target);
+      }
+    }
+  }
+  if (network.kind == NetworkKind.none) return null;
+  for (final rule in rules) {
+    final holds = switch (rule.kind) {
+      TriggerKind.app => false,
+      TriggerKind.ethernet => network.kind == NetworkKind.ethernet,
+      TriggerKind.mobile =>
+        network.kind == NetworkKind.mobile &&
+            (rule.simIds.isEmpty || rule.simIds.contains(network.simId)),
+      TriggerKind.wifi =>
+        network.kind == NetworkKind.wifi &&
+            (rule.ssids.isEmpty || rule.ssids.contains(network.ssid)),
+    };
+    if (holds) return (rule.id, rule.target);
+  }
+  return switch (settings.fallback) {
+    FallbackMode.keep => null,
+    FallbackMode.disconnect => ('fallback', const TunnelTarget.disconnect()),
+    FallbackMode.target => ('fallback', settings.fallbackTarget),
+  };
+}
+
+/// A null [open] means only the foreground app is known to be open.
+List<String> stepOpenApps(
+  List<String> recent, {
+  required String? foreground,
+  required Set<String>? open,
+  required Set<String> ruleApps,
+}) {
+  var next = recent;
+  if (foreground != null && ruleApps.contains(foreground)) {
+    next = [foreground, ...recent.where((app) => app != foreground)];
+  }
+  return [
+    for (final app in next)
+      if (ruleApps.contains(app) &&
+          (app == foreground || (open != null && open.contains(app))))
+        app,
+  ];
 }
 
 class SimCard {
@@ -85,36 +225,42 @@ typedef AutoTunnelPermissions = ({
   bool location,
   bool backgroundLocation,
   bool phone,
+  bool appWatcher,
+  bool usageAccess,
 });
 
-/// The Android side: the network-watching service, nearby Wi-Fi and SIMs.
 class AutoTunnelPlatform {
   const AutoTunnelPlatform();
 
-  static const _channel = MethodChannel('$packageName/autotunnel');
+  static const channel = MethodChannel('$packageName/autotunnel');
 
-  Future<void> update(AutoTunnelSettings settings) =>
-      _channel.invokeMethod('update', jsonEncode(settings.toJson()));
+  /// Carries pre-rendered configs so the service can switch with the app closed.
+  Future<void> update(String json) => channel.invokeMethod('update', json);
 
   Future<AutoTunnelPermissions> permissions() async {
     final map =
-        await _channel.invokeMapMethod<String, bool>('permissions') ?? const {};
+        await channel.invokeMapMethod<String, bool>('permissions') ?? const {};
     return (
       location: map['location'] ?? false,
       backgroundLocation: map['backgroundLocation'] ?? false,
       phone: map['phone'] ?? false,
+      appWatcher: map['appWatcher'] ?? false,
+      usageAccess: map['usageAccess'] ?? false,
     );
   }
 
-  /// `location`, `backgroundLocation` or `phone`.
   Future<bool> request(String kind) async =>
-      await _channel.invokeMethod<bool>('request', kind) ?? false;
+      await channel.invokeMethod<bool>('request', kind) ?? false;
 
   Future<List<String>> wifiNetworks() async =>
-      await _channel.invokeListMethod<String>('wifiNetworks') ?? const [];
+      await channel.invokeListMethod<String>('wifiNetworks') ?? const [];
+
+  /// Includes work-profile and Secure Folder apps the app list can't show.
+  Future<List<String>> seenApps() async =>
+      await channel.invokeListMethod<String>('seenApps') ?? const [];
 
   Future<List<SimCard>> simCards() async {
-    final list = await _channel.invokeListMethod<Map>('simCards') ?? const [];
+    final list = await channel.invokeListMethod<Map>('simCards') ?? const [];
     return [
       for (final item in list)
         SimCard(
@@ -132,7 +278,7 @@ final autoTunnelProvider =
     );
 
 class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
-  static const _key = 'quartz.autoTunnel';
+  static const key = 'quartz.autoTunnel.v2';
   static const platform = AutoTunnelPlatform();
 
   @override
@@ -142,7 +288,7 @@ class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
   }
 
   Future<void> _load() async {
-    final text = (await SharedPreferences.getInstance()).getString(_key);
+    final text = (await SharedPreferences.getInstance()).getString(key);
     if (text == null) return;
     try {
       state = AutoTunnelSettings.fromJson(
@@ -158,40 +304,9 @@ class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
   ) async {
     state = change(state);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, jsonEncode(state.toJson()));
-    // Windows watches networks in Dart (DesktopAutoTunnel); Android natively.
-    if (!Platform.isAndroid) return;
-    try {
-      await platform.update(state);
-    } on PlatformException catch (error) {
-      commonPrint.log('Auto-tunnel update failed: $error');
-    }
+    await prefs.setString(key, jsonEncode(state.toJson()));
   }
-}
 
-enum NetworkKind { wifi, mobile, ethernet, none }
-
-/// The network under the VPN: [ssid] is null when the system hides it.
-typedef NetworkSnapshot = ({NetworkKind kind, String? ssid, int? simId});
-
-/// True to connect, false to disconnect, null to leave the tunnel as it is.
-/// Android's `AutoTunnelRules` makes the same call natively.
-bool? decideAutoTunnel(AutoTunnelSettings settings, NetworkSnapshot network) {
-  switch (network.kind) {
-    case NetworkKind.none:
-      return null;
-    case NetworkKind.ethernet:
-      return settings.ethernetEnabled;
-    case NetworkKind.mobile:
-      return settings.mobileEnabled &&
-          (settings.simIds.isEmpty || settings.simIds.contains(network.simId));
-    case NetworkKind.wifi:
-      if (!settings.wifiEnabled) return false;
-      final ssid = network.ssid;
-      final listed = ssid != null && settings.ssids.contains(ssid);
-      return switch (settings.wifiMode) {
-        WifiRuleMode.blacklist => ssid == null ? null : !listed,
-        WifiRuleMode.whitelist => listed,
-      };
-  }
+  static String newId() =>
+      DateTime.now().microsecondsSinceEpoch.toRadixString(36);
 }

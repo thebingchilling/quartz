@@ -3,7 +3,7 @@ import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fl_clash/features/auto_tunnel/desktop_auto_tunnel.dart';
+import 'package:fl_clash/features/auto_tunnel/auto_tunnel_manager.dart';
 
 const _leaf = SizedBox.shrink();
 
@@ -24,6 +24,7 @@ Widget? _childOf(Widget widget) {
     ConnectivityManager(:final child) => child,
     WindowHeaderContainer(:final child) => child,
     DesktopAutoTunnel(:final child) => child,
+    AndroidAutoTunnel(:final child) => child,
     VpnManager(:final child) => child,
     _ => null,
   };
@@ -88,6 +89,7 @@ void main() {
       CoreManager,
       ConnectivityManager,
       VpnManager,
+      AndroidAutoTunnel,
     ]);
   });
 

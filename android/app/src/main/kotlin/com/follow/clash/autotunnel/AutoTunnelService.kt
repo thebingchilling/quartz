@@ -24,14 +24,20 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.follow.clash.R
-import com.follow.clash.ServiceState
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
+import com.follow.clash.plugins.AutoTunnelPlugin
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Watches the network underneath the VPN and connects or disconnects by the auto-tunnel rules.
- * It acts when the network changes (or the rules do), so a manual toggle holds until then.
+ * Acts only when the network, the open rule apps or the rules change, so a manual toggle holds
+ * until then.
  */
 class AutoTunnelService : Service() {
     private val connectivity by lazy { getSystemService(ConnectivityManager::class.java) }
@@ -39,6 +45,11 @@ class AutoTunnelService : Service() {
     private val networks = mutableMapOf<Network, NetworkCapabilities>()
     private var lastKey: String? = null
     private var callback: ConnectivityManager.NetworkCallback? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var openApps: List<String> = emptyList()
+    private var appsForRules: List<String> = emptyList()
+    private var linger: Job? = null
+    private var applying: Job? = null
 
     private val evaluate = Runnable { apply() }
 
@@ -48,6 +59,7 @@ class AutoTunnelService : Service() {
         super.onCreate()
         startForegroundCompat()
         register()
+        watchApps()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -62,6 +74,7 @@ class AutoTunnelService : Service() {
         handler.removeCallbacks(evaluate)
         callback?.let { runCatching { connectivity.unregisterNetworkCallback(it) } }
         callback = null
+        scope.cancel()
         super.onDestroy()
     }
 
@@ -107,6 +120,41 @@ class AutoTunnelService : Service() {
         }
     }
 
+    private fun watchApps() {
+        scope.launch {
+            ForegroundApp.activity(this@AutoTunnelService).collect { activity ->
+                val ruleApps = AutoTunnel.settings(this@AutoTunnelService).ruleApps
+                if (ruleApps.isEmpty()) {
+                    openApps = emptyList()
+                    return@collect
+                }
+                val next = AutoTunnelRules.stepOpenApps(
+                    openApps,
+                    activity.foreground,
+                    activity.open,
+                    ruleApps,
+                )
+                if (next == openApps) return@collect
+                openApps = next
+                onAppsChanged()
+            }
+        }
+    }
+
+    // Losing an app waits a little, so a quick switch away and back doesn't flap the tunnel.
+    private fun onAppsChanged() {
+        linger?.cancel()
+        if (openApps.firstOrNull() == appsForRules.firstOrNull()) {
+            appsForRules = openApps
+            return
+        }
+        linger = scope.launch {
+            if (openApps.isEmpty()) delay(LINGER_MS)
+            appsForRules = openApps
+            schedule()
+        }
+    }
+
     private fun snapshot(): NetworkSnapshot {
         val validated = networks.values.filter {
             it.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
@@ -147,13 +195,18 @@ class AutoTunnelService : Service() {
             return
         }
         val network = snapshot()
-        val key = "${network.kind}|${network.ssid}|${network.subscriptionId}"
+        val decision = AutoTunnelRules.decide(settings, network, appsForRules)
+        val key = "${network.kind}|${network.ssid}|${network.subscriptionId}|${decision?.key}"
         if (key == lastKey) return
         lastKey = key
-        val connect = AutoTunnelRules.decide(settings, network) ?: return
-        GlobalState.log("Auto-tunnel: $network -> ${if (connect) "connect" else "disconnect"}")
-        GlobalState.launch {
-            if (connect) ServiceState.handleStartAction() else ServiceState.handleStopAction()
+        decision ?: return
+        GlobalState.log("Auto-tunnel: $network -> ${decision.key}")
+        applying?.cancel()
+        applying = scope.launch {
+            if (AutoTunnelPlugin.apply(decision.key)) return@launch
+            GlobalState.launch {
+                AutoTunnel.applyWithoutFlutter(this@AutoTunnelService, decision.key, decision.target)
+            }
         }
     }
 
@@ -200,6 +253,7 @@ class AutoTunnelService : Service() {
         const val CHANNEL = "auto_tunnel"
         const val NOTIFICATION_ID = 7
         const val SETTLE_MS = 2_000L
+        const val LINGER_MS = 4_000L
         const val UNKNOWN_SSID = "<unknown ssid>"
     }
 }

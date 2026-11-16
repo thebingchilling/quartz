@@ -329,46 +329,89 @@ class MessageLookup extends MessageLookupByLibrary {
       "Auto-set system DNS",
     ),
     "autoTunnel": MessageLookupByLibrary.simpleMessage("Auto-tunnel"),
+    "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage("Add app"),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("Add network"),
-    "autoTunnelAllSims": MessageLookupByLibrary.simpleMessage("Every SIM"),
+    "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("Add rule"),
+    "autoTunnelAny": MessageLookupByLibrary.simpleMessage("any"),
+    "autoTunnelAnySim": MessageLookupByLibrary.simpleMessage("Any SIM"),
+    "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage(
+      "Any Wi-Fi: add networks to limit it",
+    ),
+    "autoTunnelApp": MessageLookupByLibrary.simpleMessage("App open"),
+    "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage(
+      "App detection",
+    ),
+    "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
+      "An accessibility service that only sees which app is on screen, in every profile",
+    ),
+    "autoTunnelAppsDesc": MessageLookupByLibrary.simpleMessage(
+      "Holds while the app is open: on screen, or until it\'s closed from the recent apps. Apps in the work profile or Secure Folder count while on screen.",
+    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Location all the time, for the background",
     ),
-    "autoTunnelBlacklist": MessageLookupByLibrary.simpleMessage(
-      "Every Wi-Fi except these",
-    ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Connects and disconnects by itself as you change networks. A manual connect or disconnect holds until the network changes.",
+      "Switches tunnels by itself: rules for Wi-Fi, mobile data per SIM, Ethernet and apps each pick a tunnel or disconnect. A manual change holds until the network or an app changes.",
     ),
+    "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
+    "autoTunnelEditRule": MessageLookupByLibrary.simpleMessage("Edit rule"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Type a name"),
+    "autoTunnelEthernet": MessageLookupByLibrary.simpleMessage("Ethernet"),
+    "autoTunnelEthernetDesc": MessageLookupByLibrary.simpleMessage(
+      "Whenever a cable is connected",
+    ),
+    "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
+      "Type a program, e.g. bank.exe",
+    ),
+    "autoTunnelFallback": MessageLookupByLibrary.simpleMessage(
+      "When no rule matches",
+    ),
+    "autoTunnelFallbackKeep": MessageLookupByLibrary.simpleMessage(
+      "Leave the tunnel as it is",
+    ),
+    "autoTunnelFallbackTarget": MessageLookupByLibrary.simpleMessage(
+      "Connect to a tunnel",
+    ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Allow"),
+    "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("Group"),
+    "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage(
+      "Keep the selected server",
+    ),
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Location, to read Wi-Fi names",
     ),
-    "autoTunnelNetworks": MessageLookupByLibrary.simpleMessage(
-      "Wi-Fi networks",
+    "autoTunnelMobile": MessageLookupByLibrary.simpleMessage("Mobile data"),
+    "autoTunnelNoApps": MessageLookupByLibrary.simpleMessage("No apps yet"),
+    "autoTunnelNoRules": MessageLookupByLibrary.simpleMessage("No rules yet"),
+    "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
+      "Type a package name",
     ),
-    "autoTunnelNoNetworks": MessageLookupByLibrary.simpleMessage(
-      "No networks listed",
-    ),
-    "autoTunnelOnEthernet": MessageLookupByLibrary.simpleMessage("On Ethernet"),
-    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage(
-      "On mobile data",
-    ),
-    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage("On Wi-Fi"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage(
       "Permissions",
     ),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Phone, to tell SIM cards apart",
     ),
-    "autoTunnelWhitelist": MessageLookupByLibrary.simpleMessage(
-      "Only these Wi-Fi",
+    "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Rules"),
+    "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "An open app\'s rule wins, then the first network rule that matches, top to bottom.",
     ),
+    "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Server"),
+    "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
+      "Picks a server in one of the profile\'s groups, e.g. a Windscribe city.",
+    ),
+    "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("Connect to"),
+    "autoTunnelTrigger": MessageLookupByLibrary.simpleMessage("When"),
+    "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
+      "Usage access",
+    ),
+    "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "Tells when an app is closed from the recent apps",
+    ),
+    "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
       "Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can\'t be listed: pick a nearby one or type its name.",
     ),
-    "autoTunnelWifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi rule"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Auto update"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Auto-update interval (minutes)",

@@ -3,6 +3,9 @@ package com.follow.clash.plugins
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -10,6 +13,7 @@ import android.telephony.SubscriptionManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.follow.clash.autotunnel.AutoTunnel
+import com.follow.clash.autotunnel.ForegroundApp
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -18,6 +22,10 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Auto-tunnel's Flutter side: its rules, nearby Wi-Fi, SIM cards and the permissions they need. */
 class AutoTunnelPlugin :
@@ -35,10 +43,30 @@ class AutoTunnelPlugin :
                 "${Components.PACKAGE_NAME}/autotunnel",
             )
         channel.setMethodCallHandler(this)
+        active = this
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        if (active === this) active = null
+    }
+
+    private suspend fun invokeApply(key: String): Boolean = withContext(Dispatchers.Main) {
+        val answer = CompletableDeferred<Boolean>()
+        channel.invokeMethod("apply", key, object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                answer.complete(result == true)
+            }
+
+            override fun error(code: String, message: String?, details: Any?) {
+                answer.complete(false)
+            }
+
+            override fun notImplemented() {
+                answer.complete(false)
+            }
+        })
+        withTimeoutOrNull(APPLY_TIMEOUT_MS) { answer.await() } ?: false
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -52,6 +80,7 @@ class AutoTunnelPlugin :
             "request" -> request(call.arguments as? String, result)
             "wifiNetworks" -> result.success(wifiNetworks())
             "simCards" -> result.success(simCards())
+            "seenApps" -> result.success(AutoTunnel.seenApps(context))
             else -> result.notImplemented()
         }
     }
@@ -66,9 +95,28 @@ class AutoTunnelPlugin :
             (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
                 granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)),
         "phone" to granted(Manifest.permission.READ_PHONE_STATE),
+        "appWatcher" to ForegroundApp.watcherEnabled(GlobalState.application),
+        "usageAccess" to ForegroundApp.hasUsageAccess(GlobalState.application),
     )
 
     private fun request(kind: String?, result: MethodChannel.Result) {
+        val settings = when (kind) {
+            "appWatcher" -> Settings.ACTION_ACCESSIBILITY_SETTINGS
+            "usageAccess" -> Settings.ACTION_USAGE_ACCESS_SETTINGS
+            else -> null
+        }
+        if (settings != null) {
+            val intent = Intent(settings).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (kind == "usageAccess") {
+                intent.data = Uri.parse("package:${GlobalState.application.packageName}")
+            }
+            val opened = runCatching { GlobalState.application.startActivity(intent) }.isSuccess ||
+                runCatching {
+                    GlobalState.application.startActivity(intent.setData(null))
+                }.isSuccess
+            result.success(opened)
+            return
+        }
         val permissions = when (kind) {
             "location" -> arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -155,7 +203,14 @@ class AutoTunnelPlugin :
         activity = null
     }
 
-    private companion object {
-        const val REQUEST_CODE = 7461
+    companion object {
+        private const val REQUEST_CODE = 7461
+        private const val APPLY_TIMEOUT_MS = 30_000L
+
+        @Volatile
+        private var active: AutoTunnelPlugin? = null
+
+        /** False when Quartz's UI isn't running or couldn't switch; the caller then switches itself. */
+        suspend fun apply(key: String): Boolean = active?.invokeApply(key) ?: false
     }
 }
