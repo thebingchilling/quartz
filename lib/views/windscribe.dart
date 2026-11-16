@@ -163,15 +163,6 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
                     _changeOptions((state) => state.copyWith(port: port));
                   },
                 ),
-                ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.star),
-                  title: Text(l.windscribePro),
-                  subtitle: Text(l.windscribeProDesc),
-                  value: settings.includePro,
-                  onChanged: (value) => _changeOptions(
-                    (state) => state.copyWith(includePro: value),
-                  ),
-                ),
               ],
             ),
             generateSectionV3(

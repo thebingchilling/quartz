@@ -16,7 +16,6 @@ class WindscribeSettings {
     this.password = '',
     this.proto = WindscribeProto.udp,
     this.port = 443,
-    this.includePro = true,
     this.profileId,
     this.updatedAt,
     this.count = 0,
@@ -28,7 +27,6 @@ class WindscribeSettings {
   final String password;
   final WindscribeProto proto;
   final int port;
-  final bool includePro;
   final int? profileId;
   final DateTime? updatedAt;
   final int count;
@@ -40,7 +38,6 @@ class WindscribeSettings {
     String? password,
     WindscribeProto? proto,
     int? port,
-    bool? includePro,
     int? profileId,
     DateTime? updatedAt,
     int? count,
@@ -49,7 +46,6 @@ class WindscribeSettings {
     password: password ?? this.password,
     proto: proto ?? this.proto,
     port: port ?? this.port,
-    includePro: includePro ?? this.includePro,
     profileId: profileId ?? this.profileId,
     updatedAt: updatedAt ?? this.updatedAt,
     count: count ?? this.count,
@@ -60,7 +56,6 @@ class WindscribeSettings {
     'password': password,
     'proto': proto.name,
     'port': port,
-    'includePro': includePro,
     'profileId': profileId,
     'updatedAt': updatedAt?.toIso8601String(),
     'count': count,
@@ -74,7 +69,6 @@ class WindscribeSettings {
             WindscribeProto.values.asNameMap()[json['proto']] ??
             WindscribeProto.udp,
         port: json['port'] as int? ?? 443,
-        includePro: json['includePro'] as bool? ?? true,
         profileId: json['profileId'] as int?,
         updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
         count: json['count'] as int? ?? 0,
@@ -133,10 +127,7 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
     if (!settings.hasCredentials) {
       throw const FormatException('Enter the OpenVPN credentials first');
     }
-    final servers = [
-      for (final server in await WindscribeApi(request.dio).servers())
-        if (settings.includePro || !server.premium) server,
-    ];
+    final servers = await WindscribeApi(request.dio).servers();
     final yaml = buildWindscribeProfile(
       servers: servers,
       username: settings.username,

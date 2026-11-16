@@ -422,10 +422,6 @@ String buildWarpProfile({
   final server = colon > 0 ? endpoint.substring(0, colon) : endpoint;
   final port = colon > 0 ? int.tryParse(endpoint.substring(colon + 1)) : null;
   final reserved = _reserved(registration.clientId);
-  final dns = [
-    for (final part in options.dns.split(','))
-      if (part.trim().isNotEmpty) part.trim(),
-  ];
   final lines = <String>[
     'proxies:',
     '  - name: ${_quote(name)}',
@@ -439,10 +435,6 @@ String buildWarpProfile({
     '    allowed-ips: ["0.0.0.0/0", "::/0"]',
     if (reserved != null) '    reserved: [${reserved.join(', ')}]',
     '    mtu: ${options.mtu}',
-    if (dns.isNotEmpty) ...[
-      '    remote-dns-resolve: true',
-      '    dns: [${dns.map(_quote).join(', ')}]',
-    ],
     if (options.keepalive > 0) '    persistent-keepalive: ${options.keepalive}',
     '    udp: true',
     if (options.variant == WarpVariant.awg && awg != null) ...[

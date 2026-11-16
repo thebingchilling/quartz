@@ -127,16 +127,6 @@ class _WarpViewState extends ConsumerState<WarpView> {
         },
       ),
       ListItem.input(
-        leading: const GlyphIcon(AppGlyphs.dns),
-        title: Text(l.warpDns),
-        subtitle: Text(_options.dns),
-        dialogTitle: l.warpDns,
-        value: _options.dns,
-        onChanged: (value) {
-          if (value != null) _update(_options.copyWith(dns: value.trim()));
-        },
-      ),
-      ListItem.input(
         leading: const GlyphIcon(AppGlyphs.clock),
         title: Text(l.warpKeepalive),
         subtitle: Text('${_options.keepalive} s'),
