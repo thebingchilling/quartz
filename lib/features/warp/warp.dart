@@ -170,6 +170,7 @@ class WarpRegistration {
     required this.privateKey,
     required this.peerPublicKey,
     required this.endpointHost,
+    this.endpointV4,
     required this.addressV4,
     this.addressV6,
     this.clientId,
@@ -183,6 +184,7 @@ class WarpRegistration {
   final String privateKey;
   final String peerPublicKey;
   final String endpointHost;
+  final String? endpointV4;
   final String addressV4;
 
   /// Without it mihomo's tunnel has no IPv6 source address, so every
@@ -210,6 +212,7 @@ class WarpRegistration {
     'privateKey': privateKey,
     'peerPublicKey': peerPublicKey,
     'endpointHost': endpointHost,
+    'endpointV4': endpointV4,
     'addressV4': addressV4,
     'addressV6': addressV6,
     'clientId': clientId,
@@ -225,6 +228,7 @@ class WarpRegistration {
         privateKey: json['privateKey'] as String,
         peerPublicKey: json['peerPublicKey'] as String,
         endpointHost: json['endpointHost'] as String,
+        endpointV4: json['endpointV4'] as String?,
         addressV4: json['addressV4'] as String,
         addressV6: json['addressV6'] as String?,
         clientId: json['clientId'] as String?,
@@ -254,6 +258,7 @@ class WarpRegistration {
     if (peer == null) throw const WarpException('No peer');
     final addresses = obj(obj(config['interface'])?['addresses']);
     final v4 = str(addresses?['v4'])?.split('/').first;
+    final endpointV4 = str(obj(peer['endpoint'])?['v4'])?.split(':').first;
     final v6 = str(addresses?['v6'])?.split('/').first;
     final ttl = DateTime.tryParse(str(obj(root['account'])?['ttl']) ?? '');
     return WarpRegistration(
@@ -265,6 +270,7 @@ class WarpRegistration {
           str(peer['public_key']) ?? (throw const WarpException('No peer key')),
       endpointHost:
           str(obj(peer['endpoint'])?['host']) ?? WarpEndpoints.defaultHost,
+      endpointV4: endpointV4,
       addressV4: v4 ?? (throw const WarpException('No IPv4 address')),
       addressV6: v6,
       clientId: str(config['client_id']),
@@ -420,16 +426,27 @@ String buildWarpProfile({
   required WarpOptions options,
   WarpAwg? awg,
 }) {
-  final endpoint = switch (options.endpointMode) {
-    WarpEndpointMode.auto => registration.endpointHost,
-    _ =>
-      options.endpoint.trim().isEmpty
-          ? registration.endpointHost
-          : options.endpoint.trim(),
-  };
-  final colon = endpoint.lastIndexOf(':');
-  final server = colon > 0 ? endpoint.substring(0, colon) : endpoint;
-  final port = colon > 0 ? int.tryParse(endpoint.substring(colon + 1)) : null;
+  (String, int?) split(String endpoint) {
+    final colon = endpoint.lastIndexOf(':');
+    return colon > 0
+        ? (
+            endpoint.substring(0, colon),
+            int.tryParse(endpoint.substring(colon + 1)),
+          )
+        : (endpoint, null);
+  }
+
+  final (host, hostPort) = split(registration.endpointHost);
+  final custom = options.endpoint.trim();
+  final useCustom =
+      options.endpointMode != WarpEndpointMode.auto && custom.isNotEmpty;
+  final (server, port) = useCustom
+      ? split(custom)
+      : (registration.endpointV4 ?? host, hostPort);
+  final dns = [
+    for (final part in options.dns.split(','))
+      if (part.trim().isNotEmpty) part.trim(),
+  ];
   final reserved = _reserved(registration.clientId);
   final lines = <String>[
     'proxies:',
@@ -444,6 +461,11 @@ String buildWarpProfile({
     '    allowed-ips: ["0.0.0.0/0", "::/0"]',
     if (reserved != null) '    reserved: [${reserved.join(', ')}]',
     '    mtu: ${options.mtu}',
+    // Networks that block outside DNS answer no local lookup at all.
+    if (dns.isNotEmpty) ...[
+      '    remote-dns-resolve: true',
+      '    dns: [${dns.map(_quote).join(', ')}]',
+    ],
     if (options.keepalive > 0) '    persistent-keepalive: ${options.keepalive}',
     '    udp: true',
     if (options.variant == WarpVariant.awg && awg != null) ...[

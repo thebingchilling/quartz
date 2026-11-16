@@ -34,7 +34,10 @@ void main() {
         'peers': [
           {
             'public_key': 'peerkey=',
-            'endpoint': {'host': 'engage.cloudflareclient.com:2408'},
+            'endpoint': {
+              'v4': '162.159.192.9:0',
+              'host': 'engage.cloudflareclient.com:2408',
+            },
           },
         ],
         'interface': {
@@ -61,10 +64,12 @@ void main() {
       awg: const WarpAwg(['<b 0x01>', '<b 0x02>', '<b 0x03>', '', '']),
     );
     expect(yaml, contains('type: wireguard'));
-    expect(yaml, contains('server: "engage.cloudflareclient.com"'));
+    expect(yaml, contains('server: "162.159.192.9"'));
     expect(yaml, contains('port: 2408'));
     expect(yaml, contains('ip: 172.16.0.2'));
     expect(yaml, contains('ipv6: "fd01::2"'));
+    expect(yaml, contains('remote-dns-resolve: true'));
+    expect(yaml, contains('dns: ["1.1.1.1", "1.0.0.1"]'));
     expect(yaml, contains('reserved: [1, 2, 3]'));
     expect(yaml, contains('amnezia-wg-option:'));
     expect(yaml, contains('i1: "<b 0x01>"'));
