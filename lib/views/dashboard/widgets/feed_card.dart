@@ -27,7 +27,7 @@ class FeedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 1),
+      height: DashboardWidgetMetrics.cardHeightOf(context, 1),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
         infoPadding: DashboardWidgetMetrics.paddingOf(

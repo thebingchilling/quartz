@@ -21,6 +21,11 @@ _AppSettingProps _$AppSettingPropsFromJson(
   dashboardWidgets: json['dashboardWidgets'] == null
       ? defaultDashboardWidgets
       : dashboardWidgetsFromJson(json['dashboardWidgets'] as List?),
+  dashboardWidgetSizes:
+      (json['dashboardWidgetSizes'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      const {},
   onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool? ?? false,
   showNotificationStopAction:
       json['showNotificationStopAction'] as bool? ?? true,
@@ -86,6 +91,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'dashboardWidgets': instance.dashboardWidgets
           .map((e) => _$DashboardWidgetEnumMap[e]!)
           .toList(),
+      'dashboardWidgetSizes': instance.dashboardWidgetSizes,
       'onlyStatisticsProxy': instance.onlyStatisticsProxy,
       'showNotificationStopAction': instance.showNotificationStopAction,
       'autoLaunch': instance.autoLaunch,

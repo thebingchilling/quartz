@@ -16,7 +16,7 @@ class TrafficUsage extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 2),
+      height: DashboardWidgetMetrics.cardHeightOf(context, 2),
       child: RepaintBoundary(
         child: CommonCard(
           radius: DashboardWidgetMetrics.radiusOf(context),

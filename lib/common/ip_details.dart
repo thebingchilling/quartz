@@ -10,6 +10,7 @@ class IpDetails {
     this.city,
     this.region,
     this.isp,
+    this.details = const {},
   });
 
   final String ip;
@@ -19,11 +20,30 @@ class IpDetails {
   final String? region;
   final String? isp;
 
+  /// Everything else the service told, by label, for the details popup.
+  final Map<String, String> details;
+
   /// "City, Region" without repeats or blanks.
   String get place => {
     ?city,
     ?region,
   }.map((part) => part.trim()).where((part) => part.isNotEmpty).join(', ');
+
+  static Map<String, String> _pick(
+    Map<String, dynamic> json,
+    Map<String, String> labels,
+  ) => {
+    for (final MapEntry(key: path, value: label) in labels.entries)
+      label: ?_text(_at(json, path)),
+  };
+
+  static Object? _at(Map<String, dynamic> json, String path) {
+    Object? value = json;
+    for (final key in path.split('.')) {
+      value = value is Map ? value[key] : null;
+    }
+    return value;
+  }
 
   static String? _text(Object? value) {
     final text = value?.toString().trim();
@@ -44,6 +64,20 @@ class IpDetails {
       isp: connection is Map
           ? _text(connection['isp']) ?? _text(connection['org'])
           : null,
+      details: _pick(json, const {
+        'type': 'IP type',
+        'continent': 'Continent',
+        'postal': 'Postal code',
+        'latitude': 'Latitude',
+        'longitude': 'Longitude',
+        'connection.asn': 'ASN',
+        'connection.org': 'Organisation',
+        'connection.domain': 'Domain',
+        'timezone.id': 'Time zone',
+        'timezone.utc': 'UTC offset',
+        'calling_code': 'Calling code',
+        'capital': 'Capital',
+      }),
     );
   }
 
@@ -58,6 +92,19 @@ class IpDetails {
       city: _text(json['city']),
       region: _text(json['region']),
       isp: _text(json['org']),
+      details: _pick(json, const {
+        'version': 'IP type',
+        'continent_code': 'Continent',
+        'postal': 'Postal code',
+        'latitude': 'Latitude',
+        'longitude': 'Longitude',
+        'asn': 'ASN',
+        'timezone': 'Time zone',
+        'utc_offset': 'UTC offset',
+        'country_calling_code': 'Calling code',
+        'country_capital': 'Capital',
+        'currency': 'Currency',
+      }),
     );
   }
 
@@ -72,6 +119,14 @@ class IpDetails {
       city: _text(json['city']),
       region: _text(json['regionName']),
       isp: _text(json['isp']) ?? _text(json['org']),
+      details: _pick(json, const {
+        'zip': 'Postal code',
+        'lat': 'Latitude',
+        'lon': 'Longitude',
+        'as': 'ASN',
+        'org': 'Organisation',
+        'timezone': 'Time zone',
+      }),
     );
   }
 }
@@ -81,7 +136,7 @@ class IpDetails {
 const ipDetailsSources = <(String, IpDetails? Function(Map<String, dynamic>))>[
   ('https://ipwho.is/', IpDetails.fromIpWhoIs),
   ('https://ipapi.co/json/', IpDetails.fromIpApiCo),
-  ('http://ip-api.com/json/', IpDetails.fromIpApiCom),
+  ('http://ip-api.com/json/?fields=66846719', IpDetails.fromIpApiCom),
 ];
 
 /// The first source that answers; throws the last failure when none does.

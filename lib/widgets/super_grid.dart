@@ -25,6 +25,9 @@ class SuperGrid extends StatefulWidget {
   final int crossAxisCount;
   final ValueChanged<List<GridItem>>? onChanged;
 
+  /// Shows a resize button on each item while editing.
+  final ValueChanged<Key>? onResize;
+
   /// What the page floats over the viewport's edges, kept clear on reveal.
   final EdgeInsets revealPadding;
 
@@ -36,6 +39,7 @@ class SuperGrid extends StatefulWidget {
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
     this.onChanged,
+    this.onResize,
     this.revealPadding = EdgeInsets.zero,
   });
 
@@ -453,6 +457,9 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
         : _buildShake(
             _DeletableContainer(
               onDelete: () => _deleteItem(key),
+              onResize: widget.onResize == null
+                  ? null
+                  : () => widget.onResize!(key),
               child: target,
             ),
             index,
@@ -577,8 +584,13 @@ class _FlightView extends StatelessWidget {
 class _DeletableContainer extends StatelessWidget {
   final Widget child;
   final VoidCallback onDelete;
+  final VoidCallback? onResize;
 
-  const _DeletableContainer({required this.child, required this.onDelete});
+  const _DeletableContainer({
+    required this.child,
+    required this.onDelete,
+    this.onResize,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -599,6 +611,20 @@ class _DeletableContainer extends StatelessWidget {
             ),
           ),
         ),
+        if (onResize != null)
+          Positioned(
+            bottom: -8,
+            right: -8,
+            child: DeferPointer(
+              child: ElasticButton(
+                child: CornerBadgeButton(
+                  glyph: AppGlyphs.cardMedium,
+                  tooltip: context.appLocalizations.dashboardResize,
+                  onPressed: onResize!,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

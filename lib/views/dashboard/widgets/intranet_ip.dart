@@ -14,7 +14,7 @@ class IntranetIP extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 1),
+      height: DashboardWidgetMetrics.cardHeightOf(context, 1),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
         infoPadding: DashboardWidgetMetrics.paddingOf(

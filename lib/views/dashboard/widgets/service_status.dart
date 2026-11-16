@@ -276,7 +276,7 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
     _showNode(check?.node);
 
     final inset = DashboardWidgetMetrics.insetOf(context);
-    final height = DashboardWidgetMetrics.heightOf(context, 1);
+    final height = DashboardWidgetMetrics.cardHeightOf(context, 1);
     final badgeInset =
         DashboardWidgetMetrics.radiusOf(context) * _badgeInsetShare;
     final badgeSize = height - badgeInset * 2;

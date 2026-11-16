@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -22,7 +23,7 @@ extension DashboardWidgetView on DashboardWidget {
     ),
     DashboardWidget.networkDetection => const GridItem(
       key: ValueKey(DashboardWidget.networkDetection),
-      crossAxisCellCount: 4,
+      crossAxisCellCount: 8,
       child: NetworkDetection(),
     ),
     DashboardWidget.tunButton => const GridItem(
@@ -86,6 +87,85 @@ extension DashboardWidgetView on DashboardWidget {
       child: ProfilesCard(),
     ),
   };
+}
+
+/// The rows each card is drawn with when it hasn't been resized.
+const _defaultRows = {
+  DashboardWidget.networkSpeed: 2,
+  DashboardWidget.outboundMode: 2,
+  DashboardWidget.trafficUsage: 2,
+  DashboardWidget.proxyGroups: 2,
+};
+
+/// A resize: [columns] in eighths of the phone grid, [rows] in card rows.
+typedef DashboardCardDimensions = ({int columns, int rows});
+
+const dashboardCardColumns = [2, 4, 6, 8];
+const dashboardCardRows = [1, 2, 3, 4];
+
+extension DashboardWidgetSize on DashboardWidget {
+  DashboardCardDimensions get defaultSize =>
+      (columns: widget.crossAxisCellCount, rows: _defaultRows[this] ?? 1);
+
+  DashboardCardDimensions sizeIn(Map<String, String> sizes) {
+    final parts = sizes[name]?.split(',');
+    final columns = int.tryParse(parts?.first ?? '');
+    final rows = int.tryParse(parts?.last ?? '');
+    if (columns == null || rows == null) return defaultSize;
+    return (columns: columns, rows: rows);
+  }
+
+  /// The card at its saved size in a grid of [gridColumns].
+  GridItem sizedWidget(Map<String, String> sizes, int gridColumns) {
+    final size = sizeIn(sizes);
+    if (size == defaultSize) return widget;
+    final span = (size.columns * gridColumns / 8).round().clamp(1, gridColumns);
+    return GridItem(
+      key: widget.key,
+      crossAxisCellCount: span,
+      child: _ResizedCard(
+        size: size,
+        defaultSize: defaultSize,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// A card bigger than its default fills the cell; a smaller one is laid out
+/// at its default size and scaled down, so nothing on it is ever cut off.
+class _ResizedCard extends StatelessWidget {
+  const _ResizedCard({
+    required this.size,
+    required this.defaultSize,
+    required this.child,
+  });
+
+  final DashboardCardDimensions size;
+  final DashboardCardDimensions defaultSize;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = size.rows < defaultSize.rows ? defaultSize.rows : size.rows;
+    return SizedBox(
+      height: DashboardWidgetMetrics.heightOf(context, size.rows),
+      child: LayoutBuilder(
+        builder: (_, constraints) {
+          final width = size.columns < defaultSize.columns
+              ? constraints.maxWidth * defaultSize.columns / size.columns
+              : constraints.maxWidth;
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(
+              width: width,
+              child: DashboardCardSize(rows: rows, child: child),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 DashboardWidget dashboardWidgetOf(GridItem gridItem) {

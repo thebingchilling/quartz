@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'widget_metrics.dart';
+import 'resize_dialog.dart';
 import 'widget_registry.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/start_button.dart';
@@ -149,6 +150,24 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     _isEditNotifier.value = false;
   }
 
+  Future<void> _resize(DashboardWidget item) async {
+    final sizes = ref.read(appSettingProvider).dashboardWidgetSizes;
+    final picked = await dialogs.showCommonDialog<DashboardCardDimensions>(
+      child: DashboardResizeDialog(initial: item.sizeIn(sizes)),
+    );
+    if (picked == null) return;
+    ref
+        .read(appSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            dashboardWidgetSizes: {
+              ...state.dashboardWidgetSizes,
+              item.name: '${picked.columns},${picked.rows}',
+            },
+          ),
+        );
+  }
+
   void _saveDashboardWidgets(List<GridItem> items) {
     final dashboardWidgets = items.map(dashboardWidgetOf).toList();
     ref
@@ -163,12 +182,15 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       profilesProvider.select((state) => state.isNotEmpty),
     );
     final spacing = cardSpacing;
-    final children = [
+    final sizes = ref.watch(
+      appSettingProvider.select((state) => state.dashboardWidgetSizes),
+    );
+    List<GridItem> childrenFor(int columns) => [
       ...dashboardState.dashboardWidgets
           .where(
             (item) => item.platforms.contains(SupportPlatform.currentPlatform),
           )
-          .map((item) => item.widget),
+          .map((item) => item.sizedWidget(sizes, columns)),
     ];
     return _buildIsEdit(
       (isEdit) => CommonScaffold(
@@ -209,11 +231,14 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                                 crossAxisSpacing: spacing,
                                 mainAxisSpacing: spacing,
                                 onChanged: _saveDashboardWidgets,
+                                onResize: (key) => _resize(
+                                  (key as ValueKey<DashboardWidget>).value,
+                                ),
                                 revealPadding: padding.copyWith(
                                   left: 0,
                                   right: 0,
                                 ),
-                                children: children,
+                                children: childrenFor(columns),
                               );
                               return DashboardWidgetMetrics(
                                 unitHeight: dashboardUnitHeight(

@@ -17,7 +17,7 @@ class NetworkSpeed extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final color = context.colorScheme.onSurfaceVariant.opacity80;
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 2),
+      height: DashboardWidgetMetrics.cardHeightOf(context, 2),
       child: RepaintBoundary(
         child: CommonCard(
           radius: DashboardWidgetMetrics.radiusOf(context),

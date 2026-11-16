@@ -38,7 +38,7 @@ class _QuickSwitchCard extends StatelessWidget {
         2;
     final overhang = max(0.0, (_switchHeight - lineHeight) / 2);
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 1),
+      height: DashboardWidgetMetrics.cardHeightOf(context, 1),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
         infoPadding: DashboardWidgetMetrics.paddingOf(

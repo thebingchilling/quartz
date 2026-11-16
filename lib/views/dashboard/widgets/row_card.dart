@@ -33,7 +33,7 @@ class RowCardFrame extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final shape = AppShape.all(DashboardWidgetMetrics.radiusOf(context));
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 2),
+      height: DashboardWidgetMetrics.cardHeightOf(context, 2),
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: ShapeDecoration(
