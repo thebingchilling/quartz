@@ -129,6 +129,9 @@ choice on Windows), the feature still ships there without that part.
 
 ## Builds
 
+Changes are pushed straight to `main` (standing rule), not left on a side branch: a push
+to `main` is what builds and publishes the release.
+
 `.github/workflows/quartz-clash.yml` builds Android and Windows (x64) in one run on pushes
 to `main` and by hand, with FlClash's own `setup.dart` (`--env stable`, so no PRE label;
 arm and arm64 APKs only), and publishes both as the latest Quartz release
