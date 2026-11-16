@@ -75,6 +75,20 @@ class WindscribeSettings {
       );
 }
 
+/// Windscribe turns away a burst of logins, so its profile is tested one
+/// country's servers at a time and never through a group of groups.
+final windscribeProfileActiveProvider = Provider<bool>((ref) {
+  final profileId = ref.watch(windscribeProvider.select((s) => s.profileId));
+  return profileId != null && profileId == ref.watch(currentProfileIdProvider);
+});
+
+/// The Windscribe group lists countries, which are groups, so it has no test.
+final groupDelayTestableProvider = Provider.family<bool, String>(
+  (ref, groupName) =>
+      groupName != windscribeGroupName ||
+      !ref.watch(windscribeProfileActiveProvider),
+);
+
 final windscribeProvider =
     NotifierProvider<WindscribeNotifier, WindscribeSettings>(
       WindscribeNotifier.new,

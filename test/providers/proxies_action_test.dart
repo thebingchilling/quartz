@@ -523,7 +523,7 @@ void main() {
     });
 
     test(
-      'on the Windscribe profile only the selected server is probed',
+      'on the Windscribe profile only a country\'s servers are probed',
       () async {
         when(() => core.asyncTestDelay(any(), any())).thenAnswer(
           (invocation) async => Delay(
@@ -563,12 +563,20 @@ void main() {
         ];
         container.read(groupsProvider.notifier).update((_) => groups);
 
-        await actionOf(container).delayTestPageGroup('Australia');
+        await actionOf(container).delayTestPageGroup('Windscribe');
         await actionOf(container).delayTestGroups(groups);
+        verifyNever(() => core.asyncTestDelay(any(), any()));
 
-        verify(() => core.asyncTestDelay(_testUrl, 'AU Perth')).called(2);
-        verifyNever(() => core.asyncTestDelay(any(), 'AU Sydney'));
+        await actionOf(container).delayTestPageGroup('Australia');
+
+        verify(() => core.asyncTestDelay(_testUrl, 'AU Perth')).called(1);
+        verify(() => core.asyncTestDelay(_testUrl, 'AU Sydney')).called(1);
         verifyNever(() => core.asyncTestDelay(any(), 'US East'));
+        expect(
+          container.read(groupDelayTestableProvider('Windscribe')),
+          isFalse,
+        );
+        expect(container.read(groupDelayTestableProvider('Australia')), isTrue);
       },
     );
 

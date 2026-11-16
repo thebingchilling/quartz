@@ -295,27 +295,12 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   Future<void> delayTestGroups(List<Group> groups) async {
-    if (_testsSelectionOnly) {
-      await _runDelayTests([
-        (proxies: [_asTarget(windscribeGroupName)], testUrl: null),
-      ]);
-      return;
-    }
+    if (ref.read(windscribeProfileActiveProvider)) return;
     await _runDelayTests([
       for (final group in groups) (proxies: group.all, testUrl: group.testUrl),
     ]);
     ref.read(sortNumProvider.notifier).add();
   }
-
-  /// Windscribe turns a burst of logins away, so on its profile a bulk test
-  /// probes only the server that is selected, never every server.
-  bool get _testsSelectionOnly {
-    final profileId = ref.read(windscribeProvider).profileId;
-    return profileId != null && profileId == ref.read(currentProfileIdProvider);
-  }
-
-  /// A group as a test target resolves to the server it has selected.
-  Proxy _asTarget(String groupName) => Proxy(name: groupName, type: 'Selector');
 
   Future<void> delayTestPageGroup(
     String groupName, {
@@ -330,10 +315,6 @@ class ProxiesAction extends _$ProxiesAction {
       return;
     }
     try {
-      if (_testsSelectionOnly) {
-        await delayTest([_asTarget(groupName)], group.testUrl);
-        return;
-      }
       final query = SearchQuery(
         matchSearch ? ref.read(queryProvider(QueryTag.proxies)) : '',
       );
@@ -355,9 +336,11 @@ class ProxiesAction extends _$ProxiesAction {
     );
     final seen = <String>{};
     final targets = <_DelayTestTarget>[];
+    final serversOnly = ref.read(windscribeProfileActiveProvider);
     for (final batch in batches) {
       final fallbackTestUrl = ref.read(realTestUrlProvider(batch.testUrl));
       for (final proxy in batch.proxies) {
+        if (serversOnly && groups.getGroup(proxy.name) != null) continue;
         final state = computeRealSelectedProxyState(
           proxy.name,
           groups: groups,

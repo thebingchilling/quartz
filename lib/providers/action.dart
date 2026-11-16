@@ -10,7 +10,6 @@ import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/app_bypass/app_bypass.dart';
-import 'package:fl_clash/features/windscribe/windscribe.dart';
 import 'package:fl_clash/features/windscribe/windscribe_store.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
