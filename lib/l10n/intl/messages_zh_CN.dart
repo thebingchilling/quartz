@@ -178,11 +178,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m73(count) => "剩余 ${count} 天";
 
-  static String m74(count, date) => "${count} 台服务器 · 更新于 ${date}";
+  static String m74(count) => "${count} 个服务器";
 
-  static String m75(count) => "${count} 年前";
+  static String m75(count, date) => "${count} 台服务器 · 更新于 ${date}";
 
   static String m76(count) => "${count} 年前";
+
+  static String m77(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1499,7 +1501,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "将 Windscribe 的服务器添加为 OpenVPN 配置",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "Quartz 启动时，如果列表超过 6 小时会自动更新。在 Windscribe 配置的 Windscribe 组中选择服务器。",
+      "Quartz 启动时，如果列表超过 6 小时会自动更新。",
+    ),
+    "windscribeLocations": MessageLookupByLibrary.simpleMessage("位置"),
+    "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
+      "更新服务器列表后即可选择位置。",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("尚未添加"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage("OpenVPN 密码"),
@@ -1508,15 +1514,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "windscribeProDesc": MessageLookupByLibrary.simpleMessage("需要有效的 Pro 套餐"),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("协议"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("保存"),
-    "windscribeStatus": m74,
+    "windscribeServerCount": m74,
+    "windscribeStatus": m75,
     "windscribeUpdate": MessageLookupByLibrary.simpleMessage("更新服务器列表"),
     "windscribeUsername": MessageLookupByLibrary.simpleMessage("OpenVPN 用户名"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "写入系统会同时设置系统时钟，Android 上不生效。",
     ),
-    "yearsAgo": m75,
-    "yearsAgoShort": m76,
+    "yearsAgo": m76,
+    "yearsAgoShort": m77,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
   };

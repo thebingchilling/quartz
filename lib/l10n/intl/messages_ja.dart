@@ -181,11 +181,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m73(count) => "残り ${count} 日";
 
-  static String m74(count, date) => "${count} 台 · ${date} に更新";
+  static String m74(count) => "${count} 台のサーバー";
 
-  static String m75(count) => "${count} 年前";
+  static String m75(count, date) => "${count} 台 · ${date} に更新";
 
   static String m76(count) => "${count} 年前";
+
+  static String m77(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1658,7 +1660,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Windscribe のサーバーを OpenVPN プロファイルとして追加",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "Quartz 起動時、一覧が 6 時間以上前なら更新します。Windscribe プロファイルの Windscribe グループでサーバーを選びます。",
+      "Quartz 起動時、一覧が 6 時間以上前なら更新します。",
+    ),
+    "windscribeLocations": MessageLookupByLibrary.simpleMessage("ロケーション"),
+    "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
+      "サーバー一覧を更新するとロケーションを選べます。",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("まだ追加されていません"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage("OpenVPN パスワード"),
@@ -1667,15 +1673,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "windscribeProDesc": MessageLookupByLibrary.simpleMessage("有効な Pro プランが必要"),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("プロトコル"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("保存"),
-    "windscribeStatus": m74,
+    "windscribeServerCount": m74,
+    "windscribeStatus": m75,
     "windscribeUpdate": MessageLookupByLibrary.simpleMessage("サーバー一覧を更新"),
     "windscribeUsername": MessageLookupByLibrary.simpleMessage("OpenVPN ユーザー名"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムに書き込む"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "システムに書き込むを有効にするとシステムクロックも設定します。Android では無視されます。",
     ),
-    "yearsAgo": m75,
-    "yearsAgoShort": m76,
+    "yearsAgo": m76,
+    "yearsAgoShort": m77,
     "yes": MessageLookupByLibrary.simpleMessage("はい"),
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };

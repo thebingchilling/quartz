@@ -29,7 +29,57 @@ class WindscribeServer {
   String get host => '${iata.toLowerCase()}-$datacenterId.whiskergalaxy.com';
 
   String get label => '$countryCode $name';
+
+  Map<String, dynamic> toJson() => {
+    'country': country,
+    'countryCode': countryCode,
+    'name': name,
+    'datacenterId': datacenterId,
+    'iata': iata,
+    'premium': premium,
+    'usage': usage,
+  };
+
+  static WindscribeServer? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final id = json['datacenterId'];
+    final iata = json['iata'];
+    if (id is! int || iata is! String) return null;
+    return WindscribeServer(
+      country: '${json['country'] ?? ''}',
+      countryCode: '${json['countryCode'] ?? ''}',
+      name: '${json['name'] ?? iata}',
+      datacenterId: id,
+      iata: iata,
+      premium: json['premium'] == true,
+      usage: (json['usage'] as num?)?.toDouble() ?? 0,
+    );
+  }
 }
+
+/// Each server with the proxy name it has in the profile; a label two
+/// servers share gets a number.
+List<(WindscribeServer, String)> windscribeProxyNames(
+  List<WindscribeServer> servers,
+) {
+  final seen = <String>{};
+  String unique(String label) {
+    var name = label;
+    for (var n = 2; !seen.add(name); n++) {
+      name = '$label $n';
+    }
+    return name;
+  }
+
+  return [for (final server in servers) (server, unique(server.label))];
+}
+
+/// Countries in the order the profile and the location list show them.
+List<String> windscribeCountries(List<WindscribeServer> servers) => {
+  for (final server in servers)
+    if (server.countryCode == windscribeHomeCountryCode) server.country,
+  for (final server in servers) server.country,
+}.toList();
 
 enum WindscribeProto {
   udp([443, 80, 53, 123, 1194, 54783]),
@@ -113,6 +163,9 @@ const windscribeGroupName = 'Windscribe';
 /// Listed first in the Windscribe group, so it is what a new profile selects.
 const windscribeHomeCountryCode = 'NZ';
 
+/// The resolver every Windscribe server offers inside its tunnel.
+const windscribeDns = '10.255.255.1';
+
 /// Every server as a mihomo `openvpn` proxy, grouped by country.
 String buildWindscribeProfile({
   required List<WindscribeServer> servers,
@@ -121,22 +174,12 @@ String buildWindscribeProfile({
   required WindscribeProto proto,
   required int port,
 }) {
-  final seen = <String>{};
-  String unique(String label) {
-    var name = label;
-    for (var n = 2; !seen.add(name); n++) {
-      name = '$label $n';
-    }
-    return name;
-  }
-
-  final named = [for (final server in servers) (server, unique(server.label))];
-  final countries = <String, List<String>>{};
-  for (final (server, name) in [
-    ...named.where((e) => e.$1.countryCode == windscribeHomeCountryCode),
-    ...named.where((e) => e.$1.countryCode != windscribeHomeCountryCode),
-  ]) {
-    countries.putIfAbsent(server.country, () => []).add(name);
+  final named = windscribeProxyNames(servers);
+  final countries = {
+    for (final country in windscribeCountries(servers)) country: <String>[],
+  };
+  for (final (server, name) in named) {
+    countries[server.country]!.add(name);
   }
   final lines = <String>['proxies:'];
   for (final (server, name) in named) {
@@ -146,6 +189,7 @@ String buildWindscribeProfile({
       '    server: ${server.host}',
       '    port: $port',
       '    proto: ${proto.name}',
+      '    dev: tun',
       '    username: ${_quote(username)}',
       '    password: ${_quote(password)}',
       '    cipher: AES-256-GCM',
@@ -153,6 +197,8 @@ String buildWindscribeProfile({
       '    auth: SHA512',
       '    key-direction: "1"',
       '    udp: true',
+      '    remote-dns-resolve: true',
+      '    dns: ["$windscribeDns"]',
       '    ca: |',
       _block(windscribeCa, '      '),
       '    tls-auth: |',
@@ -167,9 +213,12 @@ String buildWindscribeProfile({
     for (final MapEntry(key: country, value: names) in countries.entries) ...[
       '  - name: ${_quote(country)}',
       '    type: select',
+      '    hidden: true',
       '    proxies: [${names.map(_quote).join(', ')}]',
     ],
     'rules:',
+    '  - DOMAIN-SUFFIX,whiskergalaxy.com,DIRECT',
+    '  - GEOIP,LAN,DIRECT,no-resolve',
     '  - MATCH,$windscribeGroupName',
   ]);
   return '${lines.join('\n')}\n';

@@ -951,7 +951,17 @@
   "windscribeUpdate": "サーバー一覧を更新",
   "windscribeStatus": "{count} 台 · {date} に更新",
   "windscribeNotAdded": "まだ追加されていません",
-  "windscribeListDesc": "Quartz 起動時、一覧が 6 時間以上前なら更新します。Windscribe プロファイルの Windscribe グループでサーバーを選びます。",
+  "windscribeListDesc": "Quartz 起動時、一覧が 6 時間以上前なら更新します。",
+  "windscribeLocations": "ロケーション",
+  "windscribeServerCount": "{count} 台のサーバー",
+  "@windscribeServerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "windscribeLocationsEmpty": "サーバー一覧を更新するとロケーションを選べます。",
   "dashboardResize": "サイズ変更",
   "dashboardWidth": "幅",
   "dashboardHeight": "高さ（行）",

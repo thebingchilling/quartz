@@ -109,5 +109,21 @@ void main() {
     expect(yaml, contains('proxies: ["New Zealand", "Albania", "Australia"]'));
     expect(yaml, contains('  - MATCH,Windscribe'));
     expect(yaml, isNot(contains('url-test')));
+    expect(yaml, contains('dev: tun'));
+    expect(yaml, contains('remote-dns-resolve: true'));
+    expect(yaml, contains('dns: ["10.255.255.1"]'));
+    expect(yaml, contains('hidden: true'));
+    expect(yaml, contains('  - DOMAIN-SUFFIX,whiskergalaxy.com,DIRECT'));
+    expect(yaml, contains('  - GEOIP,LAN,DIRECT,no-resolve'));
+  });
+
+  test('the server list survives a save, for the location picker', () {
+    final servers = WindscribeApi.parseServers(_status);
+    final restored = [
+      for (final server in servers)
+        WindscribeServer.fromJson(jsonDecode(jsonEncode(server.toJson())))!,
+    ];
+    expect(restored.map((s) => s.host), servers.map((s) => s.host));
+    expect(windscribeCountries(restored).first, 'New Zealand');
   });
 }

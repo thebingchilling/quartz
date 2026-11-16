@@ -205,12 +205,14 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m73(count) =>
       "${Intl.plural(count, one: 'Остался ${count} день', few: 'Осталось ${count} дня', other: 'Осталось ${count} дней')}";
 
-  static String m74(count, date) => "Серверов: ${count} · обновлено ${date}";
+  static String m74(count) => "Серверов: ${count}";
 
-  static String m75(count) =>
-      "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
+  static String m75(count, date) => "Серверов: ${count} · обновлено ${date}";
 
   static String m76(count) =>
+      "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
+
+  static String m77(count) =>
       "${Intl.plural(count, one: '${count} г. назад', few: '${count} г. назад', many: '${count} л. назад', other: '${count} г. назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -2040,7 +2042,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Серверы Windscribe как профиль OpenVPN",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "Список обновляется при запуске Quartz, если ему больше 6 часов. Серверы выбираются в группе Windscribe профиля Windscribe.",
+      "Список обновляется при запуске Quartz, если ему больше 6 часов.",
+    ),
+    "windscribeLocations": MessageLookupByLibrary.simpleMessage("Локации"),
+    "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
+      "Обновите список серверов, чтобы выбрать локацию.",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage(
       "Ещё не добавлено",
@@ -2055,7 +2061,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("Протокол"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("Сохранить"),
-    "windscribeStatus": m74,
+    "windscribeServerCount": m74,
+    "windscribeStatus": m75,
     "windscribeUpdate": MessageLookupByLibrary.simpleMessage(
       "Обновить список серверов",
     ),
@@ -2068,8 +2075,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "«Записывать в систему» также устанавливает системные часы; Android это игнорирует.",
     ),
-    "yearsAgo": m75,
-    "yearsAgoShort": m76,
+    "yearsAgo": m76,
+    "yearsAgoShort": m77,
     "yes": MessageLookupByLibrary.simpleMessage("Да"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
   };

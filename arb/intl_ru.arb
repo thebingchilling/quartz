@@ -951,7 +951,17 @@
   "windscribeUpdate": "Обновить список серверов",
   "windscribeStatus": "Серверов: {count} · обновлено {date}",
   "windscribeNotAdded": "Ещё не добавлено",
-  "windscribeListDesc": "Список обновляется при запуске Quartz, если ему больше 6 часов. Серверы выбираются в группе Windscribe профиля Windscribe.",
+  "windscribeListDesc": "Список обновляется при запуске Quartz, если ему больше 6 часов.",
+  "windscribeLocations": "Локации",
+  "windscribeServerCount": "Серверов: {count}",
+  "@windscribeServerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "windscribeLocationsEmpty": "Обновите список серверов, чтобы выбрать локацию.",
   "dashboardResize": "Размер",
   "dashboardWidth": "Ширина",
   "dashboardHeight": "Высота (строки)",

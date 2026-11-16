@@ -951,7 +951,17 @@
   "windscribeUpdate": "更新服务器列表",
   "windscribeStatus": "{count} 台服务器 · 更新于 {date}",
   "windscribeNotAdded": "尚未添加",
-  "windscribeListDesc": "Quartz 启动时，如果列表超过 6 小时会自动更新。在 Windscribe 配置的 Windscribe 组中选择服务器。",
+  "windscribeListDesc": "Quartz 启动时，如果列表超过 6 小时会自动更新。",
+  "windscribeLocations": "位置",
+  "windscribeServerCount": "{count} 个服务器",
+  "@windscribeServerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "windscribeLocationsEmpty": "更新服务器列表后即可选择位置。",
   "dashboardResize": "调整大小",
   "dashboardWidth": "宽度",
   "dashboardHeight": "高度（行）",

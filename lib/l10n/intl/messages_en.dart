@@ -203,12 +203,14 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m73(count) =>
       "${Intl.plural(count, one: '1 day left', other: '${count} days left')}";
 
-  static String m74(count, date) => "${count} servers · updated ${date}";
+  static String m74(count) => "${count} servers";
 
-  static String m75(count) =>
+  static String m75(count, date) => "${count} servers · updated ${date}";
+
+  static String m76(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
-  static String m76(count) => "${Intl.plural(count, other: '${count}y ago')}";
+  static String m77(count) => "${Intl.plural(count, other: '${count}y ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1939,7 +1941,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Windscribe\'s servers as an OpenVPN profile",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "The list updates when Quartz starts if it\'s over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.",
+      "The list updates when Quartz starts if it\'s over 6 hours old.",
+    ),
+    "windscribeLocations": MessageLookupByLibrary.simpleMessage("Locations"),
+    "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
+      "Update the server list to choose a location.",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("Not added yet"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage(
@@ -1952,7 +1958,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("Protocol"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("Save"),
-    "windscribeStatus": m74,
+    "windscribeServerCount": m74,
+    "windscribeStatus": m75,
     "windscribeUpdate": MessageLookupByLibrary.simpleMessage(
       "Update server list",
     ),
@@ -1963,8 +1970,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Write to system also sets the system clock; Android ignores it.",
     ),
-    "yearsAgo": m75,
-    "yearsAgoShort": m76,
+    "yearsAgo": m76,
+    "yearsAgoShort": m77,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };

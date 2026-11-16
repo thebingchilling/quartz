@@ -19,6 +19,7 @@ class WindscribeSettings {
     this.profileId,
     this.updatedAt,
     this.count = 0,
+    this.servers = const [],
   });
 
   /// The OpenVPN credentials from Windscribe's config generator, not the
@@ -31,6 +32,9 @@ class WindscribeSettings {
   final DateTime? updatedAt;
   final int count;
 
+  /// The list the profile was last written from, for the location picker.
+  final List<WindscribeServer> servers;
+
   bool get hasCredentials => username.isNotEmpty && password.isNotEmpty;
 
   WindscribeSettings copyWith({
@@ -41,6 +45,7 @@ class WindscribeSettings {
     int? profileId,
     DateTime? updatedAt,
     int? count,
+    List<WindscribeServer>? servers,
   }) => WindscribeSettings(
     username: username ?? this.username,
     password: password ?? this.password,
@@ -49,6 +54,7 @@ class WindscribeSettings {
     profileId: profileId ?? this.profileId,
     updatedAt: updatedAt ?? this.updatedAt,
     count: count ?? this.count,
+    servers: servers ?? this.servers,
   );
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +65,7 @@ class WindscribeSettings {
     'profileId': profileId,
     'updatedAt': updatedAt?.toIso8601String(),
     'count': count,
+    'servers': [for (final server in servers) server.toJson()],
   };
 
   factory WindscribeSettings.fromJson(Map<String, dynamic> json) =>
@@ -72,6 +79,10 @@ class WindscribeSettings {
         profileId: json['profileId'] as int?,
         updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
         count: json['count'] as int? ?? 0,
+        servers: [
+          for (final item in json['servers'] as List? ?? const [])
+            ?WindscribeServer.fromJson(item),
+        ],
       );
 }
 
@@ -167,9 +178,37 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
         profileId: profile.id,
         updatedAt: DateTime.now(),
         count: servers.length,
+        servers: servers,
       ),
     );
     return servers.length;
+  }
+
+  /// Connects through [proxyName] in [country]: the Windscribe profile is
+  /// switched to first if another one runs, carrying the choice with it.
+  void select(String country, String proxyName) {
+    final profileId = state.profileId;
+    if (profileId == null) return;
+    if (ref.read(currentProfileIdProvider) == profileId) {
+      ref.read(proxiesActionProvider.notifier)
+        ..changeProxyDebounce(country, proxyName)
+        ..changeProxyDebounce(windscribeGroupName, country);
+      return;
+    }
+    final profile = ref.read(profilesProvider).getProfile(profileId);
+    if (profile == null) return;
+    ref
+        .read(profilesProvider.notifier)
+        .put(
+          profile.copyWith(
+            selectedMap: {
+              ...profile.selectedMap,
+              windscribeGroupName: country,
+              country: proxyName,
+            },
+          ),
+        );
+    ref.read(currentProfileIdProvider.notifier).value = profileId;
   }
 
   /// Run at startup: keeps an existing Windscribe profile's list current.

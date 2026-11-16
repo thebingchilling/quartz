@@ -968,7 +968,17 @@
     }
   },
   "windscribeNotAdded": "Not added yet",
-  "windscribeListDesc": "The list updates when Quartz starts if it's over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.",
+  "windscribeListDesc": "The list updates when Quartz starts if it's over 6 hours old.",
+  "windscribeLocations": "Locations",
+  "windscribeServerCount": "{count} servers",
+  "@windscribeServerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "windscribeLocationsEmpty": "Update the server list to choose a location.",
   "dashboardResize": "Resize",
   "dashboardWidth": "Width",
   "dashboardHeight": "Height (rows)",

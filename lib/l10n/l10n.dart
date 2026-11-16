@@ -7974,11 +7974,41 @@ class AppLocalizations {
     );
   }
 
-  /// `The list updates when Quartz starts if it's over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.`
+  /// `The list updates when Quartz starts if it's over 6 hours old.`
   String get windscribeListDesc {
     return Intl.message(
-      'The list updates when Quartz starts if it\'s over 6 hours old. Pick servers in the Windscribe group of the Windscribe profile.',
+      'The list updates when Quartz starts if it\'s over 6 hours old.',
       name: 'windscribeListDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Locations`
+  String get windscribeLocations {
+    return Intl.message(
+      'Locations',
+      name: 'windscribeLocations',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} servers`
+  String windscribeServerCount(int count) {
+    return Intl.message(
+      '$count servers',
+      name: 'windscribeServerCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Update the server list to choose a location.`
+  String get windscribeLocationsEmpty {
+    return Intl.message(
+      'Update the server list to choose a location.',
+      name: 'windscribeLocationsEmpty',
       desc: '',
       args: [],
     );
