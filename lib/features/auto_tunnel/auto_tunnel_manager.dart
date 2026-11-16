@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/desktop/helper_client.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +35,7 @@ class _AndroidAutoTunnelState extends ConsumerState<AndroidAutoTunnel> {
     AutoTunnelPlatform.channel.setMethodCallHandler(_handle);
     ref.listenManual(autoTunnelProvider, (_, _) => _schedule());
     ref.listenManual(profilesProvider, (_, _) => _schedule());
+    ref.listenManual(currentProfileIdProvider, (_, _) => _schedule());
     unawaited(_adopt());
   }
 
@@ -63,7 +66,7 @@ class _AndroidAutoTunnelState extends ConsumerState<AndroidAutoTunnel> {
         : const <String, dynamic>{};
     try {
       await AutoTunnelNotifier.platform.update(
-        settingsJson(settings, rendered),
+        settingsJson(settings, rendered, ref.read(currentProfileIdProvider)),
       );
     } on PlatformException catch (error) {
       commonPrint.log('Auto-tunnel update failed: $error');
@@ -81,8 +84,9 @@ class _AndroidAutoTunnelState extends ConsumerState<AndroidAutoTunnel> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Windows: the same rules as Android's service, watched while the app runs
-/// (it lives in the tray).
+/// Windows: the same settings as Android's service, watched while the app
+/// runs in the tray. The kill switch lives in the Helper's firewall, so it
+/// keeps blocking if Quartz closes.
 class DesktopAutoTunnel extends ConsumerStatefulWidget {
   const DesktopAutoTunnel({super.key, required this.child});
 
@@ -99,12 +103,16 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   List<ConnectivityResult> _results = const [];
+  NetworkSnapshot _network = (kind: NetworkKind.none, ssid: null, simId: null);
   Timer? _timer;
   Timer? _appTimer;
   Timer? _lingerTimer;
   List<String> _openApps = const [];
   List<String> _appsForRules = const [];
   String? _lastKey;
+  String? _lastFirewall;
+  bool _manualOff = false;
+  bool _switching = false;
 
   @override
   void initState() {
@@ -123,22 +131,33 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
       _lastKey = null;
       _schedule();
     });
+    ref.listenManual(isStartProvider, (previous, running) {
+      if (running) {
+        _manualOff = false;
+      } else if (previous == true && !_switching) {
+        _manualOff = true;
+      }
+      _lastFirewall = null;
+      unawaited(_syncFirewall());
+    });
+    ref.listenManual(currentProfileIdProvider, (_, _) {
+      unawaited(_syncFirewall());
+    });
     _appTimer = Timer.periodic(_appPoll, (_) => unawaited(_pollApps()));
   }
 
   Future<void> _pollApps() async {
     final settings = ref.read(autoTunnelProvider);
-    final ruleApps = {
-      for (final rule in settings.rules)
-        if (rule.enabled && rule.kind == TriggerKind.app)
-          ...rule.apps.map((app) => app.toLowerCase()),
+    final watched = {
+      for (final app in settings.apps)
+        if (app.target != null) app.detected,
     };
-    if (!settings.enabled || ruleApps.isEmpty) return;
+    if (!settings.enabled || watched.isEmpty) return;
     final next = stepOpenApps(
       _openApps,
       foreground: foregroundExecutable(),
       open: _openApps.isEmpty ? const {} : await runningExecutables(),
-      ruleApps: ruleApps,
+      ruleApps: watched,
     );
     if (listEquals(next, _openApps)) return;
     _openApps = next;
@@ -178,9 +197,13 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   }
 
   Future<void> _apply() async {
+    if (!mounted) return;
     final settings = ref.read(autoTunnelProvider);
-    if (!settings.enabled || !mounted) return;
     final network = await _snapshot();
+    if (network != _network) _manualOff = false;
+    _network = network;
+    await _syncFirewall();
+    if (!settings.enabled || !mounted) return;
     final decision = decideAutoTunnel(
       settings,
       network,
@@ -191,7 +214,43 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     _lastKey = key;
     if (decision == null) return;
     commonPrint.log('Auto-tunnel: $network -> ${decision.$1}');
-    await applyTunnelTarget(ref, decision.$2);
+    _switching = !decision.$2.disconnects;
+    try {
+      await applyTunnelTarget(ref, decision.$2);
+    } finally {
+      _switching = false;
+    }
+  }
+
+  /// The kill switch blocks every app but the Core and the TUN adapter;
+  /// a manual stop releases the connection and tunnel kill switches.
+  Future<void> _syncFirewall() async {
+    if (!mounted || !system.isWindows) return;
+    final settings = ref.read(autoTunnelProvider);
+    final blockAll =
+        !_manualOff &&
+        blocksAll(settings, _network, ref.read(currentProfileIdProvider));
+    final apps = [
+      for (final app in settings.apps)
+        if (app.killSwitch) app.app,
+    ];
+    final tunAlias = ref.read(patchClashConfigProvider).tun.device;
+    final key = '$blockAll|${apps.join('|')}|$tunAlias';
+    if (key == _lastFirewall) return;
+    _lastFirewall = key;
+    try {
+      await helperClient.applyFirewall(
+        blockAll: blockAll,
+        apps: apps,
+        tunAlias: tunAlias,
+      );
+    } on HelperException catch (error) {
+      _lastFirewall = null;
+      commonPrint.log(
+        'Kill switch: the Helper refused ($error)',
+        logLevel: LogLevel.warning,
+      );
+    }
   }
 
   @override

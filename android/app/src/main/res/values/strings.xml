@@ -5,4 +5,6 @@
     <string name="auto_tunnel_text">Switches tunnels as you change networks and apps</string>
     <string name="app_watcher_label">Quartz app detection</string>
     <string name="app_watcher_description">Lets auto-tunnel see which app is on screen, including apps in the work profile and Secure Folder, to switch tunnels for app rules. Reads no screen content.</string>
+    <string name="kill_switch_title">Kill switch</string>
+    <string name="kill_switch_text">Blocking traffic until the tunnel is back</string>
 </resources>

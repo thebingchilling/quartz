@@ -1,3 +1,4 @@
+mod firewall;
 pub mod hub;
 #[cfg(target_os = "linux")]
 pub mod linux;

@@ -28,13 +28,17 @@ object AutoTunnel {
         } ?: AutoTunnelSettings()
 
     fun update(context: Context, json: String) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, json).apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, json).commit()
+        KillSwitch.nativeProfileId = null
         sync(context)
+        KillSwitch.evaluate()
     }
 
     fun sync(context: Context) {
+        KillSwitch.watch()
         val intent = Intent(context, AutoTunnelService::class.java)
-        if (settings(context).enabled) {
+        val settings = settings(context)
+        if (settings.enabled || settings.usesKillSwitch) {
             runCatching { ContextCompat.startForegroundService(context, intent) }
         } else {
             context.stopService(intent)
@@ -59,7 +63,8 @@ object AutoTunnel {
     /** Points the service at [key]'s rendered config and restarts it if it was running. */
     suspend fun applyWithoutFlutter(context: Context, key: String, target: TunnelTarget) {
         if (target.profileId == null) {
-            ServiceState.handleStopAction()
+            KillSwitch.onManualStop()
+            ServiceState.handleSwitchStop()
             return
         }
         val rendered = settings(context).rendered[key]
@@ -85,7 +90,8 @@ object AutoTunnel {
             .putString(SHARED_STATE, state.toString())
             .putString(APPLIED, key)
             .commit()
-        if (ServiceState.isRunRequested) ServiceState.handleStopAction()
+        KillSwitch.nativeProfileId = rendered.profileId
+        if (ServiceState.isRunRequested) ServiceState.handleSwitchStop()
         ServiceState.handleStartAction()
     }
 }

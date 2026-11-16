@@ -123,8 +123,8 @@ class AutoTunnelService : Service() {
     private fun watchApps() {
         scope.launch {
             ForegroundApp.activity(this@AutoTunnelService).collect { activity ->
-                val ruleApps = AutoTunnel.settings(this@AutoTunnelService).ruleApps
-                if (ruleApps.isEmpty()) {
+                val watched = AutoTunnel.settings(this@AutoTunnelService).watchedApps
+                if (watched.isEmpty()) {
                     openApps = emptyList()
                     return@collect
                 }
@@ -132,7 +132,7 @@ class AutoTunnelService : Service() {
                     openApps,
                     activity.foreground,
                     activity.open,
-                    ruleApps,
+                    watched,
                 )
                 if (next == openApps) return@collect
                 openApps = next
@@ -190,11 +190,13 @@ class AutoTunnelService : Service() {
 
     private fun apply() {
         val settings = AutoTunnel.settings(this)
-        if (!settings.enabled) {
+        if (!settings.enabled && !settings.usesKillSwitch) {
             stopSelf()
             return
         }
         val network = snapshot()
+        KillSwitch.onNetwork(network)
+        if (!settings.enabled) return
         val decision = AutoTunnelRules.decide(settings, network, appsForRules)
         val key = "${network.kind}|${network.ssid}|${network.subscriptionId}|${decision?.key}"
         if (key == lastKey) return

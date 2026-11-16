@@ -7754,10 +7754,10 @@ class AppLocalizations {
     return Intl.message('Auto-tunnel', name: 'autoTunnel', desc: '', args: []);
   }
 
-  /// `Switches tunnels by itself: rules for Wi-Fi, mobile data per SIM, Ethernet and apps each pick a tunnel or disconnect. A manual change holds until the network or an app changes.`
+  /// `Each connection and app below can pick a tunnel; an open app wins over the connection. A manual change holds until the connection or app changes.`
   String get autoTunnelDesc {
     return Intl.message(
-      'Switches tunnels by itself: rules for Wi-Fi, mobile data per SIM, Ethernet and apps each pick a tunnel or disconnect. A manual change holds until the network or an app changes.',
+      'Each connection and app below can pick a tunnel; an open app wins over the connection. A manual change holds until the connection or app changes.',
       name: 'autoTunnelDesc',
       desc: '',
       args: [],
@@ -8094,56 +8094,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Rules`
-  String get autoTunnelRules {
-    return Intl.message('Rules', name: 'autoTunnelRules', desc: '', args: []);
-  }
-
-  /// `An open app's rule wins, then the first network rule that matches, top to bottom.`
-  String get autoTunnelRulesDesc {
-    return Intl.message(
-      'An open app\'s rule wins, then the first network rule that matches, top to bottom.',
-      name: 'autoTunnelRulesDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `No rules yet`
-  String get autoTunnelNoRules {
-    return Intl.message(
-      'No rules yet',
-      name: 'autoTunnelNoRules',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Add rule`
-  String get autoTunnelAddRule {
-    return Intl.message(
-      'Add rule',
-      name: 'autoTunnelAddRule',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Edit rule`
-  String get autoTunnelEditRule {
-    return Intl.message(
-      'Edit rule',
-      name: 'autoTunnelEditRule',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `When`
-  String get autoTunnelTrigger {
-    return Intl.message('When', name: 'autoTunnelTrigger', desc: '', args: []);
-  }
-
   /// `Connect to`
   String get autoTunnelTarget {
     return Intl.message(
@@ -8164,11 +8114,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Wi-Fi`
-  String get autoTunnelWifi {
-    return Intl.message('Wi-Fi', name: 'autoTunnelWifi', desc: '', args: []);
-  }
-
   /// `Mobile data`
   String get autoTunnelMobile {
     return Intl.message(
@@ -8184,56 +8129,6 @@ class AppLocalizations {
     return Intl.message(
       'Ethernet',
       name: 'autoTunnelEthernet',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `App open`
-  String get autoTunnelApp {
-    return Intl.message('App open', name: 'autoTunnelApp', desc: '', args: []);
-  }
-
-  /// `any`
-  String get autoTunnelAny {
-    return Intl.message('any', name: 'autoTunnelAny', desc: '', args: []);
-  }
-
-  /// `Any Wi-Fi: add networks to limit it`
-  String get autoTunnelAnyWifi {
-    return Intl.message(
-      'Any Wi-Fi: add networks to limit it',
-      name: 'autoTunnelAnyWifi',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Any SIM`
-  String get autoTunnelAnySim {
-    return Intl.message(
-      'Any SIM',
-      name: 'autoTunnelAnySim',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Whenever a cable is connected`
-  String get autoTunnelEthernetDesc {
-    return Intl.message(
-      'Whenever a cable is connected',
-      name: 'autoTunnelEthernetDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `No apps yet`
-  String get autoTunnelNoApps {
-    return Intl.message(
-      'No apps yet',
-      name: 'autoTunnelNoApps',
       desc: '',
       args: [],
     );
@@ -8269,41 +8164,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Holds while the app is open: on screen, or until it's closed from the recent apps. Apps in the work profile or Secure Folder count while on screen.`
+  /// `An app's tunnel holds while it's open: on screen, or until it's closed from the recent apps (on Windows, until it exits). Apps in the work profile or Secure Folder count while on screen.`
   String get autoTunnelAppsDesc {
     return Intl.message(
-      'Holds while the app is open: on screen, or until it\'s closed from the recent apps. Apps in the work profile or Secure Folder count while on screen.',
+      'An app\'s tunnel holds while it\'s open: on screen, or until it\'s closed from the recent apps (on Windows, until it exits). Apps in the work profile or Secure Folder count while on screen.',
       name: 'autoTunnelAppsDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `When no rule matches`
-  String get autoTunnelFallback {
-    return Intl.message(
-      'When no rule matches',
-      name: 'autoTunnelFallback',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Leave the tunnel as it is`
-  String get autoTunnelFallbackKeep {
-    return Intl.message(
-      'Leave the tunnel as it is',
-      name: 'autoTunnelFallbackKeep',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Connect to a tunnel`
-  String get autoTunnelFallbackTarget {
-    return Intl.message(
-      'Connect to a tunnel',
-      name: 'autoTunnelFallbackTarget',
       desc: '',
       args: [],
     );
@@ -8374,6 +8239,131 @@ class AppLocalizations {
     return Intl.message(
       'Tells when an app is closed from the recent apps',
       name: 'autoTunnelUsageAccessDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connections`
+  String get autoTunnelConnections {
+    return Intl.message(
+      'Connections',
+      name: 'autoTunnelConnections',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Apps`
+  String get autoTunnelApps {
+    return Intl.message('Apps', name: 'autoTunnelApps', desc: '', args: []);
+  }
+
+  /// `Tunnels`
+  String get autoTunnelTunnels {
+    return Intl.message(
+      'Tunnels',
+      name: 'autoTunnelTunnels',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Other Wi-Fi`
+  String get autoTunnelOtherWifi {
+    return Intl.message(
+      'Other Wi-Fi',
+      name: 'autoTunnelOtherWifi',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Other SIMs`
+  String get autoTunnelOtherMobile {
+    return Intl.message(
+      'Other SIMs',
+      name: 'autoTunnelOtherMobile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leave as it is`
+  String get autoTunnelDoNothing {
+    return Intl.message(
+      'Leave as it is',
+      name: 'autoTunnelDoNothing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Kill switch`
+  String get autoTunnelKillSwitch {
+    return Intl.message(
+      'Kill switch',
+      name: 'autoTunnelKillSwitch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blocks all traffic on this connection while no tunnel is running, so nothing leaks if the tunnel drops. Turning the tunnel off yourself lifts it until the connection changes.`
+  String get autoTunnelConnectionKillDesc {
+    return Intl.message(
+      'Blocks all traffic on this connection while no tunnel is running, so nothing leaks if the tunnel drops. Turning the tunnel off yourself lifts it until the connection changes.',
+      name: 'autoTunnelConnectionKillDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blocks this app whenever no tunnel is running, even after you turn the tunnel off yourself.`
+  String get autoTunnelAppKillDesc {
+    return Intl.message(
+      'Blocks this app whenever no tunnel is running, even after you turn the tunnel off yourself.',
+      name: 'autoTunnelAppKillDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blocks all traffic if one of these tunnels drops, until it's back or you turn it off yourself.`
+  String get autoTunnelTunnelKillDesc {
+    return Intl.message(
+      'Blocks all traffic if one of these tunnels drops, until it\'s back or you turn it off yourself.',
+      name: 'autoTunnelTunnelKillDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `On Windows the kill switch is a firewall run by Quartz's helper service (one admin prompt) and keeps blocking even with Quartz closed. Use TUN so every app goes through the tunnel; in system proxy mode, apps that ignore the proxy stay blocked.`
+  String get autoTunnelWindowsKillDesc {
+    return Intl.message(
+      'On Windows the kill switch is a firewall run by Quartz\'s helper service (one admin prompt) and keeps blocking even with Quartz closed. Use TUN so every app goes through the tunnel; in system proxy mode, apps that ignore the proxy stay blocked.',
+      name: 'autoTunnelWindowsKillDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android's own kill switch`
+  String get autoTunnelSystemKillSwitch {
+    return Intl.message(
+      'Android\'s own kill switch',
+      name: 'autoTunnelSystemKillSwitch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `In VPN settings, turn on "Always-on VPN" and "Block connections without VPN" for Quartz. It also covers restarts and app crashes, which Quartz's kill switch can't.`
+  String get autoTunnelSystemKillSwitchDesc {
+    return Intl.message(
+      'In VPN settings, turn on "Always-on VPN" and "Block connections without VPN" for Quartz. It also covers restarts and app crashes, which Quartz\'s kill switch can\'t.',
+      name: 'autoTunnelSystemKillSwitchDesc',
       desc: '',
       args: [],
     );

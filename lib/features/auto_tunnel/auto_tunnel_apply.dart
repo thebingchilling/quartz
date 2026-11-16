@@ -12,15 +12,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auto_tunnel.dart';
 
-const _fallbackKey = 'fallback';
-
 /// Written by Android's service when it switched while the app was closed.
 const _appliedKey = 'quartz.autoTunnel.applied';
 
 TunnelTarget? targetFor(AutoTunnelSettings settings, String key) =>
-    key == _fallbackKey
-    ? settings.fallbackTarget
-    : settings.rules.firstWhereOrNull((rule) => rule.id == key)?.target;
+    settings.apps.firstWhereOrNull((app) => app.id == key)?.target ??
+    settings.connections.firstWhereOrNull((c) => c.id == key)?.target;
 
 /// False when [target]'s profile is gone.
 Future<bool> applyTunnelTarget(
@@ -66,10 +63,10 @@ Future<Map<String, dynamic>> renderTargets(
   AutoTunnelSettings settings,
 ) async {
   final keyed = <String, TunnelTarget>{
-    for (final rule in settings.rules)
-      if (rule.enabled) rule.id: rule.target,
-    if (settings.fallback == FallbackMode.target)
-      _fallbackKey: settings.fallbackTarget,
+    for (final c in settings.connections)
+      if (c.target case final target? when !target.disconnects) c.id: target,
+    for (final a in settings.apps)
+      if (a.target case final target? when !target.disconnects) a.id: target,
   };
   final profiles = ref.read(profilesProvider);
   final dir = Directory(join(await appPath.homeDirPath, 'autotunnel'));
@@ -110,4 +107,9 @@ Future<String?> takeAppliedKey() async {
 String settingsJson(
   AutoTunnelSettings settings,
   Map<String, dynamic> rendered,
-) => jsonEncode({...settings.toJson(), 'rendered': rendered});
+  int? currentProfileId,
+) => jsonEncode({
+  ...settings.toJson(),
+  'currentProfileId': currentProfileId,
+  'rendered': rendered,
+});

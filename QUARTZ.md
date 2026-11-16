@@ -61,27 +61,35 @@ Dropped (VPN-only use doesn't need them):
   default/random/custom, MTU, DNS, keepalive. Each one becomes a Clash profile with a
   `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
   TTL) with regenerate (new registration into the same profile) and delete (revokes it).
-- **Auto-tunnel** (Settings → Quartz → Auto-tunnel, Android and Windows). Rules, each with
-  a trigger and a target: Wi-Fi (any, or named networks), mobile data (any SIM, or chosen
-  ones; Android only), Ethernet, or an app being open. The target is "disconnect" or a
-  profile, optionally with one server picked in one of its groups (a Windscribe city, say).
-  An open app's rule wins (most recently used first), then the first network rule that
-  matches, then the fallback (leave it, disconnect, or a target). It acts only when the
-  network, the open rule apps or the rules change, so a manual change holds until then
-  (`decideAutoTunnel`/`stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin; keep them the same).
-  An app counts as open while on screen or until it's closed (removed from the recent apps
-  on Android, exited on Windows), with 4 s of grace so a quick switch doesn't flap.
-  - Android: `AutoTunnelService` (foreground, `specialUse`, back after a reboot) watches the
-    network and, through `AppWatcherService` (an accessibility service that only sees which
-    app is in front, in every profile: work profile, private space, Secure Folder) or usage
-    access, the apps. While Quartz's UI runs it asks Dart to switch (`apply` on the
-    `autotunnel` channel); otherwise it switches itself: Dart keeps each target's rendered
-    config in `files/autotunnel/<profile>.yaml` with the profile's selection, and the service
-    copies it to `config.yaml`, updates `sharedState` and restarts the VPN, leaving
-    `quartz.autoTunnel.applied` for Dart to adopt on its next start. Wi-Fi names need location
-    access, all the time for the background.
-  - Windows: `DesktopAutoTunnel` watches connectivity and the foreground window's program
-    (`windows_apps.dart`, polled every 2 s) while Quartz runs in the tray.
+- **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows).
+  No rule list: every connection (each named Wi-Fi, "other Wi-Fi", each SIM, "other SIMs",
+  Ethernet) and every added app has its own page with **Connect to** (leave as it is,
+  disconnect, or a profile with an optional server in one of its groups) and **Kill switch**;
+  every tunnel (profile) has a kill switch toggle. An open app wins over the connection
+  (most recently used first). It acts only when the connection, the open apps or the
+  settings change, so a manual change holds until then (`decideAutoTunnel`, `blocksAll`,
+  `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin; keep them the same). An app counts
+  as open while on screen or until it's closed (removed from recents on Android, exited on
+  Windows), with 4 s of grace.
+  - Kill switch: while no tunnel runs, the connection's or the last tunnel's kill switch
+    blocks every app, until the user turns the tunnel off themselves; an app's kill switch
+    blocks that app always while no tunnel runs.
+  - Android: `AutoTunnelService` (foreground, `specialUse`, back after a reboot; running
+    whenever auto-tunnel or any kill switch is on) watches the network and, through
+    `AppWatcherService` (accessibility, sees which app is in front in every profile) or
+    usage access, the apps. While Quartz's UI runs it asks Dart to switch (`apply` on the
+    `autotunnel` channel); otherwise it switches itself from configs Dart renders into
+    `files/autotunnel/<profile>.yaml`, leaving `quartz.autoTunnel.applied` for Dart to adopt.
+    `KillSwitch` watches `ServiceState.runState` and starts `KillSwitchService`, a VPN
+    interface nothing reads (every app but Quartz, or only the kill-switch apps); the real
+    tunnel's interface replaces it on start. It can't outlive the app's process, so the page
+    links to Android's Always-on VPN + "Block connections without VPN" as well.
+  - Windows: `DesktopAutoTunnel` watches connectivity and the foreground program
+    (`windows_apps.dart`). The kill switch is WFP filters set by the Helper service
+    (`services/helper/src/service/firewall.rs`, `POST /firewall`): in a dynamic session it
+    permits loopback, the Core, the TUN adapter (by alias) and DHCP, and blocks everything
+    else (or just the kill-switch apps, by full path). They persist while the Helper runs,
+    even with Quartz closed; enabling the first kill switch installs the Helper if needed.
 - **Config converter** (Settings → Quartz → Config converter, `lib/features/converter`):
   WireGuard/AmneziaWG `.conf` and OpenVPN `.ovpn` files (pasted or opened, several at once)
   become one Clash profile with a PROXY group (and an auto group for more than one).

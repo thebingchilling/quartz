@@ -52,3 +52,23 @@ Future<Set<String>> runningExecutables() async {
         match.group(1)!.toLowerCase(),
   };
 }
+
+const _listPaths =
+    'Get-Process | Where-Object Path | '
+    'Select-Object -ExpandProperty Path -Unique | Sort-Object';
+
+/// Full paths of running programs, for app settings the kill switch can
+/// match exactly.
+Future<List<String>> runningProgramPaths() async {
+  if (!Platform.isWindows) return const [];
+  final result = await Process.run('powershell', const [
+    '-NoProfile',
+    '-Command',
+    _listPaths,
+  ]);
+  if (result.exitCode != 0) return const [];
+  return [
+    for (final line in (result.stdout as String).split('\n'))
+      if (line.trim().toLowerCase().endsWith('.exe')) line.trim(),
+  ];
+}

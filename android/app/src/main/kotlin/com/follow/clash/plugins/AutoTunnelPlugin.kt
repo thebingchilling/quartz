@@ -103,6 +103,7 @@ class AutoTunnelPlugin :
         val settings = when (kind) {
             "appWatcher" -> Settings.ACTION_ACCESSIBILITY_SETTINGS
             "usageAccess" -> Settings.ACTION_USAGE_ACCESS_SETTINGS
+            "systemKillSwitch" -> Settings.ACTION_VPN_SETTINGS
             else -> null
         }
         if (settings != null) {

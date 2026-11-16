@@ -26,6 +26,8 @@ use std::time::{Duration, Instant};
 use std::{io, thread};
 use warp::http::StatusCode;
 use warp::{Filter, Rejection, Reply};
+
+use super::firewall::{self, FirewallParams};
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
 #[cfg(windows)]
@@ -56,6 +58,7 @@ const PROTOCOL_VERSION: &str = "6";
 const EXPECTED_CORE_SHA256: &str = env!("CORE_SHA256");
 const LOG_CAPACITY: usize = 100;
 const MAX_REQUEST_BODY_BYTES: u64 = 4096;
+const MAX_FIREWALL_BODY_BYTES: u64 = 64 * 1024;
 const CORE_EXIT_TIMEOUT: Duration = Duration::from_millis(1500);
 const CORE_GRACEFUL_EXIT_TIMEOUT: Duration = Duration::from_millis(3000);
 const CORE_EXIT_POLL_INTERVAL: Duration = Duration::from_millis(20);
@@ -667,6 +670,32 @@ async fn stop_request(stop_params: StopParams) -> Result<warp::reply::Response, 
     )
 }
 
+fn firewall(params: FirewallParams) -> warp::reply::Response {
+    let result = core_path()
+        .map_err(|error| error.to_string())
+        .and_then(|core| firewall::apply(&params, &core));
+    match result {
+        Ok(()) => json_response(&serde_json::json!({ "applied": true }), StatusCode::OK),
+        Err(message) => {
+            log_message(format!("Helper could not apply the kill switch: {message}"));
+            error_response("firewallError", message, StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn firewall_request(params: FirewallParams) -> Result<warp::reply::Response, Infallible> {
+    Ok(
+        match tokio::task::spawn_blocking(move || firewall(params)).await {
+            Ok(response) => response,
+            Err(error) => error_response(
+                "internalError",
+                format!("Kill switch task failed: {error}"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+        },
+    )
+}
+
 async fn ping_request(ping_params: PingParams) -> Result<warp::reply::Response, Infallible> {
     Ok(tokio::task::spawn_blocking(move || ping(ping_params))
         .await
@@ -804,13 +833,26 @@ pub(super) fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallibl
         .and(warp::body::json())
         .and_then(stop_request);
 
+    let api_firewall = warp::path("firewall")
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(warp::body::content_length_limit(MAX_FIREWALL_BODY_BYTES))
+        .and(warp::body::json())
+        .and_then(firewall_request);
+
     let api_logs = warp::path("logs")
         .and(warp::path::end())
         .and(warp::get())
         .map(get_logs);
 
     native_client
-        .and(api_ping.or(api_start).or(api_stop).or(api_logs))
+        .and(
+            api_ping
+                .or(api_start)
+                .or(api_stop)
+                .or(api_firewall)
+                .or(api_logs),
+        )
         .recover(handle_rejection)
 }
 

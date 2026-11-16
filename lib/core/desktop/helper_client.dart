@@ -300,6 +300,26 @@ final class HelperClient {
     }
   }
 
+  /// Sets the kill switch's filters; nothing to block clears them.
+  Future<void> applyFirewall({
+    required bool blockAll,
+    required List<String> apps,
+    String? tunAlias,
+  }) async {
+    try {
+      await _dio.post<Object?>(
+        '$baseUrl/firewall',
+        data: {'blockAll': blockAll, 'apps': apps, 'tunAlias': tunAlias},
+        options: _options(
+          ResponseType.json,
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
+    } on DioException catch (error) {
+      throw _mapDioException(error, operation: 'firewall');
+    }
+  }
+
   Future<HelperStopResponse> stop(String sessionId) async {
     _validateSessionId(sessionId);
     try {
