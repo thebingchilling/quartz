@@ -1850,14 +1850,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunDesc": MessageLookupByLibrary.simpleMessage(
       "TUN works only in administrator mode.",
     ),
-    "tunOfferEnable": MessageLookupByLibrary.simpleMessage("Use TUN"),
-    "tunOfferLater": MessageLookupByLibrary.simpleMessage("Not now"),
-    "tunOfferMessage": MessageLookupByLibrary.simpleMessage(
-      "Without TUN, Quartz works as a system proxy: browsers and most apps use it, but apps that ignore the proxy (many games, voice chat, some tools) go around the tunnel. TUN catches everything, like a normal VPN, and is needed for the kill switch. Windows asks once for admin rights to install Quartz\'s helper service; after that it starts without prompts. You can change this later under TUN.",
-    ),
-    "tunOfferTitle": MessageLookupByLibrary.simpleMessage(
-      "Send every app through the tunnel?",
-    ),
     "turnOff": MessageLookupByLibrary.simpleMessage("Turn off"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Turn on"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP relay mode"),

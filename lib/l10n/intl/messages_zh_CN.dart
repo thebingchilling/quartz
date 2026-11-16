@@ -1426,12 +1426,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "虚拟网卡授权失败，已关闭。",
     ),
     "tunDesc": MessageLookupByLibrary.simpleMessage("虚拟网卡仅在管理员模式生效。"),
-    "tunOfferEnable": MessageLookupByLibrary.simpleMessage("使用 TUN"),
-    "tunOfferLater": MessageLookupByLibrary.simpleMessage("以后再说"),
-    "tunOfferMessage": MessageLookupByLibrary.simpleMessage(
-      "不使用 TUN 时，Quartz 作为系统代理工作：浏览器和大多数应用会使用它，但忽略代理的应用（许多游戏、语音聊天、部分工具）会绕过隧道。TUN 像普通 VPN 一样接管所有流量，断网保护也需要它。Windows 会请求一次管理员权限来安装 Quartz 助手服务，之后启动无需再确认。你可以稍后在 TUN 设置中更改。",
-    ),
-    "tunOfferTitle": MessageLookupByLibrary.simpleMessage("让所有应用都走隧道？"),
     "turnOff": MessageLookupByLibrary.simpleMessage("关闭"),
     "turnOn": MessageLookupByLibrary.simpleMessage("开启"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP 中继模式"),

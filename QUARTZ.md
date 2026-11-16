@@ -102,9 +102,11 @@ Dropped (VPN-only use doesn't need them):
   `services/launcher`): one file that embeds the release zip, unpacks it on first run to
   `%LOCALAPPDATA%\Quartz\app\<hash>` (keeping the two newest versions), and starts
   `Quartz.exe` with `QUARTZ_PORTABLE_EXE` set to its own path; the updater then swaps that
-  file for the new EXE and restarts. It runs without admin as a system proxy; TUN (every app
-  through the tunnel, needed for the kill switch) is offered once at first run on Windows and
-  costs one admin prompt to install the Helper service.
+  file for the new EXE and restarts.
+- **TUN is forced on Windows:** Quartz is only ever a full VPN, so `DesktopAutoTunnel` turns
+  TUN back on at every launch (the first connect asks once for admin to install the Helper
+  service; a declined prompt falls back to system proxy for that session only). Android is
+  always a full VPN through its VPN service.
 - **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): asks once for the OpenVPN
   credentials from Windscribe's config generator (saved locally; "Change credentials" asks
   again), reads the public server list (`WebsiteStatus`, no account login) and writes a

@@ -994,9 +994,5 @@
   "autoTunnelTunnelKillDesc": "これらのトンネルが切れたら、戻るか手動でオフにするまですべての通信を遮断します。",
   "autoTunnelWindowsKillDesc": "Windowsではキルスイッチは Quartz のヘルパーサービス（管理者確認1回）が動かすファイアウォールで、Quartz を閉じても遮断を続けます。すべてのアプリをトンネルに通すには TUN を使ってください。システムプロキシモードでは、プロキシを無視するアプリは遮断されたままです。",
   "autoTunnelSystemKillSwitch": "Android 標準のキルスイッチ",
-  "autoTunnelSystemKillSwitchDesc": "VPN 設定で Quartz の「常時接続 VPN」と「VPN 以外の接続をブロック」をオンにしてください。再起動やアプリのクラッシュ時も保護されます。",
-  "tunOfferTitle": "すべてのアプリをトンネルに通しますか？",
-  "tunOfferMessage": "TUN なしでは Quartz はシステムプロキシとして動き、ブラウザや多くのアプリは使いますが、プロキシを無視するアプリ（多くのゲーム、音声通話、一部のツール）はトンネルを通りません。TUN は通常の VPN のようにすべてを通し、キルスイッチにも必要です。Windows が一度だけ管理者権限を求めて Quartz のヘルパーサービスをインストールし、以後は確認なしで起動します。後で TUN から変更できます。",
-  "tunOfferEnable": "TUN を使う",
-  "tunOfferLater": "後で"
+  "autoTunnelSystemKillSwitchDesc": "VPN 設定で Quartz の「常時接続 VPN」と「VPN 以外の接続をブロック」をオンにしてください。再起動やアプリのクラッシュ時も保護されます。"
 }
