@@ -414,12 +414,6 @@ void main() {
     });
   });
 
-  test('every stored config is read in global mode', () {
-    for (final mode in Mode.values) {
-      expect(PatchClashConfig(mode: mode).normalized().mode, Mode.global);
-    }
-  });
-
   group('PatchClashConfig.ensureControllerSecret', () {
     const open = PatchClashConfig(
       externalController: ExternalControllerStatus.open,
@@ -839,6 +833,7 @@ void main() {
             : [
                 HotAction.view,
                 HotAction.start,
+                HotAction.mode,
                 HotAction.proxy,
                 HotAction.delayTest,
               ],

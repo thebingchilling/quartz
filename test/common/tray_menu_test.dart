@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:tray/tray.dart';
@@ -224,13 +225,14 @@ void main() {
     });
   });
 
-  test('offers no outbound mode, which is always global', () async {
+  test('offers every outbound mode as a menu entry', () async {
     await update(_trayState(mode: Mode.global));
 
-    final labels = _items(showCall()).map((item) => item['label']);
-    for (final mode in Mode.values) {
-      expect(labels, isNot(contains(mode.label)));
-    }
+    final checkedModes = _items(showCall())
+        .where((item) => item['checked'] == true)
+        .map((item) => item['label'])
+        .toList();
+    expect(checkedModes, contains(Intl.message(Mode.global.name)));
   });
 
   test('sends icon, tooltip and menu in a single show call', () async {
@@ -296,6 +298,10 @@ void main() {
         isStart: true,
         hotKeys: {
           HotAction.view: _bind(HotAction.view, PhysicalKeyboardKey.keyV),
+          HotAction.globalMode: _bind(
+            HotAction.globalMode,
+            PhysicalKeyboardKey.keyG,
+          ),
         },
       ),
     );
@@ -303,7 +309,9 @@ void main() {
     final l10n = currentAppLocalizations;
     final call = showCall();
     expect(_item(call, l10n.show)['detail'], '⌃⇧V');
+    expect(_item(call, Mode.global.label)['detail'], '⌃⇧G');
     expect(_item(call, l10n.exit), isNot(contains('detail')));
+    expect(_item(call, Mode.rule.label), isNot(contains('detail')));
   });
 
   test(

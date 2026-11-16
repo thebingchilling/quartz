@@ -1973,7 +1973,7 @@ extension PatchClashConfigExt on PatchClashConfig {
       authentication: authentication,
       allowLan: allowLan,
       findProcessMode: findProcessMode,
-      mode: mode.coreMode,
+      mode: mode,
       logLevel: logLevel,
       ipv6: ipv6,
       tcpConcurrent: tcpConcurrent,
@@ -2006,10 +2006,6 @@ extension PatchClashConfigExt on PatchClashConfig {
     geoUpdateInterval: defaultClashConfig.geoUpdateInterval,
     geoXUrl: defaultClashConfig.geoXUrl,
   );
-
-  /// What every stored config is read as: Quartz always runs in global mode.
-  PatchClashConfig normalized() =>
-      ensureControllerSecret().copyWith(mode: Mode.global);
 
   PatchClashConfig ensureControllerSecret() {
     if (externalController == ExternalControllerStatus.close) {

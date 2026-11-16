@@ -108,12 +108,6 @@ Dropped (VPN-only use doesn't need them):
   from settings, the dashboard and the tray. Windows turns TUN back on at every launch; if
   the admin prompt for the Helper is declined, Quartz stops instead of running as a proxy.
   Android's VPN is always on, never declares an HTTP proxy and doesn't let apps bypass it.
-- **Always global mode:** every stored config is read with `mode: global`
-  (`PatchClashConfig.normalized`, at boot and on restore), and the outbound-mode card, tray
-  entries and hotkeys are gone; a hotkey bound to a mode before is neither registered nor
-  acted on. mihomo's own global mode skips every rule, which would drop the Windows bypass
-  rules, so the core runs rule mode with the bypass rules and then `MATCH,GLOBAL`
-  (`Mode.coreMode`). Android's bypass is the VPN service's app list, outside mihomo.
 - **Per-app bypass** (Settings → Quartz → Access control, Android and Windows): a blacklist
   (listed apps go around the tunnel) or a whitelist (only listed apps use it). Android uses
   FlClash's own access control in the VPN service; Windows stores program paths in the same

@@ -367,29 +367,6 @@ void main() {
     expect(disabledConfig['skip-auth-prefixes'], isEmpty);
   });
 
-  test('global mode keeps the leading bypass rules ahead of GLOBAL', () async {
-    final result = await makeRealProfileTask(
-      const MakeRealProfileState(
-        profilesPath: '/profiles',
-        profileId: 14,
-        rawConfig: {
-          'rules': ['DOMAIN,example.com,DIRECT', 'MATCH,PROXY'],
-        },
-        realPatchConfig: PatchClashConfig(mode: Mode.global),
-        appendSystemDns: false,
-        proxyGroups: [],
-        rules: [],
-        addedRules: [],
-        defaultUA: 'FlClash-Test',
-        leadingRules: ['PROCESS-NAME,app.exe,DIRECT'],
-      ),
-    );
-    final config = loadYaml(result.yaml) as YamlMap;
-
-    expect(config['mode'], 'rule');
-    expect(config['rules'], ['PROCESS-NAME,app.exe,DIRECT', 'MATCH,GLOBAL']);
-  });
-
   test('makeRealProfileTask overrides DNS and explicit custom data', () async {
     final result = await makeRealProfileTask(
       const MakeRealProfileState(
