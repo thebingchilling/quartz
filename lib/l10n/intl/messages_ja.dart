@@ -253,6 +253,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "answers": MessageLookupByLibrary.simpleMessage("応答"),
     "app": MessageLookupByLibrary.simpleMessage("アプリ"),
     "appAccessControl": MessageLookupByLibrary.simpleMessage("アプリアクセス制御"),
+    "appBypassBlacklist": MessageLookupByLibrary.simpleMessage(
+      "リストのプログラムはトンネルを通らない",
+    ),
+    "appBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "プログラムはファイル名で照合します。それ以外は常にトンネルを通ります。",
+    ),
+    "appBypassMode": MessageLookupByLibrary.simpleMessage("モード"),
+    "appBypassWhitelist": MessageLookupByLibrary.simpleMessage(
+      "リストのプログラムだけがトンネルを使う",
+    ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("アプリアイコンのデザイン"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("ローカルプロキシがありません"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを追加"),

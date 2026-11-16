@@ -82,7 +82,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  test('a running core reports the mixed port as the proxy target', () {
+  test('a running core never sets a system proxy', () {
     container.read(runTimeProvider.notifier).value = 1;
     container.read(networkSettingProvider.notifier).value = const NetworkProps()
         .copyWith(systemProxy: true);
@@ -91,7 +91,7 @@ void main() {
 
     final state = container.read(proxyStateProvider);
     expect(state.isStart, isTrue);
-    expect(state.systemProxy, isTrue);
+    expect(state.systemProxy, isFalse);
     expect(state.port, 7892);
   });
 

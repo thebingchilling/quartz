@@ -315,20 +315,16 @@ void main() {
 
     tearDown(() => container.dispose());
 
-    test('updateTun flips the patched Core tun flag', () {
-      final before = container.read(patchClashConfigProvider).tun.enable;
+    test('the TUN and system proxy hotkeys change nothing', () {
+      final tun = container.read(patchClashConfigProvider).tun.enable;
+      final proxy = container.read(networkSettingProvider).systemProxy;
 
-      container.read(systemActionProvider.notifier).updateTun();
+      container.read(systemActionProvider.notifier)
+        ..updateTun()
+        ..updateSystemProxy();
 
-      expect(container.read(patchClashConfigProvider).tun.enable, !before);
-    });
-
-    test('updateSystemProxy flips the system proxy flag', () {
-      final before = container.read(networkSettingProvider).systemProxy;
-
-      container.read(systemActionProvider.notifier).updateSystemProxy();
-
-      expect(container.read(networkSettingProvider).systemProxy, !before);
+      expect(container.read(patchClashConfigProvider).tun.enable, tun);
+      expect(container.read(networkSettingProvider).systemProxy, proxy);
     });
 
     test('updateAutoLaunch flips the auto launch flag', () {

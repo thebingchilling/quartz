@@ -296,6 +296,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "App access control",
     ),
+    "appBypassBlacklist": MessageLookupByLibrary.simpleMessage(
+      "Listed programs go around the tunnel",
+    ),
+    "appBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Programs are matched by file name. Everything else always goes through the tunnel.",
+    ),
+    "appBypassMode": MessageLookupByLibrary.simpleMessage("Mode"),
+    "appBypassWhitelist": MessageLookupByLibrary.simpleMessage(
+      "Only listed programs use the tunnel",
+    ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("App icon design"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("No local proxies"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(

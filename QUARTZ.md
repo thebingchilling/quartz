@@ -103,18 +103,17 @@ Dropped (VPN-only use doesn't need them):
   `%LOCALAPPDATA%\Quartz\app\<hash>` (keeping the two newest versions), and starts
   `Quartz.exe` with `QUARTZ_PORTABLE_EXE` set to its own path; the updater then swaps that
   file for the new EXE and restarts.
-- **TUN is forced on Windows:** Quartz is only ever a full VPN, so `DesktopAutoTunnel` turns
-  TUN back on at every launch (the first connect asks once for admin to install the Helper
-  service; a declined prompt falls back to system proxy for that session only). Android is
-  always a full VPN through its VPN service.
-- **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): asks once for the OpenVPN
-  credentials from Windscribe's config generator (saved locally; "Change credentials" asks
-  again), reads the public server list (`WebsiteStatus`, no account login) and writes a
-  "Windscribe" profile: every online server as a mihomo `openvpn` proxy (stock mihomo has
-  this outbound, so no separate OpenVPN process), a Windscribe group with an auto group
-  and one group per country. Protocol/port (Windscribe's port map) is an option; changing
-  it rebuilds the list. The list updates at startup when over 6 hours old, or on demand. The CA and tls-auth key are Windscribe's public ones, the same for
-  every server.
+- **Always a full VPN, never a system proxy:** the system proxy is never set (`proxyState`
+  reports it off, which also clears one an older version left), and its switches are gone
+  from settings, the dashboard and the tray. Windows turns TUN back on at every launch; if
+  the admin prompt for the Helper is declined, Quartz stops instead of running as a proxy.
+  Android's VPN is always on, never declares an HTTP proxy and doesn't let apps bypass it.
+- **Per-app bypass** (Settings → Quartz → Access control, Android and Windows): a blacklist
+  (listed apps go around the tunnel) or a whitelist (only listed apps use it). Android uses
+  FlClash's own access control in the VPN service; Windows stores program paths in the same
+  setting and puts mihomo rules first in the generated config
+  (`lib/features/app_bypass/app_bypass.dart`): `PROCESS-NAME,<exe>,DIRECT` per blacklisted
+  program, or one `NOT,((OR,(...))),DIRECT` for a whitelist.
 
 ## Android and Windows ship together (standing rule)
 

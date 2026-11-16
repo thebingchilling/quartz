@@ -483,9 +483,10 @@ enum DashboardWidget {
   outboundMode,
   trafficUsage,
   networkDetection,
-  tunButton(platforms: desktopPlatforms),
-  vpnButton(platforms: [SupportPlatform.Android]),
-  systemProxyButton(platforms: desktopPlatforms),
+  // TUN, the VPN and no system proxy are fixed, so their switches never show.
+  tunButton(platforms: []),
+  vpnButton(platforms: []),
+  systemProxyButton(platforms: []),
   intranetIp,
   memoryInfo,
   serviceStatus,

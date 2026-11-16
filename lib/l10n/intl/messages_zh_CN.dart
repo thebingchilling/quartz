@@ -246,6 +246,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "answers": MessageLookupByLibrary.simpleMessage("应答"),
     "app": MessageLookupByLibrary.simpleMessage("应用"),
     "appAccessControl": MessageLookupByLibrary.simpleMessage("应用访问控制"),
+    "appBypassBlacklist": MessageLookupByLibrary.simpleMessage("列表中的程序绕过隧道"),
+    "appBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "按文件名匹配程序。其余流量始终走隧道。",
+    ),
+    "appBypassMode": MessageLookupByLibrary.simpleMessage("模式"),
+    "appBypassWhitelist": MessageLookupByLibrary.simpleMessage("仅列表中的程序使用隧道"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("应用图标设计"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("暂无本地代理"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("追加系统DNS"),

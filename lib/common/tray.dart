@@ -166,19 +166,6 @@ class AppTray implements TrayPort {
       const TrayMenuSeparator(),
       if (isMacOS) ..._buildGroupMenu(trayState: trayState, read: read),
       if (trayState.isStart) ...[
-        TrayMenuCheckbox(
-          label: appLocalizations.tun,
-          checked: trayState.tunEnable,
-          detail: shortcut(HotAction.tun),
-          onSelected: systemAction.updateTun,
-        ),
-        TrayMenuCheckbox(
-          label: appLocalizations.systemProxy,
-          checked: trayState.systemProxy,
-          detail: shortcut(HotAction.proxy),
-          onSelected: systemAction.updateSystemProxy,
-        ),
-        const TrayMenuSeparator(),
       ],
       TrayMenuCheckbox(
         label: appLocalizations.autoLaunch,

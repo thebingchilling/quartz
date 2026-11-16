@@ -43,7 +43,9 @@ ProxyState proxyState(Ref ref) {
   );
   return ProxyState(
     isStart: suspend ? false : isStart,
-    systemProxy: systemProxySelector.systemProxy,
+    // Quartz is only ever a full VPN through TUN; this keeps any system proxy
+    // an older version set cleared.
+    systemProxy: false,
     bassDomain: systemProxySelector.bypassDomain,
     port: mixedPort,
   );

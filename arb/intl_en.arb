@@ -1018,5 +1018,9 @@
   "autoTunnelTunnelKillDesc": "Blocks all traffic if one of these tunnels drops, until it's back or you turn it off yourself.",
   "autoTunnelWindowsKillDesc": "On Windows the kill switch is a firewall run by Quartz's helper service (one admin prompt) and keeps blocking even with Quartz closed. Use TUN so every app goes through the tunnel; in system proxy mode, apps that ignore the proxy stay blocked.",
   "autoTunnelSystemKillSwitch": "Android's own kill switch",
-  "autoTunnelSystemKillSwitchDesc": "In VPN settings, turn on \"Always-on VPN\" and \"Block connections without VPN\" for Quartz. It also covers restarts and app crashes, which Quartz's kill switch can't."
+  "autoTunnelSystemKillSwitchDesc": "In VPN settings, turn on \"Always-on VPN\" and \"Block connections without VPN\" for Quartz. It also covers restarts and app crashes, which Quartz's kill switch can't.",
+  "appBypassMode": "Mode",
+  "appBypassBlacklist": "Listed programs go around the tunnel",
+  "appBypassWhitelist": "Only listed programs use the tunnel",
+  "appBypassDesc": "Programs are matched by file name. Everything else always goes through the tunnel."
 }

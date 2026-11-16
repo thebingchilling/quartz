@@ -108,7 +108,7 @@ void main() {
     await drainTimers(tester);
   });
 
-  testWidgets('a mixed port change asks for a restart under a system proxy', (
+  testWidgets('a mixed port change needs no restart without a system proxy', (
     tester,
   ) async {
     await pumpVpnManager(tester);
@@ -119,7 +119,7 @@ void main() {
         .update((state) => state.copyWith(mixedPort: state.mixedPort + 1));
     await settle(tester);
 
-    expect(tip(), findsOneWidget);
+    expect(tip(), findsNothing);
     await drainTimers(tester);
   });
 

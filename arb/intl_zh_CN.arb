@@ -994,5 +994,9 @@
   "autoTunnelTunnelKillDesc": "这些隧道之一断开时阻止所有流量，直到恢复或你手动关闭。",
   "autoTunnelWindowsKillDesc": "在 Windows 上，断网保护是由 Quartz 助手服务运行的防火墙（需一次管理员确认），即使关闭 Quartz 也会继续阻止。请使用 TUN 让所有应用走隧道；在系统代理模式下，忽略代理的应用会一直被阻止。",
   "autoTunnelSystemKillSwitch": "Android 自带的断网保护",
-  "autoTunnelSystemKillSwitchDesc": "在 VPN 设置中为 Quartz 打开“始终开启的 VPN”和“屏蔽未使用 VPN 的连接”。它还能在重启和应用崩溃时保护你。"
+  "autoTunnelSystemKillSwitchDesc": "在 VPN 设置中为 Quartz 打开“始终开启的 VPN”和“屏蔽未使用 VPN 的连接”。它还能在重启和应用崩溃时保护你。",
+  "appBypassMode": "模式",
+  "appBypassBlacklist": "列表中的程序绕过隧道",
+  "appBypassWhitelist": "仅列表中的程序使用隧道",
+  "appBypassDesc": "按文件名匹配程序。其余流量始终走隧道。"
 }

@@ -17,6 +17,7 @@ import 'config/advanced.dart';
 import 'config/custom_resources.dart';
 import 'developer.dart';
 import 'theme.dart';
+import 'app_bypass.dart';
 import 'auto_tunnel.dart';
 import 'warp.dart';
 import 'windscribe.dart';
@@ -57,7 +58,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _ThemeItem(),
         const _BackupItem(),
         if (system.isDesktop) const _HotkeyItem(),
-        if (system.isAndroid) const _AccessItem(),
         const _AdvancedConfigItem(),
         const _CustomResourcesItem(),
         const _GeneralItem(),
@@ -71,6 +71,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       title: appName,
       items: [
         if (system.isAndroid || system.isWindows) const _AutoTunnelItem(),
+        if (system.isAndroid || system.isWindows) const _AccessItem(),
         const _WarpItem(),
         const _WindscribeItem(),
         const _ConverterItem(),
@@ -202,7 +203,7 @@ class _AccessItem extends StatelessWidget {
       leading: const GlyphIcon(AppGlyphs.appsList),
       title: Text(context.appLocalizations.accessControl),
       subtitle: Text(context.appLocalizations.accessControlDesc),
-      widget: const AccessView(),
+      widget: system.isWindows ? const AppBypassView() : const AccessView(),
     );
   }
 }

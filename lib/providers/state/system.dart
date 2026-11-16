@@ -254,17 +254,14 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
   final routeAddress = ref.watch(vpnRouteAddressProvider.future);
   final tun = clashConfig.tun;
   return VpnOptions(
-    enable: vpnSetting.enable && !safeMode,
+    enable: !safeMode,
     stack: tun.stack.name,
-    // VpnService.setHttpProxy cannot carry credentials, so an authenticated
-    // mixed port is left to TUN instead of declared as the system proxy.
-    systemProxy:
-        vpnSetting.systemProxy && !networkSetting.authenticated && !safeMode,
+    systemProxy: false,
     port: clashConfig.mixedPort,
     ipv6: vpnSetting.ipv6,
     dnsHijacking: vpnSetting.dnsHijacking,
     accessControlProps: vpnSetting.accessControlProps,
-    allowBypass: vpnSetting.allowBypass,
+    allowBypass: false,
     bypassDomain: networkSetting.bypassDomain,
     routeAddress: await routeAddress,
     mtu: tun.mtu,

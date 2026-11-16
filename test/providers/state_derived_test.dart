@@ -873,39 +873,61 @@ void main() {
     ]);
   });
 
-  // VpnService.setHttpProxy cannot carry credentials.
-  test('local authentication withholds the VPN system proxy', () async {
-    await AppLocalizations.load(const Locale('en'));
-    container.listen(sharedStateProvider, (_, _) {});
-    await container.read(vpnOptionsProvider.future);
-    expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, true);
-
-    container
-        .read(networkSettingProvider.notifier)
-        .update(
-          (state) => state.copyWith(
-            authentication: const AuthenticationProps(
-              enable: true,
-              username: 'user',
-              password: 'pass',
+  test(
+    'the VPN never declares a system proxy or lets apps bypass it',
+    () async {
+      await AppLocalizations.load(const Locale('en'));
+      container.listen(sharedStateProvider, (_, _) {});
+      container
+          .read(vpnSettingProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              enable: false,
+              systemProxy: true,
+              allowBypass: true,
             ),
-          ),
-        );
-    await container.read(vpnOptionsProvider.future);
-    expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, false);
-    expect(container.read(updateParamsProvider).authentication, ['user:pass']);
+          );
+      await container.read(vpnOptionsProvider.future);
+      final options = container.read(sharedStateProvider).vpnOptions;
+      expect(options?.systemProxy, false);
+      expect(options?.allowBypass, false);
+      expect(options?.enable, true);
 
-    container
-        .read(networkSettingProvider.notifier)
-        .update(
-          (state) => state.copyWith(
-            authentication: const AuthenticationProps(enable: false),
-          ),
-        );
-    await container.read(vpnOptionsProvider.future);
-    expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, true);
-    expect(container.read(updateParamsProvider).authentication, isEmpty);
-  });
+      container
+          .read(networkSettingProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              authentication: const AuthenticationProps(
+                enable: true,
+                username: 'user',
+                password: 'pass',
+              ),
+            ),
+          );
+      await container.read(vpnOptionsProvider.future);
+      expect(
+        container.read(sharedStateProvider).vpnOptions?.systemProxy,
+        false,
+      );
+      expect(container.read(updateParamsProvider).authentication, [
+        'user:pass',
+      ]);
+
+      container
+          .read(networkSettingProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              authentication: const AuthenticationProps(enable: false),
+            ),
+          );
+      await container.read(vpnOptionsProvider.future);
+      expect(
+        container.read(sharedStateProvider).vpnOptions?.systemProxy,
+        false,
+      );
+      expect(container.read(updateParamsProvider).authentication, isEmpty);
+    },
+  );
 
   test('the setup patch changes only with what a re-apply carries', () {
     container.listen(setupPatchProvider, (_, _) {});

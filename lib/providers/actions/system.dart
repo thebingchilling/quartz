@@ -119,17 +119,11 @@ class SystemAction extends _$SystemAction {
     await windowPort?.toggle();
   }
 
-  void updateTun() {
-    ref
-        .read(patchClashConfigProvider.notifier)
-        .update((state) => state.copyWith.tun(enable: !state.tun.enable));
-  }
+  // TUN is always on and there is no system proxy, so their hotkeys do
+  // nothing.
+  void updateTun() {}
 
-  void updateSystemProxy() {
-    ref
-        .read(networkSettingProvider.notifier)
-        .update((state) => state.copyWith(systemProxy: !state.systemProxy));
-  }
+  void updateSystemProxy() {}
 
   Future<void> copyProxyEnv() async {
     final port = ref.read(

@@ -460,6 +460,9 @@ class SetupAction extends _$SetupAction {
         authentication: networkSetting.authentication.credentials,
         matchTarget: setupState.matchTarget,
         safeMode: ref.read(safeModeProvider),
+        leadingRules: system.isWindows
+            ? appBypassRules(ref.read(vpnSettingProvider).accessControlProps)
+            : const [],
       ),
     );
     return res;
@@ -580,13 +583,19 @@ class SetupAction extends _$SetupAction {
         authorizationNotifier.value = TunAuthorizationState.authorized;
         return true;
       case AuthorizeCode.error:
+        // Without TUN nothing would go through the tunnel, so Quartz stops
+        // instead of running as a proxy only.
         authorizationNotifier.value = TunAuthorizationState.none;
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.tun(enable: false));
         dialogs.showNotifier(
           currentAppLocalizations.tunAuthorizationFailed,
           level: MessageLevel.error,
+        );
+        unawaited(
+          Future(() async {
+            if (ref.mounted) await setRunning(false);
+          }).catchError((Object error) {
+            commonPrint.log('stop after a failed TUN authorization: $error');
+          }),
         );
         return true;
     }

@@ -347,6 +347,9 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     @Default({}) Map<String, dynamic> injectedRuleProviders,
     String? matchTarget,
     @Default(false) bool safeMode,
+
+    /// Put before every other rule, e.g. Windows' per-app bypass.
+    @Default([]) List<String> leadingRules,
   }) = _MakeRealProfileState;
 }
 

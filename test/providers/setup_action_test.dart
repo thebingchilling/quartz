@@ -662,26 +662,28 @@ void main() {
       );
     });
 
-    test('a failed authorization turns tun off and asks again on the next '
-        'enable', () async {
-      await AppLocalizations.load(const Locale('en'));
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update((state) => state.copyWith.tun(enable: true));
-      action.authorizeResult = AuthorizeCode.error;
+    test(
+      'a failed authorization keeps tun on and asks again next time',
+      () async {
+        await AppLocalizations.load(const Locale('en'));
+        container
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith.tun(enable: true));
+        action.authorizeResult = AuthorizeCode.error;
 
-      expect(await action.requestAdmin(true), isTrue);
-      expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
-      expect(
-        container.read(authorizedTunEnableProvider),
-        TunAuthorizationState.none,
-      );
+        expect(await action.requestAdmin(true), isTrue);
+        expect(container.read(patchClashConfigProvider).tun.enable, isTrue);
+        expect(
+          container.read(authorizedTunEnableProvider),
+          TunAuthorizationState.none,
+        );
 
-      action.authorizeResult = AuthorizeCode.success;
+        action.authorizeResult = AuthorizeCode.success;
 
-      expect(await action.requestAdmin(true), isFalse);
-      expect(action.authorizeCalls, 2);
-    });
+        expect(await action.requestAdmin(true), isFalse);
+        expect(action.authorizeCalls, 2);
+      },
+    );
   });
 
   group('updateConfig', () {

@@ -305,6 +305,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Контроль доступа приложений",
     ),
+    "appBypassBlacklist": MessageLookupByLibrary.simpleMessage(
+      "Программы из списка идут мимо туннеля",
+    ),
+    "appBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Программы сопоставляются по имени файла. Всё остальное всегда идёт через туннель.",
+    ),
+    "appBypassMode": MessageLookupByLibrary.simpleMessage("Режим"),
+    "appBypassWhitelist": MessageLookupByLibrary.simpleMessage(
+      "Туннелем пользуются только программы из списка",
+    ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage(
       "Дизайн значка приложения",
     ),

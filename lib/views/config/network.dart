@@ -468,7 +468,6 @@ List<Widget> networkOptionsItems({
   required bool isCustomInterfaceName,
 }) {
   return [
-    if (isDesktop) const TUNItem(),
     if (isMacOS) const AutoSetSystemDnsItem(),
     const TunStackItem(),
     // mihomo's DefaultSocketHook ignores interface-name on Android
@@ -487,30 +486,12 @@ class VpnSections extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final authenticationEnable = ref.watch(
-      networkSettingProvider.select((state) => state.authentication.enable),
-    );
     return Column(
       children: [
         generateSectionV3(
-          items: const [VPNItem()],
-          footer: appLocalizations.vpnEnableDesc,
-        ),
-        generateSectionV3(
           title: 'VPN',
-          items: const [
-            VpnSystemProxyItem(),
-            BypassDomainItem(),
-            AllowBypassItem(),
-            Ipv6Item(),
-            DNSHijackingItem(),
-          ],
-          footer: [
-            if (authenticationEnable)
-              appLocalizations.authenticationSystemProxyDesc,
-            appLocalizations.bypassDomainDesc,
-            appLocalizations.ipv6InboundDesc,
-          ].join('\n'),
+          items: const [Ipv6Item(), DNSHijackingItem()],
+          footer: appLocalizations.ipv6InboundDesc,
         ),
       ],
     );
@@ -575,7 +556,6 @@ class NetworkListView extends StatelessWidget {
       ).copyWith(top: context.contentTopPadding, bottom: 16),
       children: [
         if (system.isAndroid) const VpnSections(),
-        if (system.isDesktop) const SystemProxySection(),
         const NetworkOptionsSection(),
         const TunSection(),
         generateSectionV3(

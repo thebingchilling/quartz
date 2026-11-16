@@ -8368,6 +8368,41 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Mode`
+  String get appBypassMode {
+    return Intl.message('Mode', name: 'appBypassMode', desc: '', args: []);
+  }
+
+  /// `Listed programs go around the tunnel`
+  String get appBypassBlacklist {
+    return Intl.message(
+      'Listed programs go around the tunnel',
+      name: 'appBypassBlacklist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only listed programs use the tunnel`
+  String get appBypassWhitelist {
+    return Intl.message(
+      'Only listed programs use the tunnel',
+      name: 'appBypassWhitelist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Programs are matched by file name. Everything else always goes through the tunnel.`
+  String get appBypassDesc {
+    return Intl.message(
+      'Programs are matched by file name. Everything else always goes through the tunnel.',
+      name: 'appBypassDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -143,6 +143,15 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     ref.listenManual(currentProfileIdProvider, (_, _) {
       unawaited(_syncFirewall());
     });
+    ref.listenManual(
+      vpnSettingProvider.select((state) => state.accessControlProps),
+      (previous, next) {
+        if (previous == next) return;
+        ref
+            .read(setupActionProvider.notifier)
+            .applyProfileDebounce(silence: true, force: true);
+      },
+    );
     _appTimer = Timer.periodic(_appPoll, (_) => unawaited(_pollApps()));
     if (system.isWindows) runAfterFrame(_forceTun);
   }
