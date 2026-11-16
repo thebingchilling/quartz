@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -44,25 +43,6 @@ void main() {
     addTearDown(container.dispose);
     return container;
   }
-
-  group('CommonAction.updateMode', () {
-    test('advances through every mode and wraps back to the first', () {
-      final container = buildContainer();
-      final action = container.read(commonActionProvider.notifier);
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update((state) => state.copyWith(mode: Mode.values.first));
-
-      final seen = <Mode>[container.read(patchClashConfigProvider).mode];
-      for (var i = 0; i < Mode.values.length; i++) {
-        action.updateMode();
-        seen.add(container.read(patchClashConfigProvider).mode);
-      }
-
-      expect(seen.sublist(0, Mode.values.length), Mode.values);
-      expect(seen.last, Mode.values.first, reason: 'wraps after the last mode');
-    });
-  });
 
   group('CommonAction.updateSpeedStatistics', () {
     test('toggles the tray title flag both ways', () {

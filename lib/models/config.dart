@@ -103,14 +103,12 @@ final List<HotKeyAction> defaultHotKeyActions = system.isWindows
     : [
         _defaultHotKeyAction(HotAction.view, PhysicalKeyboardKey.keyV),
         _defaultHotKeyAction(HotAction.start, PhysicalKeyboardKey.keyS),
-        _defaultHotKeyAction(HotAction.mode, PhysicalKeyboardKey.keyM),
         _defaultHotKeyAction(HotAction.proxy, PhysicalKeyboardKey.keyP),
         _defaultHotKeyAction(HotAction.delayTest, PhysicalKeyboardKey.keyD),
       ];
 
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
-  DashboardWidget.outboundMode,
   DashboardWidget.networkDetection,
   DashboardWidget.trafficUsage,
   DashboardWidget.intranetIp,

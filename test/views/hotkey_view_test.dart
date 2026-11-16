@@ -122,7 +122,9 @@ TextButton _button(WidgetTester tester, String label) {
 
 void main() {
   group('HotKeyView', () {
-    testWidgets('lists every action, bound or not', (tester) async {
+    testWidgets('lists every action that does something, bound or not', (
+      tester,
+    ) async {
       final container = _containerFor(
         tester,
         hotKeyActions: [
@@ -135,7 +137,7 @@ void main() {
       );
       await _pumpView(tester, container);
 
-      for (final action in HotAction.values) {
+      for (final action in HotAction.values.where((a) => !a.changesMode)) {
         await tester.scrollUntilVisible(find.text(action.label), 100);
         expect(find.text(action.label), findsOne, reason: action.name);
       }

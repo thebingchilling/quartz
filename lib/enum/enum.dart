@@ -115,6 +115,12 @@ enum DelayTestPhase { queued, running }
 
 enum Mode { rule, global, direct }
 
+extension ModeCore on Mode {
+  /// mihomo's global mode skips every rule, the app's own leading ones
+  /// included, so global runs as rule mode with a single `MATCH,GLOBAL`.
+  Mode get coreMode => this == Mode.global ? Mode.rule : this;
+}
+
 enum ViewMode { mobile, laptop, desktop }
 
 enum LogLevel { debug, info, warning, error, silent }
@@ -423,7 +429,12 @@ enum HotAction {
   delayTest,
   updateProfiles,
   copyEnv,
-  exit,
+  exit;
+
+  bool get changesMode => switch (this) {
+    mode || ruleMode || globalMode || directMode => true,
+    _ => false,
+  };
 }
 
 enum ProxiesIconStyle { filled, plain, hidden }
@@ -480,10 +491,11 @@ enum FunctionTag {
 
 enum DashboardWidget {
   networkSpeed,
-  outboundMode,
+  // TUN, the VPN, no system proxy and global mode are fixed, so their
+  // switches never show.
+  outboundMode(platforms: []),
   trafficUsage,
   networkDetection,
-  // TUN, the VPN and no system proxy are fixed, so their switches never show.
   tunButton(platforms: []),
   vpnButton(platforms: []),
   systemProxyButton(platforms: []),

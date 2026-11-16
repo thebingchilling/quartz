@@ -33,15 +33,6 @@ List<(String, List<HotAction>)> _sections(AppLocalizations appLocalizations) {
       const [HotAction.view, HotAction.start, HotAction.exit],
     ),
     (
-      appLocalizations.outboundMode,
-      const [
-        HotAction.mode,
-        HotAction.ruleMode,
-        HotAction.globalMode,
-        HotAction.directMode,
-      ],
-    ),
-    (
       appLocalizations.network,
       const [HotAction.proxy, HotAction.tun, HotAction.copyEnv],
     ),

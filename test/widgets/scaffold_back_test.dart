@@ -358,7 +358,7 @@ void main() {
           const DashboardState(
             dashboardWidgets: [
               DashboardWidget.networkSpeed,
-              DashboardWidget.outboundMode,
+              DashboardWidget.runTime,
             ],
           ),
         ),
@@ -393,14 +393,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 301));
     await tester.pump();
     expect(tester.state<SuperGridState>(find.byType(SuperGrid)).items, [
-      DashboardWidget.outboundMode.widget,
+      DashboardWidget.runTime.widget,
     ]);
     await tester.binding.handlePopRoute();
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byKey(const ValueKey('edit-icon')), findsOneWidget);
     expect(container.read(appSettingProvider).dashboardWidgets, [
-      DashboardWidget.outboundMode,
+      DashboardWidget.runTime,
     ]);
   });
 }

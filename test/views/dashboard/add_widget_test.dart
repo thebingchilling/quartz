@@ -30,7 +30,7 @@ void main() {
     final shown = DashboardWidget.values
         .where(
           (item) =>
-              item != DashboardWidget.outboundMode &&
+              item != DashboardWidget.runTime &&
               item.platforms.contains(SupportPlatform.currentPlatform),
         )
         .toList();
@@ -70,10 +70,10 @@ void main() {
     await tester.pump();
 
     final grid = tester.state<SuperGridState>(find.byType(SuperGrid));
-    expect(grid.items.last, DashboardWidget.outboundMode.widget);
+    expect(grid.items.last, DashboardWidget.runTime.widget);
     expect(container.read(appSettingProvider).dashboardWidgets, [
       ...shown,
-      DashboardWidget.outboundMode,
+      DashboardWidget.runTime,
     ]);
 
     for (var i = 0; i < 20; i++) {

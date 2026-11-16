@@ -28,15 +28,6 @@ class CommonAction extends _$CommonAction {
         .update((state) => state.copyWith(showTrayTitle: !state.showTrayTitle));
   }
 
-  void updateMode() {
-    ref.read(patchClashConfigProvider.notifier).update((state) {
-      final index = Mode.values.indexWhere((item) => item == state.mode);
-      if (index == -1) return state;
-      final nextIndex = index + 1 > Mode.values.length - 1 ? 0 : index + 1;
-      return state.copyWith(mode: Mode.values[nextIndex]);
-    });
-  }
-
   Future<void> updateTraffic() async {
     if (_isUpdatingTraffic) {
       return;

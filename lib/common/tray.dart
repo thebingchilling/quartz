@@ -115,7 +115,6 @@ class AppTray implements TrayPort {
   }) {
     final commonAction = read(commonActionProvider.notifier);
     final systemAction = read(systemActionProvider.notifier);
-    final setupAction = read(setupActionProvider.notifier);
     final appLocalizations = currentAppLocalizations;
     String? shortcut(HotAction action) => _shortcut(trayState, action);
     final showItem = TrayMenuAction(
@@ -150,23 +149,8 @@ class AppTray implements TrayPort {
           onSelected: commonAction.updateSpeedStatistics,
         ),
       const TrayMenuSeparator(),
-      for (final mode in Mode.values)
-        TrayMenuCheckbox(
-          label: mode.label,
-          checked: mode == trayState.mode,
-          detail: shortcut(switch (mode) {
-            Mode.rule => HotAction.ruleMode,
-            Mode.global => HotAction.globalMode,
-            Mode.direct => HotAction.directMode,
-          }),
-          onSelected: () {
-            setupAction.changeMode(mode);
-          },
-        ),
-      const TrayMenuSeparator(),
       if (isMacOS) ..._buildGroupMenu(trayState: trayState, read: read),
-      if (trayState.isStart) ...[
-      ],
+      if (trayState.isStart) ...[],
       TrayMenuCheckbox(
         label: appLocalizations.autoLaunch,
         checked: trayState.autoLaunch,

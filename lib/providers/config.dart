@@ -135,7 +135,7 @@ void writeConfig(Ref ref, Config config) {
   ref.read(proxiesStyleSettingProvider.notifier).value =
       config.proxiesStyleProps;
   ref.read(patchClashConfigProvider.notifier).value = config.patchClashConfig
-      .ensureControllerSecret();
+      .normalized();
   ref.read(excludeSSIDsProvider.notifier).value = config.excludeSSIDs;
 }
 
