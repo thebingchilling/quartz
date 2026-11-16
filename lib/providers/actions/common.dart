@@ -150,9 +150,13 @@ class CommonAction extends _$CommonAction {
     if (system.isAndroid) {
       await app?.installApk(file.path);
     } else if (Platform.isWindows) {
+      // The installer replaces the running files and starts Quartz again.
       await Process.start(file.path, const [
         '/SILENT',
+        '/SUPPRESSMSGBOXES',
+        '/NORESTART',
       ], mode: ProcessStartMode.detached);
+      await ref.read(systemActionProvider.notifier).handleExit();
     }
   }
 
