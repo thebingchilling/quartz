@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/warp/warp.dart';
 import 'package:fl_clash/features/warp/warp_store.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -533,7 +534,7 @@ class ProfileItem extends ConsumerWidget {
           ProfileType.file => SourceKind.file,
           ProfileType.custom => SourceKind.custom,
         },
-        usage: usage,
+        usage: warpExpiry == null ? usage : _warpUsed(warpExpiry),
         tooltip: context.appLocalizations.subscriptionInfo,
         onPressed: usage == null
             ? null
@@ -543,10 +544,9 @@ class ProfileItem extends ConsumerWidget {
       title: _ProfileCardTitle(
         profile: profile,
         expire: warpExpiry ?? subscriptionInfo?.expireDate,
-        expireLabel: warpExpiry == null
-            ? null
-            : _warpExpiryLabel(context, warpExpiry),
-        info: _buildTraffic(context),
+        info: warpExpiry == null
+            ? _buildTraffic(context)
+            : _WarpRemaining(expiresAt: warpExpiry),
       ),
     );
     return ContextMenuRegion(
@@ -563,12 +563,48 @@ class ProfileItem extends ConsumerWidget {
     );
   }
 
-  String _warpExpiryLabel(BuildContext context, DateTime expiresAt) {
+  double _warpUsed(DateTime expiresAt) {
+    final left = expiresAt.difference(DateTime.now()).inMinutes;
+    return (1 - left / WarpRegistration.lifetime.inMinutes).clamp(0.0, 1.0);
+  }
+}
+
+/// The days a WARP registration has left, beside a bar that empties with them.
+class _WarpRemaining extends StatelessWidget {
+  const _WarpRemaining({required this.expiresAt});
+
+  final DateTime expiresAt;
+
+  @override
+  Widget build(BuildContext context) {
     final l = context.appLocalizations;
+    final colorScheme = context.colorScheme;
     final remaining = expiresAt.difference(DateTime.now());
-    return remaining.isNegative
-        ? l.warpExpired
-        : l.warpDaysLeft(remaining.inDays);
+    final color = switch (remaining.inDays) {
+      _ when remaining.isNegative => colorScheme.error,
+      < 7 => colorScheme.tertiary,
+      _ => colorScheme.primary,
+    };
+    final left = remaining.inMinutes / WarpRegistration.lifetime.inMinutes;
+    return Row(
+      children: [
+        Text(
+          remaining.isNegative
+              ? l.warpExpired
+              : l.warpDaysLeft(remaining.inDays),
+          style: context.textTheme.bodySmall?.copyWith(color: color),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: LinearProgressIndicator(
+            minHeight: 4,
+            value: left.clamp(0.0, 1.0),
+            color: color,
+            backgroundColor: color.opacity15,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -577,12 +613,10 @@ class _ProfileCardTitle extends StatelessWidget {
     required this.profile,
     required this.expire,
     required this.info,
-    this.expireLabel,
   });
 
   final Profile profile;
   final DateTime? expire;
-  final String? expireLabel;
   final Widget? info;
 
   @override
@@ -590,7 +624,6 @@ class _ProfileCardTitle extends StatelessWidget {
     final title = ChipTitle(
       title: profile.realLabel,
       expire: expire,
-      expireLabel: expireLabel,
       style: context.textTheme.titleMedium,
     );
     final info = this.info;
