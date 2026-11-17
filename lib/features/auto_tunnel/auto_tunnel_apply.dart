@@ -15,21 +15,40 @@ import 'auto_tunnel.dart';
 /// Written by Android's service when it switched while the app was closed.
 const _appliedKey = 'quartz.autoTunnel.applied';
 
-TunnelTarget? targetFor(AutoTunnelSettings settings, String key) =>
-    settings.apps.firstWhereOrNull((app) => app.id == key)?.target ??
-    settings.connections.firstWhereOrNull((c) => c.id == key)?.target;
+/// Reads what Android's service sends through `apply`, or leaves behind.
+AutoTunnelAction? actionFromJson(Object? json) {
+  final map = json is String ? jsonDecode(json) : json;
+  if (map is! Map) return null;
+  return (
+    key: map['key'] as String? ?? '',
+    connect: map['connect'] == true,
+    target: TunnelTarget.fromJson(map['target']),
+  );
+}
 
-/// False when [target]'s profile is gone.
-Future<bool> applyTunnelTarget(
+/// A tunnel whose profile was deleted connects whichever profile is current.
+Future<void> applyAutoTunnelAction(
   WidgetRef ref,
-  TunnelTarget target, {
+  AutoTunnelAction action, {
   bool connect = true,
 }) async {
   final setup = ref.read(setupActionProvider.notifier);
-  if (target.disconnects) {
+  if (!action.connect) {
     if (connect && ref.read(isStartProvider)) await setup.setRunning(false);
-    return true;
+    return;
   }
+  final target = action.target;
+  if (target != null && !await applyTunnelTarget(ref, target)) {
+    commonPrint.log('Auto-tunnel: profile ${target.profileId} is gone');
+  }
+  if (connect && !ref.read(isStartProvider)) {
+    await setup.setRunning(true, initialize: !ref.read(initProvider));
+  }
+}
+
+/// Makes [target] the current profile with its server picked; false when
+/// its profile is gone.
+Future<bool> applyTunnelTarget(WidgetRef ref, TunnelTarget target) async {
   final profile = ref
       .read(profilesProvider)
       .firstWhereOrNull((profile) => profile.id == target.profileId);
@@ -50,30 +69,27 @@ Future<bool> applyTunnelTarget(
     }
   }
   if (switching) ref.read(currentProfileIdProvider.notifier).value = profile.id;
-  if (connect && !ref.read(isStartProvider)) {
-    await setup.setRunning(true, initialize: !ref.read(initProvider));
-  }
   return true;
 }
 
-/// Each target's config and service state, so Android's service can switch
-/// with the app closed.
+/// Each tunnel's config and service state by [TunnelTarget.key], so
+/// Android's service can switch with the app closed. The current profile is
+/// rendered too, for decisions that keep whichever profile is current.
 Future<Map<String, dynamic>> renderTargets(
   WidgetRef ref,
   AutoTunnelSettings settings,
 ) async {
-  final keyed = <String, TunnelTarget>{
-    for (final c in settings.connections)
-      if (c.target case final target? when !target.disconnects) c.id: target,
-    for (final a in settings.apps)
-      if (a.target case final target? when !target.disconnects) a.id: target,
+  final current = ref.read(currentProfileIdProvider);
+  final targets = {
+    ...settings.targets,
+    if (current != null) TunnelTarget(profileId: current),
   };
   final profiles = ref.read(profilesProvider);
   final dir = Directory(join(await appPath.homeDirPath, 'autotunnel'));
   await dir.create(recursive: true);
   final yamls = <int, String>{};
   final rendered = <String, dynamic>{};
-  for (final MapEntry(:key, value: target) in keyed.entries) {
+  for (final target in targets) {
     final profile = profiles.firstWhereOrNull((p) => p.id == target.profileId);
     if (profile == null) continue;
     final path = join(dir.path, '${profile.id}.yaml');
@@ -85,7 +101,7 @@ Future<Map<String, dynamic>> renderTargets(
       yamls[profile.id] = yaml;
       await File(path).writeAsStringAtomically(yaml);
     }
-    rendered[key] = {
+    rendered[target.key] = {
       'profileId': profile.id,
       'path': path,
       'label': profile.realLabel,
@@ -96,12 +112,17 @@ Future<Map<String, dynamic>> renderTargets(
 }
 
 /// The switch Android's service made while the app was closed, if any.
-Future<String?> takeAppliedKey() async {
+Future<AutoTunnelAction?> takeAppliedAction() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.reload();
-  final key = prefs.getString(_appliedKey);
-  if (key != null) await prefs.remove(_appliedKey);
-  return key;
+  final json = prefs.getString(_appliedKey);
+  if (json == null) return null;
+  await prefs.remove(_appliedKey);
+  try {
+    return actionFromJson(json);
+  } on FormatException {
+    return null;
+  }
 }
 
 String settingsJson(

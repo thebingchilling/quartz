@@ -41,16 +41,16 @@ class _AndroidAutoTunnelState extends ConsumerState<AndroidAutoTunnel> {
 
   Future<dynamic> _handle(MethodCall call) async {
     if (call.method != 'apply') return null;
-    final target = targetFor(ref.read(autoTunnelProvider), call.arguments);
-    if (target == null || !mounted) return false;
-    return applyTunnelTarget(ref, target);
+    final action = actionFromJson(call.arguments);
+    if (action == null || !mounted) return false;
+    await applyAutoTunnelAction(ref, action);
+    return true;
   }
 
   Future<void> _adopt() async {
-    final key = await takeAppliedKey();
-    if (key == null || !mounted) return;
-    final target = targetFor(ref.read(autoTunnelProvider), key);
-    if (target != null) await applyTunnelTarget(ref, target, connect: false);
+    final action = await takeAppliedAction();
+    if (action == null || !mounted) return;
+    await applyAutoTunnelAction(ref, action, connect: false);
   }
 
   void _schedule() {
@@ -97,7 +97,6 @@ class DesktopAutoTunnel extends ConsumerStatefulWidget {
 }
 
 class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
-  static const _settle = Duration(seconds: 2);
   static const _appPoll = Duration(seconds: 2);
   static const _linger = Duration(seconds: 4);
 
@@ -167,10 +166,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
 
   Future<void> _pollApps() async {
     final settings = ref.read(autoTunnelProvider);
-    final watched = {
-      for (final app in settings.apps)
-        if (app.target != null) app.detected,
-    };
+    final watched = {for (final app in settings.apps) app.detected};
     if (!settings.enabled || watched.isEmpty) return;
     final next = stepOpenApps(
       _openApps,
@@ -193,13 +189,13 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
 
   void _schedule() {
     _timer?.cancel();
-    _timer = Timer(_settle, () => unawaited(_apply()));
+    final settle = Duration(
+      seconds: ref.read(autoTunnelProvider).debounceSeconds,
+    );
+    _timer = Timer(settle, () => unawaited(_apply()));
   }
 
   Future<NetworkSnapshot> _snapshot() async {
-    if (_results.contains(ConnectivityResult.ethernet)) {
-      return (kind: NetworkKind.ethernet, ssid: null, simId: null);
-    }
     if (_results.contains(ConnectivityResult.wifi)) {
       String? ssid;
       try {
@@ -223,26 +219,22 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     _network = network;
     await _syncFirewall();
     if (!settings.enabled || !mounted) return;
-    final decision = decideAutoTunnel(
-      settings,
-      network,
-      openApps: _appsForRules,
-    );
-    final key = '${network.kind}|${network.ssid}|${decision?.$1}';
+    final action = decideAutoTunnel(settings, network, openApps: _appsForRules);
+    final key = '${network.kind}|${network.ssid}|${action?.key}';
     if (!mounted || key == _lastKey) return;
     _lastKey = key;
-    if (decision == null) return;
-    commonPrint.log('Auto-tunnel: $network -> ${decision.$1}');
-    _switching = !decision.$2.disconnects;
+    if (action == null) return;
+    commonPrint.log('Auto-tunnel: $network -> ${action.key}');
+    _switching = action.connect;
     try {
-      await applyTunnelTarget(ref, decision.$2);
+      await applyAutoTunnelAction(ref, action);
     } finally {
       _switching = false;
     }
   }
 
   /// The kill switch blocks every app but the Core and the TUN adapter;
-  /// a manual stop releases the connection and tunnel kill switches.
+  /// a manual stop releases the tunnel kill switches.
   Future<void> _syncFirewall() async {
     if (!mounted || !system.isWindows) return;
     final settings = ref.read(autoTunnelProvider);

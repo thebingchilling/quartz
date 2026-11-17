@@ -51,9 +51,9 @@ class AutoTunnelPlugin :
         if (active === this) active = null
     }
 
-    private suspend fun invokeApply(key: String): Boolean = withContext(Dispatchers.Main) {
+    private suspend fun invokeApply(decision: String): Boolean = withContext(Dispatchers.Main) {
         val answer = CompletableDeferred<Boolean>()
-        channel.invokeMethod("apply", key, object : MethodChannel.Result {
+        channel.invokeMethod("apply", decision, object : MethodChannel.Result {
             override fun success(result: Any?) {
                 answer.complete(result == true)
             }
@@ -212,6 +212,6 @@ class AutoTunnelPlugin :
         private var active: AutoTunnelPlugin? = null
 
         /** False when Quartz's UI isn't running or couldn't switch; the caller then switches itself. */
-        suspend fun apply(key: String): Boolean = active?.invokeApply(key) ?: false
+        suspend fun apply(decision: String): Boolean = active?.invokeApply(decision) ?: false
     }
 }

@@ -81,7 +81,7 @@ class AutoTunnelService : Service() {
     private fun schedule() {
         handler.removeCallbacks(evaluate)
         // Networks come and go in bursts while switching; judge once they settle.
-        handler.postDelayed(evaluate, SETTLE_MS)
+        handler.postDelayed(evaluate, AutoTunnel.settings(this).debounceSeconds * 1_000L)
     }
 
     private fun register() {
@@ -159,8 +159,6 @@ class AutoTunnelService : Service() {
         val validated = networks.values.filter {
             it.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
         }.ifEmpty { networks.values.toList() }
-        validated.firstOrNull { it.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) }
-            ?.let { return NetworkSnapshot(NetworkKind.ETHERNET) }
         validated.firstOrNull { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }
             ?.let { return NetworkSnapshot(NetworkKind.WIFI, ssid = ssidOf(it)) }
         validated.firstOrNull { it.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) }
@@ -205,9 +203,9 @@ class AutoTunnelService : Service() {
         GlobalState.log("Auto-tunnel: $network -> ${decision.key}")
         applying?.cancel()
         applying = scope.launch {
-            if (AutoTunnelPlugin.apply(decision.key)) return@launch
+            if (AutoTunnelPlugin.apply(AutoTunnel.toJson(decision))) return@launch
             GlobalState.launch {
-                AutoTunnel.applyWithoutFlutter(this@AutoTunnelService, decision.key, decision.target)
+                AutoTunnel.applyWithoutFlutter(this@AutoTunnelService, decision)
             }
         }
     }
@@ -254,7 +252,6 @@ class AutoTunnelService : Service() {
     private companion object {
         const val CHANNEL = "auto_tunnel"
         const val NOTIFICATION_ID = 7
-        const val SETTLE_MS = 2_000L
         const val LINGER_MS = 4_000L
         const val UNKNOWN_SSID = "<unknown ssid>"
     }

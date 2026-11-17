@@ -5,21 +5,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// No [profileId] means disconnect.
 class TunnelTarget {
-  const TunnelTarget({this.profileId, this.group, this.proxy});
+  const TunnelTarget({required this.profileId, this.group, this.proxy});
 
-  const TunnelTarget.disconnect() : this();
-
-  final int? profileId;
+  final int profileId;
   final String? group;
   final String? proxy;
-
-  bool get disconnects => profileId == null;
 
   Map<String, String> get picks => {
     if (group != null && proxy != null) group!: proxy!,
   };
+
+  String get key => '$profileId/${group ?? ''}/${proxy ?? ''}';
 
   Map<String, dynamic> toJson() => {
     'profileId': profileId,
@@ -28,11 +25,14 @@ class TunnelTarget {
   };
 
   static TunnelTarget? fromJson(Object? json) => json is Map
-      ? TunnelTarget(
-          profileId: json['profileId'] as int?,
-          group: json['group'] as String?,
-          proxy: json['proxy'] as String?,
-        )
+      ? switch (json['profileId']) {
+          final int profileId => TunnelTarget(
+            profileId: profileId,
+            group: json['group'] as String?,
+            proxy: json['proxy'] as String?,
+          ),
+          _ => null,
+        }
       : null;
 
   @override
@@ -46,59 +46,6 @@ class TunnelTarget {
   int get hashCode => Object.hash(profileId, group, proxy);
 }
 
-enum ConnectionKind { wifi, mobile, ethernet }
-
-/// One connection's settings. A null [ssid] is every other Wi-Fi, a null
-/// [simId] every other SIM; a null [target] leaves the tunnel as it is.
-class ConnectionSettings {
-  const ConnectionSettings({
-    required this.kind,
-    this.ssid,
-    this.simId,
-    this.target,
-    this.killSwitch = false,
-  });
-
-  final ConnectionKind kind;
-  final String? ssid;
-  final int? simId;
-  final TunnelTarget? target;
-  final bool killSwitch;
-
-  String get id => '${kind.name}:${ssid ?? simId ?? '*'}';
-
-  ConnectionSettings copyWith({
-    TunnelTarget? Function()? target,
-    bool? killSwitch,
-  }) => ConnectionSettings(
-    kind: kind,
-    ssid: ssid,
-    simId: simId,
-    target: target == null ? this.target : target(),
-    killSwitch: killSwitch ?? this.killSwitch,
-  );
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'kind': kind.name,
-    'ssid': ssid,
-    'simId': simId,
-    'target': target?.toJson(),
-    'killSwitch': killSwitch,
-  };
-
-  factory ConnectionSettings.fromJson(Map<String, dynamic> json) =>
-      ConnectionSettings(
-        kind:
-            ConnectionKind.values.asNameMap()[json['kind']] ??
-            ConnectionKind.wifi,
-        ssid: json['ssid'] as String?,
-        simId: json['simId'] as int?,
-        target: TunnelTarget.fromJson(json['target']),
-        killSwitch: json['killSwitch'] as bool? ?? false,
-      );
-}
-
 /// [app] is an Android package or a Windows program's full path.
 class AppSettings {
   const AppSettings({
@@ -110,6 +57,8 @@ class AppSettings {
 
   final String app;
   final String label;
+
+  /// Null connects the default tunnel.
   final TunnelTarget? target;
   final bool killSwitch;
 
@@ -146,42 +95,87 @@ class AppSettings {
   );
 }
 
+/// WG Tunnel's model, plus the SIMs mobile data counts on, apps that bring
+/// their own tunnel while open, and kill switches.
 class AutoTunnelSettings {
   const AutoTunnelSettings({
     this.enabled = false,
-    this.connections = const [],
+    this.defaultTunnel,
+    this.tunnelOnWifi = true,
+    this.trustedNetworks = const [],
+    this.wifiTunnels = const {},
+    this.tunnelOnMobileData = true,
+    this.mobileSims = const {},
+    this.mobileTunnel,
+    this.simTunnels = const {},
+    this.stopOnNoNetwork = false,
+    this.debounceSeconds = 2,
     this.apps = const [],
     this.killSwitchTunnels = const {},
   });
 
   final bool enabled;
-  final List<ConnectionSettings> connections;
+
+  /// Null connects whichever profile is current.
+  final TunnelTarget? defaultTunnel;
+
+  final bool tunnelOnWifi;
+
+  /// Names, where `*` and `?` match any run of characters and any one.
+  final List<String> trustedNetworks;
+  final Map<String, TunnelTarget> wifiTunnels;
+  final bool tunnelOnMobileData;
+
+  /// Empty means every SIM.
+  final Set<int> mobileSims;
+  final TunnelTarget? mobileTunnel;
+  final Map<int, TunnelTarget> simTunnels;
+  final bool stopOnNoNetwork;
+  final int debounceSeconds;
   final List<AppSettings> apps;
   final Set<int> killSwitchTunnels;
 
+  static const debounceChoices = [0, 1, 2, 3, 5, 10];
+
   bool get usesKillSwitch =>
-      killSwitchTunnels.isNotEmpty ||
-      connections.any((c) => c.killSwitch) ||
-      apps.any((a) => a.killSwitch);
+      killSwitchTunnels.isNotEmpty || apps.any((a) => a.killSwitch);
+
+  Iterable<TunnelTarget> get targets => {
+    ?defaultTunnel,
+    ...wifiTunnels.values,
+    ?mobileTunnel,
+    ...simTunnels.values,
+    for (final app in apps) ?app.target,
+  };
 
   AutoTunnelSettings copyWith({
     bool? enabled,
-    List<ConnectionSettings>? connections,
+    TunnelTarget? Function()? defaultTunnel,
+    bool? tunnelOnWifi,
+    List<String>? trustedNetworks,
+    Map<String, TunnelTarget>? wifiTunnels,
+    bool? tunnelOnMobileData,
+    Set<int>? mobileSims,
+    TunnelTarget? Function()? mobileTunnel,
+    Map<int, TunnelTarget>? simTunnels,
+    bool? stopOnNoNetwork,
+    int? debounceSeconds,
     List<AppSettings>? apps,
     Set<int>? killSwitchTunnels,
   }) => AutoTunnelSettings(
     enabled: enabled ?? this.enabled,
-    connections: connections ?? this.connections,
+    defaultTunnel: defaultTunnel == null ? this.defaultTunnel : defaultTunnel(),
+    tunnelOnWifi: tunnelOnWifi ?? this.tunnelOnWifi,
+    trustedNetworks: trustedNetworks ?? this.trustedNetworks,
+    wifiTunnels: wifiTunnels ?? this.wifiTunnels,
+    tunnelOnMobileData: tunnelOnMobileData ?? this.tunnelOnMobileData,
+    mobileSims: mobileSims ?? this.mobileSims,
+    mobileTunnel: mobileTunnel == null ? this.mobileTunnel : mobileTunnel(),
+    simTunnels: simTunnels ?? this.simTunnels,
+    stopOnNoNetwork: stopOnNoNetwork ?? this.stopOnNoNetwork,
+    debounceSeconds: debounceSeconds ?? this.debounceSeconds,
     apps: apps ?? this.apps,
     killSwitchTunnels: killSwitchTunnels ?? this.killSwitchTunnels,
-  );
-
-  AutoTunnelSettings putConnection(ConnectionSettings connection) => copyWith(
-    connections: [
-      for (final c in connections)
-        if (c.id != connection.id) c,
-      connection,
-    ],
   );
 
   AutoTunnelSettings putApp(AppSettings app) => copyWith(
@@ -194,87 +188,149 @@ class AutoTunnelSettings {
 
   Map<String, dynamic> toJson() => {
     'enabled': enabled,
-    'connections': [for (final c in connections) c.toJson()],
+    'defaultTunnel': defaultTunnel?.toJson(),
+    'tunnelOnWifi': tunnelOnWifi,
+    'trustedNetworks': trustedNetworks,
+    'wifiTunnels': [
+      for (final MapEntry(:key, :value) in wifiTunnels.entries)
+        {'ssid': key, 'target': value.toJson()},
+    ],
+    'tunnelOnMobileData': tunnelOnMobileData,
+    'mobileSims': mobileSims.toList(),
+    'mobileTunnel': mobileTunnel?.toJson(),
+    'simTunnels': [
+      for (final MapEntry(:key, :value) in simTunnels.entries)
+        {'simId': key, 'target': value.toJson()},
+    ],
+    'stopOnNoNetwork': stopOnNoNetwork,
+    'debounceSeconds': debounceSeconds,
     'apps': [for (final a in apps) a.toJson()],
     'killSwitchTunnels': killSwitchTunnels.toList(),
   };
 
-  factory AutoTunnelSettings.fromJson(Map<String, dynamic> json) =>
-      AutoTunnelSettings(
-        enabled: json['enabled'] as bool? ?? false,
-        connections: [
-          for (final c in (json['connections'] as List?) ?? const [])
-            ConnectionSettings.fromJson((c as Map).cast()),
-        ],
-        apps: [
-          for (final a in (json['apps'] as List?) ?? const [])
-            AppSettings.fromJson((a as Map).cast()),
-        ],
-        killSwitchTunnels: {
-          for (final id in (json['killSwitchTunnels'] as List?) ?? const [])
-            id as int,
-        },
-      );
+  factory AutoTunnelSettings.fromJson(Map<String, dynamic> json) {
+    List<Map<String, dynamic>> maps(String key) => [
+      for (final item in (json[key] as List?) ?? const [])
+        if (item is Map) item.cast<String, dynamic>(),
+    ];
+    return AutoTunnelSettings(
+      enabled: json['enabled'] as bool? ?? false,
+      defaultTunnel: TunnelTarget.fromJson(json['defaultTunnel']),
+      tunnelOnWifi: json['tunnelOnWifi'] as bool? ?? true,
+      trustedNetworks: [
+        for (final ssid in (json['trustedNetworks'] as List?) ?? const [])
+          if (ssid is String) ssid,
+      ],
+      wifiTunnels: {
+        for (final item in maps('wifiTunnels'))
+          if (item['ssid'] case final String ssid)
+            ssid: ?TunnelTarget.fromJson(item['target']),
+      },
+      tunnelOnMobileData: json['tunnelOnMobileData'] as bool? ?? true,
+      mobileSims: {
+        for (final id in (json['mobileSims'] as List?) ?? const [])
+          if (id is int) id,
+      },
+      mobileTunnel: TunnelTarget.fromJson(json['mobileTunnel']),
+      simTunnels: {
+        for (final item in maps('simTunnels'))
+          if (item['simId'] case final int simId)
+            simId: ?TunnelTarget.fromJson(item['target']),
+      },
+      stopOnNoNetwork: json['stopOnNoNetwork'] as bool? ?? false,
+      debounceSeconds: json['debounceSeconds'] as int? ?? 2,
+      apps: [for (final a in maps('apps')) AppSettings.fromJson(a)],
+      killSwitchTunnels: {
+        for (final id in (json['killSwitchTunnels'] as List?) ?? const [])
+          if (id is int) id,
+      },
+    );
+  }
 }
 
-enum NetworkKind { wifi, mobile, ethernet, none }
+enum NetworkKind { wifi, mobile, none }
 
 /// [ssid] is null when the system hides it.
 typedef NetworkSnapshot = ({NetworkKind kind, String? ssid, int? simId});
 
-ConnectionSettings? connectionFor(
-  AutoTunnelSettings settings,
-  NetworkSnapshot network,
-) {
-  final kind = switch (network.kind) {
-    NetworkKind.wifi => ConnectionKind.wifi,
-    NetworkKind.mobile => ConnectionKind.mobile,
-    NetworkKind.ethernet => ConnectionKind.ethernet,
-    NetworkKind.none => null,
-  };
-  if (kind == null) return null;
-  final ofKind = settings.connections.where((c) => c.kind == kind);
-  return switch (kind) {
-        ConnectionKind.wifi when network.ssid != null =>
-          ofKind.where((c) => c.ssid == network.ssid).firstOrNull,
-        ConnectionKind.mobile when network.simId != null =>
-          ofKind.where((c) => c.simId == network.simId).firstOrNull,
-        _ => null,
-      } ??
-      ofKind.where((c) => c.ssid == null && c.simId == null).firstOrNull;
+/// A null [target] while connecting is whichever profile is current.
+typedef AutoTunnelAction = ({String key, bool connect, TunnelTarget? target});
+
+bool ssidMatches(String pattern, String ssid) {
+  if (!pattern.contains('*') && !pattern.contains('?')) return pattern == ssid;
+  final regex = pattern
+      .split('')
+      .map(
+        (char) => switch (char) {
+          '*' => '.*',
+          '?' => '.',
+          _ => RegExp.escape(char),
+        },
+      )
+      .join();
+  return RegExp('^$regex\$').hasMatch(ssid);
 }
 
-/// The key of the item that decides ([AppSettings.id] or
-/// [ConnectionSettings.id]) and its target, or null to leave the tunnel as it
-/// is. An open app (most recent first) wins over the connection. Mirrored by
-/// Android's `AutoTunnelRules`; keep both in step.
-(String, TunnelTarget)? decideAutoTunnel(
+bool isTrusted(AutoTunnelSettings settings, NetworkSnapshot network) {
+  final ssid = network.ssid;
+  return network.kind == NetworkKind.wifi &&
+      ssid != null &&
+      settings.trustedNetworks.any((pattern) => ssidMatches(pattern, ssid));
+}
+
+/// Null leaves the tunnel as it is. Mirrored by Android's `AutoTunnelRules`.
+AutoTunnelAction? decideAutoTunnel(
   AutoTunnelSettings settings,
   NetworkSnapshot network, {
   List<String> openApps = const [],
 }) {
+  AutoTunnelAction connect(String key, TunnelTarget? target) =>
+      (key: key, connect: true, target: target ?? settings.defaultTunnel);
+  AutoTunnelAction disconnect(String key) =>
+      (key: key, connect: false, target: null);
+
   for (final open in openApps) {
     for (final app in settings.apps) {
-      if (app.detected == open && app.target != null) {
-        return (app.id, app.target!);
-      }
+      if (app.detected == open) return connect(app.id, app.target);
     }
   }
-  final connection = connectionFor(settings, network);
-  final target = connection?.target;
-  if (connection == null || target == null) return null;
-  return (connection.id, target);
+  final ssid = network.ssid;
+  final simId = network.simId;
+  switch (network.kind) {
+    case NetworkKind.wifi:
+      if (isTrusted(settings, network)) return disconnect('wifi:trusted');
+      if (!settings.tunnelOnWifi) return disconnect('wifi:off');
+      final preferred = ssid == null
+          ? null
+          : settings.wifiTunnels.entries
+                .where((entry) => ssidMatches(entry.key, ssid))
+                .firstOrNull;
+      return preferred == null
+          ? connect('wifi', null)
+          : connect('wifi:${preferred.key}', preferred.value);
+    case NetworkKind.mobile:
+      final counted =
+          settings.mobileSims.isEmpty ||
+          simId == null ||
+          settings.mobileSims.contains(simId);
+      if (!settings.tunnelOnMobileData || !counted) {
+        return disconnect('mobile:off');
+      }
+      final perSim = simId == null ? null : settings.simTunnels[simId];
+      if (perSim != null) return connect('mobile:$simId', perSim);
+      return connect('mobile', settings.mobileTunnel);
+    case NetworkKind.none:
+      return settings.stopOnNoNetwork ? disconnect('none') : null;
+  }
 }
 
-/// Whether everything is blocked while no tunnel runs: the connection's or
-/// the last tunnel's kill switch is on.
 bool blocksAll(
   AutoTunnelSettings settings,
   NetworkSnapshot network,
   int? tunnelId,
 ) =>
-    settings.killSwitchTunnels.contains(tunnelId) ||
-    (connectionFor(settings, network)?.killSwitch ?? false);
+    settings.killSwitchTunnels.contains(tunnelId) &&
+    !isTrusted(settings, network);
 
 /// A null [open] means only the foreground app is known to be open.
 List<String> stepOpenApps(
@@ -301,6 +357,8 @@ class SimCard {
   final int id;
   final String name;
   final int slot;
+
+  String get title => '$name · SIM ${slot + 1}';
 }
 
 typedef AutoTunnelPermissions = ({
@@ -360,7 +418,8 @@ final autoTunnelProvider =
     );
 
 class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
-  static const key = 'quartz.autoTunnel.v3';
+  static const key = 'quartz.autoTunnel.v4';
+  static const _previousKey = 'quartz.autoTunnel.v3';
   static const platform = AutoTunnelPlatform();
 
   @override
@@ -370,11 +429,23 @@ class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
   }
 
   Future<void> _load() async {
-    final text = (await SharedPreferences.getInstance()).getString(key);
-    if (text == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final text = prefs.getString(key);
     try {
-      state = AutoTunnelSettings.fromJson(
-        (jsonDecode(text) as Map).cast<String, dynamic>(),
+      if (text != null) {
+        state = AutoTunnelSettings.fromJson(
+          (jsonDecode(text) as Map).cast<String, dynamic>(),
+        );
+        return;
+      }
+      final previous = prefs.getString(_previousKey);
+      if (previous == null) return;
+      final old = AutoTunnelSettings.fromJson(
+        (jsonDecode(previous) as Map).cast<String, dynamic>(),
+      );
+      state = AutoTunnelSettings(
+        apps: old.apps,
+        killSwitchTunnels: old.killSwitchTunnels,
       );
     } on Object catch (error) {
       commonPrint.log('Auto-tunnel settings unreadable: $error');
@@ -388,7 +459,4 @@ class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, jsonEncode(state.toJson()));
   }
-
-  static String newId() =>
-      DateTime.now().microsecondsSinceEpoch.toRadixString(36);
 }

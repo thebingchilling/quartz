@@ -60,21 +60,31 @@ object AutoTunnel {
             .apply()
     }
 
-    /** Points the service at [key]'s rendered config and restarts it if it was running. */
-    suspend fun applyWithoutFlutter(context: Context, key: String, target: TunnelTarget) {
-        if (target.profileId == null) {
+    fun toJson(decision: Decision): String = gson.toJson(decision)
+
+    /** Points the service at the decision's rendered config and restarts it if it was running. */
+    suspend fun applyWithoutFlutter(context: Context, decision: Decision) {
+        if (!decision.connect) {
             KillSwitch.onManualStop()
             ServiceState.handleSwitchStop()
             return
         }
-        val rendered = settings(context).rendered[key]
+        if (decision.target == null && ServiceState.isRunRequested) return
+        val settings = settings(context)
+        val target = decision.target ?: settings.currentProfileId?.let { TunnelTarget(profileId = it) }
+        val rendered = target?.let { settings.rendered[it.key] }
         val source = rendered?.path?.let(::File)
         if (rendered == null || source == null || !source.isFile) {
-            GlobalState.log("Auto-tunnel: no config rendered for $key yet; open Quartz once")
+            if (decision.target == null) {
+                ServiceState.handleStartAction()
+                return
+            }
+            GlobalState.log("Auto-tunnel: no config rendered for ${decision.key} yet; open Quartz once")
             return
         }
         val prefs = context.getSharedPreferences(FLUTTER_PREFS, Context.MODE_PRIVATE)
-        if (prefs.getString(APPLIED, null) == key && ServiceState.isRunRequested) return
+        val applied = toJson(decision)
+        if (prefs.getString(APPLIED, null) == applied && ServiceState.isRunRequested) return
         val state = prefs.getString(SHARED_STATE, null)
             ?.let { runCatching { JsonParser.parseString(it).asJsonObject }.getOrNull() }
             ?: run {
@@ -88,7 +98,7 @@ object AutoTunnel {
         source.copyTo(File(context.filesDir, "config.yaml"), overwrite = true)
         prefs.edit()
             .putString(SHARED_STATE, state.toString())
-            .putString(APPLIED, key)
+            .putString(APPLIED, applied)
             .commit()
         KillSwitch.nativeProfileId = rendered.profileId
         if (ServiceState.isRunRequested) ServiceState.handleSwitchStop()

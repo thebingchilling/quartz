@@ -5,7 +5,7 @@ import com.follow.clash.ServiceState
 import com.follow.clash.common.GlobalState
 import kotlinx.coroutines.launch
 
-/** A manual stop releases the connection and tunnel kill switches, never the per-app ones. */
+/** A manual stop releases the tunnel kill switches, never the per-app ones. */
 object KillSwitch {
     @Volatile
     private var manualOff = false

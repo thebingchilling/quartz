@@ -7,23 +7,17 @@ const _auckland = TunnelTarget(
   group: 'Windscribe',
   proxy: 'NZ Auckland',
 );
+const _windscribe = TunnelTarget(profileId: 3);
 const _settings = AutoTunnelSettings(
   enabled: true,
-  connections: [
-    ConnectionSettings(
-      kind: ConnectionKind.wifi,
-      ssid: 'eduroam',
-      target: _warp,
-    ),
-    ConnectionSettings(kind: ConnectionKind.wifi, killSwitch: true),
-    ConnectionSettings(
-      kind: ConnectionKind.mobile,
-      simId: 2,
-      target: _auckland,
-    ),
-  ],
+  defaultTunnel: _warp,
+  trustedNetworks: ['Home', 'Office-*'],
+  wifiTunnels: {'eduroam': _windscribe},
+  mobileSims: {1, 2},
+  simTunnels: {2: _auckland},
   apps: [
     AppSettings(app: 'nz.bank', label: 'Bank', target: _auckland),
+    AppSettings(app: 'nz.news', label: 'News'),
     AppSettings(
       app: r'C:\Apps\Torrent.exe',
       label: 'Torrent',
@@ -33,34 +27,84 @@ const _settings = AutoTunnelSettings(
   killSwitchTunnels: {1},
 );
 
-NetworkSnapshot _wifi(String ssid) =>
+NetworkSnapshot _wifi(String? ssid) =>
     (kind: NetworkKind.wifi, ssid: ssid, simId: null);
 
-NetworkSnapshot _sim(int id) =>
+NetworkSnapshot _sim(int? id) =>
     (kind: NetworkKind.mobile, ssid: null, simId: id);
 
+const NetworkSnapshot _offline = (
+  kind: NetworkKind.none,
+  ssid: null,
+  simId: null,
+);
+
 void main() {
-  test('each connection picks its own tunnel', () {
-    expect(decideAutoTunnel(_settings, _wifi('eduroam'))?.$1, 'wifi:eduroam');
-    expect(decideAutoTunnel(_settings, _sim(2))?.$2, _auckland);
-    expect(decideAutoTunnel(_settings, _sim(1)), isNull);
-    expect(decideAutoTunnel(_settings, _wifi('Cafe')), isNull);
+  test('untrusted Wi-Fi connects, trusted Wi-Fi disconnects', () {
+    final cafe = decideAutoTunnel(_settings, _wifi('Cafe'))!;
+    expect(cafe.connect, isTrue);
+    expect(cafe.target, _warp);
+    expect(decideAutoTunnel(_settings, _wifi('Home'))!.connect, isFalse);
+    expect(decideAutoTunnel(_settings, _wifi('Office-3'))!.connect, isFalse);
+    expect(decideAutoTunnel(_settings, _wifi(null))!.connect, isTrue);
   });
 
-  test('an open app wins over the connection', () {
-    final decision = decideAutoTunnel(
+  test('a network listed with a tunnel connects that one', () {
+    expect(decideAutoTunnel(_settings, _wifi('eduroam'))!.target, _windscribe);
+  });
+
+  test('Wi-Fi with the tunnel off disconnects', () {
+    final off = _settings.copyWith(tunnelOnWifi: false);
+    expect(decideAutoTunnel(off, _wifi('Cafe'))!.connect, isFalse);
+  });
+
+  test('mobile data follows the chosen SIMs and their tunnels', () {
+    expect(decideAutoTunnel(_settings, _sim(2))!.target, _auckland);
+    expect(decideAutoTunnel(_settings, _sim(1))!.target, _warp);
+    expect(decideAutoTunnel(_settings, _sim(3))!.connect, isFalse);
+    expect(decideAutoTunnel(_settings, _sim(null))!.connect, isTrue);
+    final off = _settings.copyWith(tunnelOnMobileData: false);
+    expect(decideAutoTunnel(off, _sim(1))!.connect, isFalse);
+  });
+
+  test('a mobile data tunnel stands in for the default', () {
+    final mobile = _settings.copyWith(mobileTunnel: () => _windscribe);
+    expect(decideAutoTunnel(mobile, _sim(1))!.target, _windscribe);
+  });
+
+  test('no default tunnel keeps whichever profile is current', () {
+    final current = _settings.copyWith(defaultTunnel: () => null);
+    final action = decideAutoTunnel(current, _wifi('Cafe'))!;
+    expect(action.connect, isTrue);
+    expect(action.target, isNull);
+  });
+
+  test('no network leaves the tunnel unless told to stop', () {
+    expect(decideAutoTunnel(_settings, _offline), isNull);
+    final stop = _settings.copyWith(stopOnNoNetwork: true);
+    expect(decideAutoTunnel(stop, _offline)!.connect, isFalse);
+  });
+
+  test('an open app wins over the network, even a trusted one', () {
+    final bank = decideAutoTunnel(
       _settings,
-      _wifi('eduroam'),
+      _wifi('Home'),
       openApps: ['nz.bank'],
-    );
-    expect(decision?.$1, 'app:nz.bank');
+    )!;
+    expect(bank.key, 'app:nz.bank');
+    expect(bank.target, _auckland);
+    final news = decideAutoTunnel(
+      _settings,
+      _wifi('Home'),
+      openApps: ['nz.news'],
+    )!;
+    expect(news.target, _warp);
   });
 
-  test('named Wi-Fi falls back to the other Wi-Fi entry', () {
-    expect(connectionFor(_settings, _wifi('Cafe'))?.id, 'wifi:*');
-    expect(blocksAll(_settings, _wifi('Cafe'), null), isTrue);
-    expect(blocksAll(_settings, _wifi('eduroam'), 2), isFalse);
-    expect(blocksAll(_settings, _wifi('eduroam'), 1), isTrue);
+  test('the tunnel kill switch spares trusted networks', () {
+    expect(blocksAll(_settings, _wifi('Cafe'), 1), isTrue);
+    expect(blocksAll(_settings, _wifi('Home'), 1), isFalse);
+    expect(blocksAll(_settings, _wifi('Cafe'), 2), isFalse);
   });
 
   test('Windows programs are detected by file name', () {
@@ -95,15 +139,15 @@ void main() {
 
   test('settings survive a JSON round trip', () {
     final back = AutoTunnelSettings.fromJson(_settings.toJson());
-    expect(back.connections.map((c) => c.id), [
-      'wifi:eduroam',
-      'wifi:*',
-      'mobile:2',
-    ]);
-    expect(back.connections.last.target, _auckland);
-    expect(back.connections[1].target, isNull);
+    expect(back.defaultTunnel, _warp);
+    expect(back.trustedNetworks, ['Home', 'Office-*']);
+    expect(back.wifiTunnels, {'eduroam': _windscribe});
+    expect(back.mobileSims, {1, 2});
+    expect(back.simTunnels, {2: _auckland});
+    expect(back.apps[1].target, isNull);
     expect(back.apps.last.killSwitch, isTrue);
     expect(back.killSwitchTunnels, {1});
     expect(back.usesKillSwitch, isTrue);
+    expect(back.targets, {_warp, _windscribe, _auckland});
   });
 }

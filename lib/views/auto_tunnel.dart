@@ -18,8 +18,7 @@ import 'package:wifi_ssid/wifi_ssid.dart';
 
 const _platform = AutoTunnelNotifier.platform;
 const _manual = '\u0000manual';
-const _doNothing = -2;
-const _disconnect = -1;
+const _fallback = -1;
 
 Future<void> _update(
   WidgetRef ref,
@@ -38,26 +37,32 @@ Future<void> _ensureHelper() async {
   await system.authorizeCore();
 }
 
-String _targetText(
-  AppLocalizations l,
-  List<Profile> profiles,
-  TunnelTarget? target,
-) {
-  if (target == null) return l.autoTunnelDoNothing;
-  if (target.disconnects) return l.autoTunnelDisconnect;
+String _targetText(List<Profile> profiles, TunnelTarget target) {
   final profile = profiles.firstWhereOrNull((p) => p.id == target.profileId);
   final name = profile?.realLabel ?? '?';
   return target.proxy == null ? name : '$name · ${target.proxy}';
 }
 
-String _summary(
-  AppLocalizations l,
+/// [fallback] names what a null target connects.
+String _tunnelText(
   List<Profile> profiles,
   TunnelTarget? target,
-  bool killSwitch,
-) {
-  final text = _targetText(l, profiles, target);
-  return killSwitch ? '$text · ${l.autoTunnelKillSwitch}' : text;
+  String fallback,
+) => target == null ? fallback : _targetText(profiles, target);
+
+Future<void> _pickTunnel(
+  BuildContext context,
+  WidgetRef ref, {
+  required TunnelTarget? initial,
+  required String fallback,
+  required AutoTunnelSettings Function(AutoTunnelSettings, TunnelTarget?) write,
+}) async {
+  final picked = await BaseNavigator.push<(TunnelTarget?,)>(
+    context,
+    _TunnelPicker(initial: initial, fallback: fallback),
+  );
+  if (picked == null) return;
+  await _update(ref, (s) => write(s, picked.$1));
 }
 
 class AutoTunnelView extends ConsumerStatefulWidget {
@@ -113,7 +118,7 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
   List<Widget> _permissionItems(AppLocalizations l, AutoTunnelSettings s) {
     final permissions = _permissions;
     if (permissions == null) return const [];
-    final hasApps = s.apps.any((app) => app.target != null);
+    final hasApps = s.apps.isNotEmpty;
     Widget item(String title, Glyph glyph, String kind, {String? subtitle}) =>
         ListItem(
           leading: GlyphIcon(glyph),
@@ -152,81 +157,8 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
     ];
   }
 
-  void _openConnection(String title, ConnectionSettings blank) {
-    unawaited(
-      BaseNavigator.push<void>(
-        context,
-        _ItemPage(
-          title: title,
-          killSwitchDesc: context.appLocalizations.autoTunnelConnectionKillDesc,
-          read: (s) {
-            final c =
-                s.connections.firstWhereOrNull((c) => c.id == blank.id) ??
-                blank;
-            return (c.target, c.killSwitch);
-          },
-          write: (s, target, killSwitch) => s.putConnection(
-            ConnectionSettings(
-              kind: blank.kind,
-              ssid: blank.ssid,
-              simId: blank.simId,
-              target: target,
-              killSwitch: killSwitch,
-            ),
-          ),
-          onDelete: blank.ssid == null
-              ? null
-              : (s) => s.copyWith(
-                  connections: [
-                    ...s.connections.where((c) => c.id != blank.id),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
   void _openApp(AppSettings app) {
-    unawaited(
-      BaseNavigator.push<void>(
-        context,
-        _ItemPage(
-          title: app.label,
-          subtitle: app.app,
-          killSwitchDesc: context.appLocalizations.autoTunnelAppKillDesc,
-          read: (s) {
-            final a = s.apps.firstWhereOrNull((a) => a.id == app.id) ?? app;
-            return (a.target, a.killSwitch);
-          },
-          write: (s, target, killSwitch) => s.putApp(
-            AppSettings(
-              app: app.app,
-              label: app.label,
-              target: target,
-              killSwitch: killSwitch,
-            ),
-          ),
-          onDelete: (s) =>
-              s.copyWith(apps: [...s.apps.where((a) => a.id != app.id)]),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _addNetwork(AppLocalizations l) async {
-    final nearby = system.isAndroid
-        ? await _platform.wifiNetworks().catchError((_) => const <String>[])
-        : [?await WifiSsidManager.instance.getSsid().catchError((_) => null)];
-    if (!mounted) return;
-    final listed = ref.read(autoTunnelProvider).connections.map((c) => c.ssid);
-    final ssid = await _choose(context, l.autoTunnelAddNetwork, [
-      for (final ssid in nearby)
-        if (!listed.contains(ssid)) (ssid, ssid),
-    ], l.autoTunnelEnterName);
-    if (ssid == null || !mounted) return;
-    final blank = ConnectionSettings(kind: ConnectionKind.wifi, ssid: ssid);
-    await _update(ref, (s) => s.putConnection(blank));
-    _openConnection(ssid, blank);
+    unawaited(BaseNavigator.push<void>(context, _AppPage(app: app)));
   }
 
   Future<void> _addApp(AppLocalizations l) async {
@@ -246,28 +178,60 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
     _openApp(settings);
   }
 
+  void _setSim(SimCard sim, bool on) {
+    unawaited(
+      _update(ref, (s) {
+        final all = {for (final card in _sims) card.id};
+        final counted = s.mobileSims.isEmpty ? all : {...s.mobileSims};
+        on ? counted.add(sim.id) : counted.remove(sim.id);
+        return s.copyWith(
+          mobileSims: counted.containsAll(all) ? const {} : counted,
+        );
+      }),
+    );
+  }
+
+  List<Widget> _simItems(AppLocalizations l, AutoTunnelSettings s) {
+    final profiles = ref.watch(profilesProvider);
+    return [
+      for (final sim in _sims)
+        ListItem(
+          leading: const GlyphIcon(AppGlyphs.dataUsage),
+          title: Text(sim.title),
+          subtitle: Text(
+            _tunnelText(
+              profiles,
+              s.simTunnels[sim.id],
+              l.autoTunnelMobileTunnel,
+            ),
+          ),
+          onTap: () => _pickTunnel(
+            context,
+            ref,
+            initial: s.simTunnels[sim.id],
+            fallback: l.autoTunnelMobileTunnel,
+            write: (s, target) => s.copyWith(
+              simTunnels: {
+                for (final MapEntry(:key, :value) in s.simTunnels.entries)
+                  if (key != sim.id) key: value,
+                sim.id: ?target,
+              },
+            ),
+          ),
+          trailing: Switch(
+            value: s.mobileSims.isEmpty || s.mobileSims.contains(sim.id),
+            onChanged: s.tunnelOnMobileData ? (on) => _setSim(sim, on) : null,
+          ),
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     final settings = ref.watch(autoTunnelProvider);
     final profiles = ref.watch(profilesProvider);
     final permissionItems = _permissionItems(l, settings);
-    Widget connection(String title, Glyph glyph, ConnectionSettings blank) {
-      final c =
-          settings.connections.firstWhereOrNull((c) => c.id == blank.id) ??
-          blank;
-      return ListItem(
-        leading: GlyphIcon(glyph),
-        title: Text(title),
-        subtitle: Text(_summary(l, profiles, c.target, c.killSwitch)),
-        trailing: const GlyphIcon(AppGlyphs.chevronForward),
-        onTap: () => _openConnection(title, blank),
-      );
-    }
-
-    final namedWifi = settings.connections.where(
-      (c) => c.kind == ConnectionKind.wifi && c.ssid != null,
-    );
     return CommonScaffold(
       title: l.autoTunnel,
       body: ListView(
@@ -284,6 +248,25 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
                 onChanged: (value) =>
                     _update(ref, (state) => state.copyWith(enabled: value)),
               ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.target),
+                title: Text(l.autoTunnelDefaultTunnel),
+                subtitle: Text(
+                  _tunnelText(
+                    profiles,
+                    settings.defaultTunnel,
+                    l.autoTunnelCurrentProfile,
+                  ),
+                ),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
+                onTap: () => _pickTunnel(
+                  context,
+                  ref,
+                  initial: settings.defaultTunnel,
+                  fallback: l.autoTunnelCurrentProfile,
+                  write: (s, target) => s.copyWith(defaultTunnel: () => target),
+                ),
+              ),
             ],
             footer: l.autoTunnelDesc,
           ),
@@ -293,40 +276,76 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
               items: permissionItems,
             ),
           generateSectionV3(
-            title: l.autoTunnelConnections,
+            title: l.autoTunnelWifi,
             items: [
-              for (final c in namedWifi) connection(c.ssid!, AppGlyphs.wifi, c),
-              connection(
-                l.autoTunnelOtherWifi,
-                AppGlyphs.wifi,
-                const ConnectionSettings(kind: ConnectionKind.wifi),
+              ListItem.toggle(
+                leading: const GlyphIcon(AppGlyphs.wifi),
+                title: Text(l.autoTunnelOnWifi),
+                value: settings.tunnelOnWifi,
+                onChanged: (value) =>
+                    _update(ref, (s) => s.copyWith(tunnelOnWifi: value)),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.add),
-                title: Text(l.autoTunnelAddNetwork),
-                onTap: () => _addNetwork(l),
-              ),
-              for (final sim in _sims)
-                connection(
-                  '${sim.name} · SIM ${sim.slot + 1}',
-                  AppGlyphs.dataUsage,
-                  ConnectionSettings(
-                    kind: ConnectionKind.mobile,
-                    simId: sim.id,
-                  ),
+                leading: const GlyphIcon(AppGlyphs.lockOpen),
+                title: Text(l.autoTunnelTrustedNetworks),
+                subtitle: Text(
+                  settings.trustedNetworks.isEmpty
+                      ? l.none
+                      : settings.trustedNetworks.join(', '),
                 ),
-              connection(
-                _sims.isEmpty ? l.autoTunnelMobile : l.autoTunnelOtherMobile,
-                AppGlyphs.dataUsage,
-                const ConnectionSettings(kind: ConnectionKind.mobile),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
+                onTap: () => BaseNavigator.push<void>(
+                  context,
+                  const _TrustedNetworksPage(),
+                ),
               ),
-              connection(
-                l.autoTunnelEthernet,
-                AppGlyphs.devices,
-                const ConnectionSettings(kind: ConnectionKind.ethernet),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.link),
+                title: Text(l.autoTunnelWifiTunnels),
+                subtitle: Text(
+                  settings.wifiTunnels.isEmpty
+                      ? l.none
+                      : settings.wifiTunnels.keys.join(', '),
+                ),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
+                onTap: () =>
+                    BaseNavigator.push<void>(context, const _WifiTunnelsPage()),
               ),
             ],
             footer: system.isAndroid ? l.autoTunnelWifiDesc : null,
+          ),
+          generateSectionV3(
+            title: l.autoTunnelMobile,
+            items: [
+              ListItem.toggle(
+                leading: const GlyphIcon(AppGlyphs.dataUsage),
+                title: Text(l.autoTunnelOnMobile),
+                value: settings.tunnelOnMobileData,
+                onChanged: (value) =>
+                    _update(ref, (s) => s.copyWith(tunnelOnMobileData: value)),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.target),
+                title: Text(l.autoTunnelMobileTunnel),
+                subtitle: Text(
+                  _tunnelText(
+                    profiles,
+                    settings.mobileTunnel,
+                    l.autoTunnelDefaultTunnel,
+                  ),
+                ),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
+                onTap: () => _pickTunnel(
+                  context,
+                  ref,
+                  initial: settings.mobileTunnel,
+                  fallback: l.autoTunnelDefaultTunnel,
+                  write: (s, target) => s.copyWith(mobileTunnel: () => target),
+                ),
+              ),
+              ..._simItems(l, settings),
+            ],
+            footer: _sims.isEmpty ? null : l.autoTunnelSimsDesc,
           ),
           generateSectionV3(
             title: l.autoTunnelApps,
@@ -336,7 +355,14 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
                   leading: const GlyphIcon(AppGlyphs.appsList),
                   title: Text(app.label),
                   subtitle: Text(
-                    _summary(l, profiles, app.target, app.killSwitch),
+                    [
+                      _tunnelText(
+                        profiles,
+                        app.target,
+                        l.autoTunnelDefaultTunnel,
+                      ),
+                      if (app.killSwitch) l.autoTunnelKillSwitch,
+                    ].join(' · '),
                   ),
                   trailing: const GlyphIcon(AppGlyphs.chevronForward),
                   onTap: () => _openApp(app),
@@ -350,13 +376,38 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
             footer: l.autoTunnelAppsDesc,
           ),
           generateSectionV3(
-            title: l.autoTunnelTunnels,
+            title: l.autoTunnelAdvanced,
+            items: [
+              ListItem.toggle(
+                leading: const GlyphIcon(AppGlyphs.networkCheck),
+                title: Text(l.autoTunnelStopNoNetwork),
+                value: settings.stopOnNoNetwork,
+                onChanged: (value) =>
+                    _update(ref, (s) => s.copyWith(stopOnNoNetwork: value)),
+              ),
+              ListItem<int>.options(
+                leading: const GlyphIcon(AppGlyphs.history),
+                title: Text(l.autoTunnelDebounce),
+                subtitle: Text(l.autoTunnelSeconds(settings.debounceSeconds)),
+                dialogTitle: l.autoTunnelDebounce,
+                options: AutoTunnelSettings.debounceChoices,
+                value: settings.debounceSeconds,
+                textBuilder: l.autoTunnelSeconds,
+                onChanged: (value) {
+                  if (value == null) return;
+                  _update(ref, (s) => s.copyWith(debounceSeconds: value));
+                },
+              ),
+            ],
+            footer: l.autoTunnelDebounceDesc,
+          ),
+          generateSectionV3(
+            title: l.autoTunnelKillSwitch,
             items: [
               for (final profile in profiles)
                 ListItem.toggle(
                   leading: const GlyphIcon(AppGlyphs.lock),
                   title: Text(profile.realLabel),
-                  subtitle: Text(l.autoTunnelKillSwitch),
                   value: settings.killSwitchTunnels.contains(profile.id),
                   onChanged: (value) => _update(
                     ref,
@@ -385,6 +436,152 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
               ],
               footer: l.autoTunnelSystemKillSwitchDesc,
             ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<List<String>> _nearbyNetworks() async => system.isAndroid
+    ? await _platform.wifiNetworks().catchError((_) => const <String>[])
+    : [?await WifiSsidManager.instance.getSsid().catchError((_) => null)];
+
+Future<String?> _pickNetwork(
+  BuildContext context,
+  Iterable<String> listed,
+) async {
+  final l = context.appLocalizations;
+  final nearby = await _nearbyNetworks();
+  if (!context.mounted) return null;
+  return _choose(context, l.autoTunnelAddNetwork, [
+    for (final ssid in nearby)
+      if (!listed.contains(ssid)) (ssid, ssid),
+  ], l.autoTunnelEnterName);
+}
+
+class _TrustedNetworksPage extends ConsumerWidget {
+  const _TrustedNetworksPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.appLocalizations;
+    final trusted = ref.watch(
+      autoTunnelProvider.select((s) => s.trustedNetworks),
+    );
+    return CommonScaffold(
+      title: l.autoTunnelTrustedNetworks,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(top: context.contentTopPadding, bottom: 32),
+        children: [
+          generateSectionV3(
+            items: [
+              for (final ssid in trusted)
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.wifi),
+                  title: Text(ssid),
+                  trailing: IconButton(
+                    tooltip: l.delete,
+                    icon: const GlyphIcon(AppGlyphs.delete),
+                    onPressed: () => _update(
+                      ref,
+                      (s) => s.copyWith(
+                        trustedNetworks: [
+                          for (final t in s.trustedNetworks)
+                            if (t != ssid) t,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.add),
+                title: Text(l.autoTunnelAddNetwork),
+                onTap: () async {
+                  final ssid = await _pickNetwork(context, trusted);
+                  if (ssid == null) return;
+                  await _update(
+                    ref,
+                    (s) => s.copyWith(
+                      trustedNetworks: [...s.trustedNetworks, ssid],
+                    ),
+                  );
+                },
+              ),
+            ],
+            footer: l.autoTunnelTrustedDesc,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WifiTunnelsPage extends ConsumerWidget {
+  const _WifiTunnelsPage();
+
+  AutoTunnelSettings Function(AutoTunnelSettings, TunnelTarget?) _write(
+    String ssid,
+  ) =>
+      (s, target) => s.copyWith(
+        wifiTunnels: {
+          for (final MapEntry(:key, :value) in s.wifiTunnels.entries)
+            if (key != ssid) key: value,
+          ssid: ?target,
+        },
+      );
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.appLocalizations;
+    final tunnels = ref.watch(autoTunnelProvider.select((s) => s.wifiTunnels));
+    final profiles = ref.watch(profilesProvider);
+    return CommonScaffold(
+      title: l.autoTunnelWifiTunnels,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(top: context.contentTopPadding, bottom: 32),
+        children: [
+          generateSectionV3(
+            items: [
+              for (final MapEntry(key: ssid, value: target) in tunnels.entries)
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.wifi),
+                  title: Text(ssid),
+                  subtitle: Text(_targetText(profiles, target)),
+                  onTap: () => _pickTunnel(
+                    context,
+                    ref,
+                    initial: target,
+                    fallback: l.autoTunnelDefaultTunnel,
+                    write: _write(ssid),
+                  ),
+                  trailing: IconButton(
+                    tooltip: l.delete,
+                    icon: const GlyphIcon(AppGlyphs.delete),
+                    onPressed: () => _update(ref, (s) => _write(ssid)(s, null)),
+                  ),
+                ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.add),
+                title: Text(l.autoTunnelAddNetwork),
+                onTap: () async {
+                  final ssid = await _pickNetwork(context, tunnels.keys);
+                  if (ssid == null || !context.mounted) return;
+                  await _pickTunnel(
+                    context,
+                    ref,
+                    initial: null,
+                    fallback: l.autoTunnelDefaultTunnel,
+                    write: _write(ssid),
+                  );
+                },
+              ),
+            ],
+            footer: l.autoTunnelWifiTunnelsDesc,
+          ),
         ],
       ),
     );
@@ -450,44 +647,37 @@ Future<List<(String, String)>> _appChoices(WidgetRef ref) async {
   ];
 }
 
-typedef _ItemState = (TunnelTarget?, bool);
+class _AppPage extends ConsumerWidget {
+  const _AppPage({required this.app});
 
-class _ItemPage extends ConsumerWidget {
-  const _ItemPage({
-    required this.title,
-    required this.read,
-    required this.write,
-    required this.killSwitchDesc,
-    this.subtitle,
-    this.onDelete,
-  });
-
-  final String title;
-  final String? subtitle;
-  final String killSwitchDesc;
-  final _ItemState Function(AutoTunnelSettings) read;
-  final AutoTunnelSettings Function(AutoTunnelSettings, TunnelTarget?, bool)
-  write;
-  final AutoTunnelSettings Function(AutoTunnelSettings)? onDelete;
+  final AppSettings app;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.appLocalizations;
     final profiles = ref.watch(profilesProvider);
-    final (target, killSwitch) = read(ref.watch(autoTunnelProvider));
-    final delete = onDelete;
+    final current = ref.watch(
+      autoTunnelProvider.select(
+        (s) => s.apps.firstWhereOrNull((a) => a.id == app.id) ?? app,
+      ),
+    );
     return CommonScaffold(
-      title: title,
+      title: app.label,
       actions: [
-        if (delete != null)
-          IconButton(
-            tooltip: l.delete,
-            onPressed: () {
-              unawaited(_update(ref, delete));
-              Navigator.of(context).pop();
-            },
-            icon: const GlyphIcon(AppGlyphs.delete),
-          ),
+        IconButton(
+          tooltip: l.delete,
+          onPressed: () {
+            unawaited(
+              _update(
+                ref,
+                (s) =>
+                    s.copyWith(apps: [...s.apps.where((a) => a.id != app.id)]),
+              ),
+            );
+            Navigator.of(context).pop();
+          },
+          icon: const GlyphIcon(AppGlyphs.delete),
+        ),
       ],
       body: ListView(
         padding: const EdgeInsets.symmetric(
@@ -499,28 +689,34 @@ class _ItemPage extends ConsumerWidget {
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.target),
                 title: Text(l.autoTunnelTarget),
-                subtitle: Text(_targetText(l, profiles, target)),
+                subtitle: Text(
+                  _tunnelText(
+                    profiles,
+                    current.target,
+                    l.autoTunnelDefaultTunnel,
+                  ),
+                ),
                 trailing: const GlyphIcon(AppGlyphs.chevronForward),
-                onTap: () async {
-                  final picked = await BaseNavigator.push<(TunnelTarget?,)>(
-                    context,
-                    _TargetPicker(initial: target),
-                  );
-                  if (picked == null) return;
-                  await _update(ref, (s) => write(s, picked.$1, killSwitch));
-                },
+                onTap: () => _pickTunnel(
+                  context,
+                  ref,
+                  initial: current.target,
+                  fallback: l.autoTunnelDefaultTunnel,
+                  write: (s, target) =>
+                      s.putApp(current.copyWith(target: () => target)),
+                ),
               ),
               ListItem.toggle(
                 leading: const GlyphIcon(AppGlyphs.lock),
                 title: Text(l.autoTunnelKillSwitch),
-                value: killSwitch,
-                onChanged: (value) =>
-                    _update(ref, (s) => write(s, target, value)),
+                value: current.killSwitch,
+                onChanged: (value) => _update(
+                  ref,
+                  (s) => s.putApp(current.copyWith(killSwitch: value)),
+                ),
               ),
             ],
-            footer: subtitle == null
-                ? killSwitchDesc
-                : '$subtitle\n\n$killSwitchDesc',
+            footer: '${app.app}\n\n${l.autoTunnelAppKillDesc}',
           ),
         ],
       ),
@@ -549,25 +745,20 @@ Future<_Groups> _groupsOf(int profileId) async {
   }
 }
 
-/// Pops `(target,)`, where a null target leaves the tunnel as it is.
-class _TargetPicker extends ConsumerStatefulWidget {
-  const _TargetPicker({required this.initial});
+/// Pops `(target,)`, where a null target is the [fallback] choice.
+class _TunnelPicker extends ConsumerStatefulWidget {
+  const _TunnelPicker({required this.initial, required this.fallback});
 
   final TunnelTarget? initial;
+  final String fallback;
 
   @override
-  ConsumerState<_TargetPicker> createState() => _TargetPickerState();
+  ConsumerState<_TunnelPicker> createState() => _TunnelPickerState();
 }
 
-class _TargetPickerState extends ConsumerState<_TargetPicker> {
+class _TunnelPickerState extends ConsumerState<_TunnelPicker> {
   late TunnelTarget? _target = widget.initial;
   _Groups _groups = const {};
-
-  int get _choice => switch (_target) {
-    null => _doNothing,
-    TunnelTarget(:final profileId?) => profileId,
-    _ => _disconnect,
-  };
 
   @override
   void initState() {
@@ -585,11 +776,9 @@ class _TargetPickerState extends ConsumerState<_TargetPicker> {
 
   void _pick(int choice) {
     setState(
-      () => _target = switch (choice) {
-        _doNothing => null,
-        _disconnect => const TunnelTarget.disconnect(),
-        _ => TunnelTarget(profileId: choice),
-      },
+      () => _target = choice == _fallback
+          ? null
+          : TunnelTarget(profileId: choice),
     );
     unawaited(_loadGroups());
   }
@@ -618,19 +807,15 @@ class _TargetPickerState extends ConsumerState<_TargetPicker> {
         ).copyWith(top: context.contentTopPadding, bottom: 32),
         children: [
           RadioGroup<int>(
-            groupValue: _choice,
+            groupValue: target?.profileId ?? _fallback,
             onChanged: (choice) {
               if (choice != null) _pick(choice);
             },
             child: generateSectionV3(
               items: [
                 ListItem<int>.radio(
-                  title: Text(l.autoTunnelDoNothing),
-                  value: _doNothing,
-                ),
-                ListItem<int>.radio(
-                  title: Text(l.autoTunnelDisconnect),
-                  value: _disconnect,
+                  title: Text(widget.fallback),
+                  value: _fallback,
                 ),
                 for (final profile in profiles)
                   ListItem<int>.radio(
@@ -640,7 +825,7 @@ class _TargetPickerState extends ConsumerState<_TargetPicker> {
               ],
             ),
           ),
-          if (target?.profileId != null && _groups.isNotEmpty)
+          if (target != null && _groups.isNotEmpty)
             generateSectionV3(
               title: l.autoTunnelServer,
               items: [
@@ -653,7 +838,7 @@ class _TargetPickerState extends ConsumerState<_TargetPicker> {
                   textBuilder: (g) => g.isEmpty ? l.autoTunnelKeepServer : g,
                   onChanged: (g) => setState(
                     () => _target = TunnelTarget(
-                      profileId: target?.profileId,
+                      profileId: target.profileId,
                       group: g == null || g.isEmpty ? null : g,
                     ),
                   ),
@@ -661,14 +846,14 @@ class _TargetPickerState extends ConsumerState<_TargetPicker> {
                 if (group != null && groupProxies.isNotEmpty)
                   ListItem<String>.options(
                     title: Text(l.autoTunnelServer),
-                    subtitle: Text(target?.proxy ?? l.autoTunnelKeepServer),
+                    subtitle: Text(target.proxy ?? l.autoTunnelKeepServer),
                     dialogTitle: l.autoTunnelServer,
                     options: groupProxies,
-                    value: target?.proxy ?? groupProxies.first,
+                    value: target.proxy ?? groupProxies.first,
                     textBuilder: (p) => p,
                     onChanged: (p) => setState(
                       () => _target = TunnelTarget(
-                        profileId: target?.profileId,
+                        profileId: target.profileId,
                         group: group,
                         proxy: p,
                       ),
