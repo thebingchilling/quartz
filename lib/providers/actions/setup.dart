@@ -208,17 +208,27 @@ class SetupAction extends _$SetupAction {
 
   Future<void> _setCoreRunning(_RunRequest request) {
     return _listenerScheduler.run(() async {
-      if (!_isCurrent(request)) {
-        return;
+      try {
+        await _applyCoreRunning(request);
+      } finally {
+        if (_isCurrent(request)) {
+          ref.read(routeEpochProvider.notifier).bump();
+        }
       }
-      if (request.running && ref.read(suspendProvider)) {
-        return;
-      }
-      if (ref.read(safeModeProvider)) {
-        return;
-      }
-      await _setListening(request.running);
     });
+  }
+
+  Future<void> _applyCoreRunning(_RunRequest request) async {
+    if (!_isCurrent(request)) {
+      return;
+    }
+    if (request.running && ref.read(suspendProvider)) {
+      return;
+    }
+    if (ref.read(safeModeProvider)) {
+      return;
+    }
+    await _setListening(request.running);
   }
 
   Future<void> _setListening(bool running) async {
@@ -237,6 +247,7 @@ class SetupAction extends _$SetupAction {
           return;
         }
         await _setListening(!ref.read(suspendProvider));
+        ref.read(routeEpochProvider.notifier).bump();
       });
     });
   }
@@ -255,6 +266,7 @@ class SetupAction extends _$SetupAction {
     }
     _startTime = request.previousStartTime;
     _setLocalRunning(!request.running);
+    ref.read(routeEpochProvider.notifier).bump();
   }
 
   bool _isCurrent(_RunRequest request) => identical(_latestRunRequest, request);
@@ -377,6 +389,9 @@ class SetupAction extends _$SetupAction {
         },
       );
     });
+    if (result == _SetupTaskResult.completed && ref.read(isStartProvider)) {
+      ref.read(routeEpochProvider.notifier).bump();
+    }
     if (result != _SetupTaskResult.handoffToCoreRestart) {
       return result;
     }

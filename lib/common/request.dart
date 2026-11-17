@@ -97,6 +97,9 @@ class Request {
           options: Options(
             responseType: ResponseType.json,
             headers: {'Accept': 'application/json'},
+            // A pooled socket opened before the route changed still goes the
+            // old way out, or hangs once that way is gone.
+            persistentConnection: false,
           ),
         )
         .timeout(

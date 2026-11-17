@@ -4,22 +4,49 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'route_state.dart';
 import 'state.dart';
 
-/// The Network card's lookup, asked again when the app connects or
-/// disconnects, the proxy picks change, or the card is tapped.
+/// Moves when the Core's listener has really started or stopped, or a profile
+/// finished applying while it runs. `isStart` flips the moment the user asks,
+/// before the mixed port answers, so a lookup keyed on it alone went out too
+/// early and the card held the old address until a later retry won.
+final routeEpochProvider = NotifierProvider<RouteEpoch, int>(RouteEpoch.new);
+
+class RouteEpoch extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
+/// The Network card's lookup, asked again when the route out changes, the
+/// proxy picks change, or the card is tapped.
 final ipDetailsProvider = AsyncNotifierProvider<IpDetailsNotifier, IpDetails>(
   IpDetailsNotifier.new,
 );
 
 class IpDetailsNotifier extends AsyncNotifier<IpDetails> {
-  /// A tunnel that just came up can drop the first request.
-  static const _settle = Duration(milliseconds: 300);
+  static const _retryDelays = [
+    Duration(milliseconds: 400),
+    Duration(milliseconds: 1200),
+  ];
 
   @override
   Future<IpDetails> build() async {
-    final started = ref.watch(isStartProvider);
+    ref.watch(routeEpochProvider);
     ref.watch(routeTrackerProvider.select((state) => state.picks));
-    if (started) await Future<void>.delayed(_settle);
-    return lookupIpDetails(request.getJsonThroughApp);
+    ref.listen(isStartProvider, (_, _) => state = const AsyncLoading());
+    var attempt = 0;
+    while (true) {
+      final started = ref.read(isStartProvider);
+      try {
+        final details = await lookupIpDetails(request.getJsonThroughApp);
+        if (!ref.mounted || ref.read(isStartProvider) == started) {
+          return details;
+        }
+      } catch (_) {
+        if (!ref.mounted || attempt >= _retryDelays.length) rethrow;
+        await Future<void>.delayed(_retryDelays[attempt++]);
+      }
+    }
   }
 
   void refresh() => ref.invalidateSelf();
