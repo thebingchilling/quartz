@@ -22,7 +22,7 @@ class NetworkDetection extends ConsumerWidget {
     final info = details.value;
     final direct = !ref.watch(isStartProvider);
     return SizedBox(
-      height: DashboardWidgetMetrics.cardHeightOf(context, defaultRows),
+      height: DashboardWidgetMetrics.heightOf(context, defaultRows),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
         onPressed: () => ref.read(ipDetailsProvider.notifier).refresh(),

@@ -146,7 +146,7 @@ class _MemoryInfoState extends ConsumerState<MemoryInfo>
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return SizedBox(
-      height: DashboardWidgetMetrics.cardHeightOf(context, 1),
+      height: DashboardWidgetMetrics.heightOf(context, 1),
       child: RepaintBoundary(
         child: CommonCard(
           radius: DashboardWidgetMetrics.radiusOf(context),

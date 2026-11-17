@@ -34,7 +34,7 @@ class OutboundMode extends ConsumerWidget {
     final radius = DashboardWidgetMetrics.radiusOf(context);
     final pillInset = min(_pillInset.mAp, inset);
     return SizedBox(
-      height: DashboardWidgetMetrics.cardHeightOf(context, 2),
+      height: DashboardWidgetMetrics.heightOf(context, 2),
       child: Theme(
         data: Theme.of(context).copyWith(
           splashColor: Colors.transparent,

@@ -96,10 +96,6 @@ class DashboardWidgetMetrics extends InheritedTheme {
     return max(lines * (unitHeight + cardSpacing) - cardSpacing, 0);
   }
 
-  /// A card's height: the rows it was resized to, else [defaultRows].
-  static double cardHeightOf(BuildContext context, num defaultRows) =>
-      heightOf(context, DashboardCardSize.rowsOf(context) ?? defaultRows);
-
   static double radiusOf(BuildContext context) {
     return AppCorner.lg * _unitHeightOf(context) / _minUnitHeight.ap;
   }
@@ -146,23 +142,4 @@ class _DashboardTextScale extends StatelessWidget {
       child: child,
     );
   }
-}
-
-/// The rows a resized card was given; cards read it through
-/// [DashboardWidgetMetrics.cardHeightOf].
-class DashboardCardSize extends InheritedWidget {
-  const DashboardCardSize({
-    super.key,
-    required this.rows,
-    required super.child,
-  });
-
-  final int rows;
-
-  static int? rowsOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<DashboardCardSize>()?.rows;
-
-  @override
-  bool updateShouldNotify(DashboardCardSize oldWidget) =>
-      rows != oldWidget.rows;
 }

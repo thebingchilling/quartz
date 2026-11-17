@@ -176,8 +176,6 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(defaultDashboardWidgets)
     @JsonKey(fromJson: dashboardWidgetsFromJson)
     List<DashboardWidget> dashboardWidgets,
-    // Card name → "columns,rows" in eighths of the phone grid, when resized.
-    @Default({}) Map<String, String> dashboardWidgetSizes,
     @Default(false) bool onlyStatisticsProxy,
     @Default(true) bool showNotificationStopAction,
     @Default(false) bool autoLaunch,

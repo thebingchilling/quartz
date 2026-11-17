@@ -30,7 +30,7 @@ class ProfilesCard extends ConsumerWidget {
     final textScale = DashboardWidgetMetrics.textScaleOf(context);
     final padding = DashboardWidgetMetrics.paddingOf(context);
     return SizedBox(
-      height: DashboardWidgetMetrics.cardHeightOf(context, 1),
+      height: DashboardWidgetMetrics.heightOf(context, 1),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
         onPressed: switch (profile) {
