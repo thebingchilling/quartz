@@ -94,6 +94,11 @@ class WindscribeSettings {
       );
 }
 
+final windscribeProfileActiveProvider = Provider<bool>((ref) {
+  final profileId = ref.watch(windscribeProvider.select((s) => s.profileId));
+  return profileId != null && profileId == ref.watch(currentProfileIdProvider);
+});
+
 final windscribeProvider =
     NotifierProvider<WindscribeNotifier, WindscribeSettings>(
       WindscribeNotifier.new,
@@ -101,7 +106,7 @@ final windscribeProvider =
 
 class WindscribeNotifier extends Notifier<WindscribeSettings> {
   static const _key = 'quartz.windscribe';
-  static const label = 'Windscribe';
+  static const label = 'windscribe';
 
   /// Load changes constantly, the set of servers rarely.
   static const staleAfter = Duration(hours: 6);
@@ -179,11 +184,13 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
     final existing = settings.profileId == null
         ? null
         : ref.read(profilesProvider).getProfile(settings.profileId!);
-    final profile = await (existing ?? Profile.normal(label: label)).saveFile(
-      Uint8List.fromList(utf8.encode(yaml)),
-      validate: (path, key) =>
-          ref.read(coreHandlerProvider).validateProfile(path, key),
-    );
+    final profile =
+        await (existing?.copyWith(label: label) ?? Profile.normal(label: label))
+            .saveFile(
+              Uint8List.fromList(utf8.encode(yaml)),
+              validate: (path, key) =>
+                  ref.read(coreHandlerProvider).validateProfile(path, key),
+            );
     if (existing == null) {
       ref.read(profilesActionProvider.notifier).putProfile(profile);
     } else {
@@ -206,11 +213,10 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
     final updated = state.updatedAt;
     final profileId = state.profileId;
     if (profileId == null || !state.hasCredentials) return;
-    if (state.country == null && state.servers.isNotEmpty) {
-      final picked = ref
-          .read(profilesProvider)
-          .getProfile(profileId)
-          ?.selectedMap[windscribeGroupName];
+    final profile = ref.read(profilesProvider).getProfile(profileId);
+    final outdated = state.country == null || profile?.label != label;
+    if (outdated && state.servers.isNotEmpty) {
+      final picked = state.country ?? profile?.selectedMap['Windscribe'];
       try {
         await _writeProfile(state.servers, picked);
       } on Object catch (error) {

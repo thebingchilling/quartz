@@ -25,6 +25,7 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   bool _editing = false;
+  bool _openVpnExpanded = false;
 
   @override
   void dispose() {
@@ -118,56 +119,9 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
             _credentialsForm(l)
           else ...[
             generateSectionV3(
-              items: [
-                ListItem(
-                  leading: const GlyphIcon(AppGlyphs.key),
-                  title: Text(l.windscribeCredentials),
-                  subtitle: Text(settings.username),
-                  trailing: TextButton(
-                    onPressed: () => setState(() {
-                      _username.text = settings.username;
-                      _password.clear();
-                      _editing = true;
-                    }),
-                    child: Text(l.windscribeChange),
-                  ),
-                ),
-              ],
+              title: l.windscribeLocations,
+              items: _locationItems(l, settings),
             ),
-            generateSectionV3(
-              title: l.options,
-              items: [
-                ListItem<WindscribeProto>.options(
-                  leading: const GlyphIcon(AppGlyphs.vpn),
-                  title: Text(l.windscribeProtocol),
-                  subtitle: Text(settings.proto.name.toUpperCase()),
-                  dialogTitle: l.windscribeProtocol,
-                  options: WindscribeProto.values,
-                  value: settings.proto,
-                  textBuilder: (proto) => proto.name.toUpperCase(),
-                  onChanged: (proto) {
-                    if (proto == null || proto == settings.proto) return;
-                    _changeOptions(
-                      (state) => state.copyWith(proto: proto, port: 443),
-                    );
-                  },
-                ),
-                ListItem<int>.options(
-                  leading: const GlyphIcon(AppGlyphs.link),
-                  title: Text(l.windscribePort),
-                  subtitle: Text('${settings.port}'),
-                  dialogTitle: l.windscribePort,
-                  options: settings.proto.ports,
-                  value: settings.port,
-                  textBuilder: (port) => '$port',
-                  onChanged: (port) {
-                    if (port == null || port == settings.port) return;
-                    _changeOptions((state) => state.copyWith(port: port));
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
             generateSectionV3(
               items: [
                 ListItem(
@@ -187,17 +141,93 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
               footer: l.windscribeListDesc,
             ),
             generateSectionV3(
-              title: l.windscribeLocations,
-              items: settings.servers.isEmpty || settings.profileId == null
-                  ? [ListItem(title: Text(l.windscribeLocationsEmpty))]
-                  : [
-                      for (final country in windscribeCountries(
-                        settings.servers,
-                      ))
-                        _CountryItem(country: country),
-                    ],
+              items: [
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.vpn),
+                  title: Text(l.windscribeOpenVpn),
+                  subtitle: Text(
+                    '${settings.proto.name.toUpperCase()} · ${settings.port}',
+                  ),
+                  trailing: AnimatedRotation(
+                    turns: _openVpnExpanded ? 0.5 : 0,
+                    duration: commonDuration,
+                    child: const GlyphIcon(AppGlyphs.chevronDown),
+                  ),
+                  onTap: () =>
+                      setState(() => _openVpnExpanded = !_openVpnExpanded),
+                ),
+              ],
+            ),
+            AnimatedSize(
+              duration: commonDuration,
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: _openVpnExpanded
+                  ? _openVpnSettings(l, settings)
+                  : const SizedBox(width: double.infinity),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _locationItems(AppLocalizations l, WindscribeSettings settings) {
+    if (settings.servers.isEmpty || settings.profileId == null) {
+      return [ListItem(title: Text(l.windscribeLocationsEmpty))];
+    }
+    return [
+      for (final country in windscribeCountries(settings.servers))
+        WindscribeCountryItem(country: country),
+    ];
+  }
+
+  Widget _openVpnSettings(AppLocalizations l, WindscribeSettings settings) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: generateSectionV3(
+        items: [
+          ListItem(
+            leading: const GlyphIcon(AppGlyphs.key),
+            title: Text(l.windscribeCredentials),
+            subtitle: Text(settings.username),
+            trailing: TextButton(
+              onPressed: () => setState(() {
+                _username.text = settings.username;
+                _password.clear();
+                _editing = true;
+              }),
+              child: Text(l.windscribeChange),
+            ),
+          ),
+          ListItem<WindscribeProto>.options(
+            leading: const GlyphIcon(AppGlyphs.vpn),
+            title: Text(l.windscribeProtocol),
+            subtitle: Text(settings.proto.name.toUpperCase()),
+            dialogTitle: l.windscribeProtocol,
+            options: WindscribeProto.values,
+            value: settings.proto,
+            textBuilder: (proto) => proto.name.toUpperCase(),
+            onChanged: (proto) {
+              if (proto == null || proto == settings.proto) return;
+              _changeOptions(
+                (state) => state.copyWith(proto: proto, port: 443),
+              );
+            },
+          ),
+          ListItem<int>.options(
+            leading: const GlyphIcon(AppGlyphs.link),
+            title: Text(l.windscribePort),
+            subtitle: Text('${settings.port}'),
+            dialogTitle: l.windscribePort,
+            options: settings.proto.ports,
+            value: settings.port,
+            textBuilder: (port) => '$port',
+            onChanged: (port) {
+              if (port == null || port == settings.port) return;
+              _changeOptions((state) => state.copyWith(port: port));
+            },
+          ),
         ],
       ),
     );
@@ -222,10 +252,24 @@ class _Flag extends StatelessWidget {
 
 /// A location: a tap writes the profile with its servers, which the proxies
 /// page then offers.
-class _CountryItem extends ConsumerWidget {
-  const _CountryItem({required this.country});
+class WindscribeCountryItem extends ConsumerWidget {
+  const WindscribeCountryItem({
+    super.key,
+    required this.country,
+    this.onSelected,
+  });
 
   final String country;
+  final VoidCallback? onSelected;
+
+  Future<void> _select(WidgetRef ref) async {
+    await globalState.loadingRun(
+      () => ref.read(windscribeProvider.notifier).selectCountry(country),
+      title: country,
+      tag: LoadingTag.profiles,
+    );
+    onSelected?.call();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -245,14 +289,96 @@ class _CountryItem extends ConsumerWidget {
       title: Text(country),
       subtitle: Text(context.appLocalizations.windscribeServerCount(count)),
       trailing: chosen ? const GlyphIcon(AppGlyphs.checkCircle) : null,
-      onTap: chosen || isLoading
-          ? null
-          : () => globalState.loadingRun(
-              () =>
-                  ref.read(windscribeProvider.notifier).selectCountry(country),
-              title: country,
-              tag: LoadingTag.profiles,
+      onTap: chosen || isLoading ? null : () => _select(ref),
+    );
+  }
+}
+
+/// The locations alone, opened from the proxies page; picking one goes back.
+class WindscribeLocationsView extends ConsumerWidget {
+  const WindscribeLocationsView({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.appLocalizations;
+    final servers = ref.watch(windscribeProvider.select((s) => s.servers));
+    final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
+    return CommonScaffold(
+      title: l.windscribeLocations,
+      isLoading: isLoading,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(top: context.contentTopPadding, bottom: 32),
+        children: [
+          generateSectionV3(
+            items: [
+              for (final country in windscribeCountries(servers))
+                WindscribeCountryItem(
+                  country: country,
+                  onSelected: () {
+                    if (context.mounted) Navigator.of(context).maybePop();
+                  },
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Puts the chosen location and a way to change it above the proxies.
+class WindscribeProxiesHeader extends ConsumerWidget {
+  const WindscribeProxiesHeader({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.appLocalizations;
+    final (:country, :code) = ref.watch(
+      windscribeProvider.select((s) {
+        final country = windscribeCountryOf(s.servers, s.country);
+        return (
+          country: country,
+          code:
+              s.servers
+                  .where((server) => server.country == country)
+                  .firstOrNull
+                  ?.countryCode ??
+              '',
+        );
+      }),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: context.appBarInset),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: CommonCard(
+            radius: AppCorner.xl,
+            onPressed: () => BaseNavigator.push<void>(
+              context,
+              const WindscribeLocationsView(),
             ),
+            child: ListItem(
+              leading: _Flag(code),
+              title: Text(country ?? l.windscribe),
+              subtitle: Text(l.windscribeChangeCountry),
+              trailing: const GlyphIcon(AppGlyphs.chevronForward),
+            ),
+          ),
+        ),
+        Expanded(
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: FloatingBarScope(inset: 0, child: child),
+          ),
+        ),
+      ],
     );
   }
 }
