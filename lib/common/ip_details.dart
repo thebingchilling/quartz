@@ -12,6 +12,8 @@ class IpDetails {
     this.city,
     this.region,
     this.isp,
+    this.latitude,
+    this.longitude,
     this.details = const {},
   });
 
@@ -21,6 +23,8 @@ class IpDetails {
   final String? city;
   final String? region;
   final String? isp;
+  final double? latitude;
+  final double? longitude;
 
   /// Everything else the service told, by label, for the details popup.
   final Map<String, String> details;
@@ -30,6 +34,29 @@ class IpDetails {
     ?city,
     ?region,
   }.map((part) => part.trim()).where((part) => part.isNotEmpty).join(', ');
+
+  String? get coordinates {
+    final lat = latitude;
+    final lon = longitude;
+    if (lat == null || lon == null) return null;
+    return '${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}';
+  }
+
+  String? get mapsUrl {
+    final lat = latitude;
+    final lon = longitude;
+    if (lat == null || lon == null) return null;
+    return Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': '$lat,$lon',
+    }).toString();
+  }
+
+  static double? _number(Object? value) => switch (value) {
+    final num number => number.toDouble(),
+    final String text => double.tryParse(text.trim()),
+    _ => null,
+  };
 
   static Map<String, String> _pick(
     Map<String, dynamic> json,
@@ -66,6 +93,8 @@ class IpDetails {
       isp: connection is Map
           ? _text(connection['isp']) ?? _text(connection['org'])
           : null,
+      latitude: _number(json['latitude']),
+      longitude: _number(json['longitude']),
       details: _pick(json, const {
         'connection.asn': 'ASN',
         'connection.org': 'Organisation',
@@ -81,12 +110,15 @@ class IpDetails {
     final org = _text(json['org']);
     final asn = org == null ? null : RegExp(r'^AS\d+').firstMatch(org)?[0];
     final isp = asn == null ? org : _text(org!.substring(asn.length));
+    final loc = _text(json['loc'])?.split(',');
     return IpDetails(
       ip: ip,
       countryCode: code,
       city: _text(json['city']),
       region: _text(json['region']),
       isp: isp,
+      latitude: loc?.length == 2 ? _number(loc!.first) : null,
+      longitude: loc?.length == 2 ? _number(loc!.last) : null,
       details: {'ASN': ?asn},
     );
   }
@@ -102,6 +134,8 @@ class IpDetails {
       city: _text(json['city']),
       region: _text(json['regionName']),
       isp: _text(json['isp']) ?? _text(json['org']),
+      latitude: _number(json['lat']),
+      longitude: _number(json['lon']),
       details: _pick(json, const {'as': 'ASN', 'org': 'Organisation'}),
     );
   }

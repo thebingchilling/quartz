@@ -166,9 +166,11 @@ class _DetailsList extends StatelessWidget {
       ),
       if (info.region != null) ('Region', info.region!),
       if (info.city != null) ('City', info.city!),
+      if (info.coordinates != null) ('Coordinates', info.coordinates!),
       if (info.isp != null) ('ISP', info.isp!),
       for (final MapEntry(:key, :value) in info.details.entries) (key, value),
     ];
+    final mapsUrl = info.mapsUrl;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -195,6 +197,18 @@ class _DetailsList extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        if (mapsUrl != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: TextButton.icon(
+                onPressed: () => dialogs.openUrl(mapsUrl),
+                icon: const GlyphIcon(AppGlyphs.openExternal),
+                label: Text(context.appLocalizations.openInGoogleMaps),
+              ),
             ),
           ),
       ],
