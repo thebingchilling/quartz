@@ -50,36 +50,46 @@ Dropped (VPN-only use doesn't need them):
   `REQUEST_INSTALL_PACKAGES`) or the Windows installer (run with `/SILENT`).
 - **Defaults:** system theme, dynamic colour, tonal spot, docked navigation bar, Google Sans
   Flex (`assets/fonts`, OFL) as the app font; picking "Default" in the font list uses it.
-- **Network card** (`lib/views/dashboard/widgets/network_detection.dart`): two rows high,
-  flag, country, IP, city/region and ISP, from ipwho.is, then ipapi.co, then ip-api.com
-  (`lib/common/ip_details.dart`). Requests go the way the app's own traffic goes, so it
-  answers whether or not the proxy runs; it looks again on connect/disconnect, a node
-  switch, or a tap.
+- **Network card** (`lib/views/dashboard/widgets/network_detection.dart`): flag, country,
+  IP, city/region and ISP, from ip-api.com, ipinfo.io and ipwho.is asked at once
+  (`lib/common/ip_details.dart`); a long press shows the details with coordinates and a
+  Google Maps link. Requests go the way the app's own traffic goes, on fresh connections, and
+  are asked again once the Core's listener has actually started or stopped
+  (`routeEpochProvider`), when a profile finishes applying while running, on a node switch, or
+  on a tap. Its IP is green while no tunnel runs.
 - **WARP generator** (Tools → WARP generator, `lib/features/warp`): registers with
   Cloudflare's WARP API (X25519 keys in Dart, API versions tried in turn), WireGuard or
   AmneziaWG (junk Jc/Jmin/Jmax; I1 from `assets/data/warp-awg-payloads.txt`), endpoint
   default/random/custom, MTU, DNS, keepalive. Each one becomes a Clash profile with a
   `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
-  TTL) with regenerate (new registration into the same profile) and delete (revokes it).
-- **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows).
-  No rule list: every connection (each named Wi-Fi, "other Wi-Fi", each SIM, "other SIMs",
-  Ethernet) and every added app has its own page with **Connect to** (leave as it is,
-  disconnect, or a profile with an optional server in one of its groups) and **Kill switch**;
-  every tunnel (profile) has a kill switch toggle. An open app wins over the connection
-  (most recently used first). It acts only when the connection, the open apps or the
+  TTL) with regenerate (new registration into the same profile) and delete (revokes it);
+  the profile list shows the same days left on the profile and greys it out once expired.
+- **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): Windscribe's public server
+  list as a Clash profile of `openvpn` proxies with the OpenVPN credentials from its config
+  generator. The page picks one location (New Zealand first); the profile then holds only that
+  country's servers in its one Windscribe group, so the proxies page offers just those.
+- **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows),
+  modelled on WG Tunnel: a **default tunnel** (a profile with an optional server in one of its
+  groups, or whichever profile is current); **tunnel on untrusted Wi-Fi** with **trusted
+  networks** (`*` and `?` wildcards) that disconnect and **Wi-Fi tunnels** that prefer their own
+  tunnel; **tunnel on mobile data** with a **mobile data tunnel**, and on Android each SIM can be
+  left out or given its own tunnel; **stop with no network**; a **debounce delay**. An app
+  added under Apps connects its tunnel (or the default one) while open and wins over the
+  network. There is no Ethernet handling. It acts only when the network, the open apps or the
   settings change, so a manual change holds until then (`decideAutoTunnel`, `blocksAll`,
   `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin; keep them the same). An app counts
   as open while on screen or until it's closed (removed from recents on Android, exited on
   Windows), with 4 s of grace.
-  - Kill switch: while no tunnel runs, the connection's or the last tunnel's kill switch
-    blocks every app, until the user turns the tunnel off themselves; an app's kill switch
+  - Kill switch: while no tunnel runs, the last tunnel's kill switch blocks every app except
+    on a trusted network, until the user turns the tunnel off themselves; an app's kill switch
     blocks that app always while no tunnel runs.
   - Android: `AutoTunnelService` (foreground, `specialUse`, back after a reboot; running
     whenever auto-tunnel or any kill switch is on) watches the network and, through
     `AppWatcherService` (accessibility, sees which app is in front in every profile) or
     usage access, the apps. While Quartz's UI runs it asks Dart to switch (`apply` on the
     `autotunnel` channel); otherwise it switches itself from configs Dart renders into
-    `files/autotunnel/<profile>.yaml`, leaving `quartz.autoTunnel.applied` for Dart to adopt.
+    `files/autotunnel/<profile>.yaml` (keyed by `TunnelTarget.key`, the current profile
+    included), leaving the decision in `quartz.autoTunnel.applied` for Dart to adopt.
     `KillSwitch` watches `ServiceState.runState` and starts `KillSwitchService`, a VPN
     interface nothing reads (every app but Quartz, or only the kill-switch apps); the real
     tunnel's interface replaces it on start. It can't outlive the app's process, so the page
@@ -93,10 +103,6 @@ Dropped (VPN-only use doesn't need them):
 - **Config converter** (Settings → Quartz → Config converter, `lib/features/converter`):
   WireGuard/AmneziaWG `.conf` and OpenVPN `.ovpn` files (pasted or opened, several at once)
   become one Clash profile with a PROXY group (and an auto group for more than one).
-- **Dashboard cards** resize to any width (2–8 of 8 columns) and height (1–4 rows) from
-  the edit mode's corner button; the network card defaults to one full-width row, wraps
-  instead of hiding, and opens every field the lookup returned on tap. Its IP is green while
-  no tunnel runs.
 - **Windows updates** install silently and start Quartz again, like Android's.
 - **Standalone Windows EXE** (`Quartz-<version>-windows-amd64-portable.exe`,
   `services/launcher`): one file that embeds the release zip, unpacks it on first run to
