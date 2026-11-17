@@ -87,6 +87,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       ),
     );
     final items = [
+      ..._getQuartzList(),
       Consumer(
         builder: (_, ref, _) {
           final state = ref.watch(moreToolsSelectorStateProvider);
@@ -101,7 +102,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           );
         },
       ),
-      ..._getQuartzList(),
       ..._getSettingList(),
       ..._getOtherList(appSetting.developerMode),
     ];
