@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/warp/warp_store.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -511,6 +512,43 @@ class ProfileItem extends ConsumerWidget {
     final isUpdating = ref.watch(isUpdatingProvider(profile.updatingKey));
     final subscriptionInfo = _subscriptionInfo;
     final usage = subscriptionInfo?.usage;
+    final warpExpiry = ref.watch(
+      warpEntriesProvider.select(
+        (entries) => entries
+            .where((entry) => entry.profileId == profile.id)
+            .firstOrNull
+            ?.expiresAt,
+      ),
+    );
+    final warpExpired = warpExpiry?.isBeforeNow ?? false;
+    final item = ListItem(
+      key: Key(profile.id.toString()),
+      horizontalTitleGap: 12,
+      minTileHeight: _profileItemHeight,
+      minVerticalPadding: listRowVerticalPadding,
+      padding: const EdgeInsets.only(left: SourceIcon.inset, right: 16),
+      leading: SourceIcon(
+        kind: switch (profile.type) {
+          ProfileType.url => SourceKind.remote,
+          ProfileType.file => SourceKind.file,
+          ProfileType.custom => SourceKind.custom,
+        },
+        usage: usage,
+        tooltip: context.appLocalizations.subscriptionInfo,
+        onPressed: usage == null
+            ? null
+            : () => _handleShowSubscriptionInfo(context),
+      ),
+      trailing: _buildTrailing(context, isUpdating: isUpdating),
+      title: _ProfileCardTitle(
+        profile: profile,
+        expire: warpExpiry ?? subscriptionInfo?.expireDate,
+        expireLabel: warpExpiry == null
+            ? null
+            : _warpExpiryLabel(context, warpExpiry),
+        info: _buildTraffic(context),
+      ),
+    );
     return ContextMenuRegion(
       menuItems: isUpdating ? null : _menuItems(context, ref),
       child: CommonCard(
@@ -520,33 +558,17 @@ class ProfileItem extends ConsumerWidget {
         onPressed: () {
           onChanged(profile.id);
         },
-        child: ListItem(
-          key: Key(profile.id.toString()),
-          horizontalTitleGap: 12,
-          minTileHeight: _profileItemHeight,
-          minVerticalPadding: listRowVerticalPadding,
-          padding: const EdgeInsets.only(left: SourceIcon.inset, right: 16),
-          leading: SourceIcon(
-            kind: switch (profile.type) {
-              ProfileType.url => SourceKind.remote,
-              ProfileType.file => SourceKind.file,
-              ProfileType.custom => SourceKind.custom,
-            },
-            usage: usage,
-            tooltip: context.appLocalizations.subscriptionInfo,
-            onPressed: usage == null
-                ? null
-                : () => _handleShowSubscriptionInfo(context),
-          ),
-          trailing: _buildTrailing(context, isUpdating: isUpdating),
-          title: _ProfileCardTitle(
-            profile: profile,
-            expire: subscriptionInfo?.expireDate,
-            info: _buildTraffic(context),
-          ),
-        ),
+        child: warpExpired ? Opacity(opacity: 0.4, child: item) : item,
       ),
     );
+  }
+
+  String _warpExpiryLabel(BuildContext context, DateTime expiresAt) {
+    final l = context.appLocalizations;
+    final remaining = expiresAt.difference(DateTime.now());
+    return remaining.isNegative
+        ? l.warpExpired
+        : l.warpDaysLeft(remaining.inDays);
   }
 }
 
@@ -555,10 +577,12 @@ class _ProfileCardTitle extends StatelessWidget {
     required this.profile,
     required this.expire,
     required this.info,
+    this.expireLabel,
   });
 
   final Profile profile;
   final DateTime? expire;
+  final String? expireLabel;
   final Widget? info;
 
   @override
@@ -566,6 +590,7 @@ class _ProfileCardTitle extends StatelessWidget {
     final title = ChipTitle(
       title: profile.realLabel,
       expire: expire,
+      expireLabel: expireLabel,
       style: context.textTheme.titleMedium,
     );
     final info = this.info;
