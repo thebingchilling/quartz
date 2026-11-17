@@ -345,7 +345,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("サーバー"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
-      "プロファイルのグループ内のサーバーを選びます（例：Windscribeの都市）。",
+      "プロファイルのグループ内のサーバーを選びます（例：windscribeの都市）。",
     ),
     "autoTunnelSimsDesc": MessageLookupByLibrary.simpleMessage(
       "SIM をオフにすると、その SIM のデータ通信ではトンネルを使いません。SIM をタップすると専用のトンネルを選べます。",
@@ -1655,16 +1655,16 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "warpDaysLeft": m74,
     "warpDns": MessageLookupByLibrary.simpleMessage("DNS"),
-    "warpEmpty": MessageLookupByLibrary.simpleMessage("WARP プロファイルはまだありません"),
+    "warpEmpty": MessageLookupByLibrary.simpleMessage("warp プロファイルはまだありません"),
     "warpEndpoint": MessageLookupByLibrary.simpleMessage("エンドポイント"),
     "warpEndpointAuto": MessageLookupByLibrary.simpleMessage("Cloudflare の既定"),
     "warpEndpointRandom": MessageLookupByLibrary.simpleMessage("ランダム"),
     "warpExpired": MessageLookupByLibrary.simpleMessage("期限切れ"),
     "warpGenerate": MessageLookupByLibrary.simpleMessage("生成"),
     "warpGenerated": MessageLookupByLibrary.simpleMessage("生成済み"),
-    "warpGenerator": MessageLookupByLibrary.simpleMessage("WARP ジェネレーター"),
+    "warpGenerator": MessageLookupByLibrary.simpleMessage("warp ジェネレーター"),
     "warpGeneratorDesc": MessageLookupByLibrary.simpleMessage(
-      "無料の Cloudflare WARP プロファイル（90 日間有効）",
+      "無料の Cloudflare warp プロファイル（90 日間有効）",
     ),
     "warpJunkCount": MessageLookupByLibrary.simpleMessage("ジャンクパケット数 (Jc)"),
     "warpJunkMax": MessageLookupByLibrary.simpleMessage("ジャンク最大サイズ (Jmax)"),
@@ -1676,16 +1676,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpVariant": MessageLookupByLibrary.simpleMessage("プロトコル"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
-    "windscribe": MessageLookupByLibrary.simpleMessage("Windscribe"),
+    "windscribe": MessageLookupByLibrary.simpleMessage("windscribe"),
     "windscribeChange": MessageLookupByLibrary.simpleMessage("認証情報を変更"),
+    "windscribeChangeCountry": MessageLookupByLibrary.simpleMessage("国を変更"),
     "windscribeCredentials": MessageLookupByLibrary.simpleMessage(
       "OpenVPN 認証情報",
     ),
     "windscribeCredentialsDesc": MessageLookupByLibrary.simpleMessage(
-      "アカウントのログインではなく、Windscribe の設定ジェネレーターのもの。この端末に保存されます。",
+      "アカウントのログインではなく、windscribe の設定ジェネレーターのもの。この端末に保存されます。",
     ),
     "windscribeDesc": MessageLookupByLibrary.simpleMessage(
-      "Windscribe のサーバーを OpenVPN プロファイルとして追加",
+      "windscribe のサーバーを OpenVPN プロファイルとして追加",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
       "Quartz 起動時、一覧が 6 時間以上前なら更新します。",
@@ -1695,6 +1696,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "サーバー一覧を更新するとロケーションを選べます。",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("まだ追加されていません"),
+    "windscribeOpenVpn": MessageLookupByLibrary.simpleMessage("OpenVPN"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage("OpenVPN パスワード"),
     "windscribePort": MessageLookupByLibrary.simpleMessage("ポート"),
     "windscribePro": MessageLookupByLibrary.simpleMessage("Pro サーバー"),

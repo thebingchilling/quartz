@@ -7597,20 +7597,20 @@ class AppLocalizations {
     );
   }
 
-  /// `WARP generator`
+  /// `warp generator`
   String get warpGenerator {
     return Intl.message(
-      'WARP generator',
+      'warp generator',
       name: 'warpGenerator',
       desc: '',
       args: [],
     );
   }
 
-  /// `Free Cloudflare WARP profiles, valid for 90 days`
+  /// `Free Cloudflare warp profiles, valid for 90 days`
   String get warpGeneratorDesc {
     return Intl.message(
-      'Free Cloudflare WARP profiles, valid for 90 days',
+      'Free Cloudflare warp profiles, valid for 90 days',
       name: 'warpGeneratorDesc',
       desc: '',
       args: [],
@@ -7722,10 +7722,10 @@ class AppLocalizations {
     return Intl.message('Generated', name: 'warpGenerated', desc: '', args: []);
   }
 
-  /// `No WARP profiles yet`
+  /// `No warp profiles yet`
   String get warpEmpty {
     return Intl.message(
-      'No WARP profiles yet',
+      'No warp profiles yet',
       name: 'warpEmpty',
       desc: '',
       args: [],
@@ -8004,15 +8004,35 @@ class AppLocalizations {
     return Intl.message('Allow', name: 'autoTunnelGrant', desc: '', args: []);
   }
 
-  /// `Windscribe`
-  String get windscribe {
-    return Intl.message('Windscribe', name: 'windscribe', desc: '', args: []);
+  /// `OpenVPN`
+  String get windscribeOpenVpn {
+    return Intl.message(
+      'OpenVPN',
+      name: 'windscribeOpenVpn',
+      desc: '',
+      args: [],
+    );
   }
 
-  /// `Windscribe's servers as an OpenVPN profile`
+  /// `Change country`
+  String get windscribeChangeCountry {
+    return Intl.message(
+      'Change country',
+      name: 'windscribeChangeCountry',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `windscribe`
+  String get windscribe {
+    return Intl.message('windscribe', name: 'windscribe', desc: '', args: []);
+  }
+
+  /// `windscribe's servers as an OpenVPN profile`
   String get windscribeDesc {
     return Intl.message(
-      'Windscribe\'s servers as an OpenVPN profile',
+      'windscribe\'s servers as an OpenVPN profile',
       name: 'windscribeDesc',
       desc: '',
       args: [],
@@ -8039,10 +8059,10 @@ class AppLocalizations {
     );
   }
 
-  /// `From Windscribe's config generator, not your account login. Saved on this device.`
+  /// `From windscribe's config generator, not your account login. Saved on this device.`
   String get windscribeCredentialsDesc {
     return Intl.message(
-      'From Windscribe\'s config generator, not your account login. Saved on this device.',
+      'From windscribe\'s config generator, not your account login. Saved on this device.',
       name: 'windscribeCredentialsDesc',
       desc: '',
       args: [],
@@ -8364,10 +8384,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Picks a server in one of the profile's groups, e.g. a Windscribe city.`
+  /// `Picks a server in one of the profile's groups, e.g. a windscribe city.`
   String get autoTunnelServerDesc {
     return Intl.message(
-      'Picks a server in one of the profile\'s groups, e.g. a Windscribe city.',
+      'Picks a server in one of the profile\'s groups, e.g. a windscribe city.',
       name: 'autoTunnelServerDesc',
       desc: '',
       args: [],

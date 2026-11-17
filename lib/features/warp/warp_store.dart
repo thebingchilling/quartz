@@ -69,13 +69,39 @@ class WarpEntries extends Notifier<List<WarpEntry>> {
     final text = prefs.getString(_key);
     if (text == null) return;
     try {
-      state = [
+      final entries = [
         for (final item in jsonDecode(text) as List)
           WarpEntry.fromJson((item as Map).cast<String, dynamic>()),
       ];
+      state = entries;
+      if (entries.any((entry) => entry.name != entry.name.toLowerCase())) {
+        await _lowercaseNames(entries);
+      }
     } on Object catch (error) {
       commonPrint.log('WARP entries unreadable: $error');
     }
+  }
+
+  /// Names were upper case before; the profile labels follow the entries.
+  Future<void> _lowercaseNames(List<WarpEntry> entries) async {
+    final profiles = ref.read(profilesProvider.notifier);
+    final renamed = [
+      for (final entry in entries)
+        WarpEntry(
+          profileId: entry.profileId,
+          name: entry.name.toLowerCase(),
+          options: entry.options,
+          registration: entry.registration,
+          awg: entry.awg,
+        ),
+    ];
+    for (final entry in renamed) {
+      final profile = ref.read(profilesProvider).getProfile(entry.profileId);
+      if (profile != null && profile.label != entry.name) {
+        profiles.put(profile.copyWith(label: entry.name));
+      }
+    }
+    await _save(renamed);
   }
 
   Future<void> _save(List<WarpEntry> entries) async {
@@ -100,7 +126,7 @@ class WarpEntries extends Notifier<List<WarpEntry>> {
   );
 
   String _nameFor(WarpVariant variant) {
-    final base = variant == WarpVariant.awg ? 'WARP AWG' : 'WARP';
+    final base = variant == WarpVariant.awg ? 'warp awg' : 'warp';
     final taken = {for (final entry in state) entry.name};
     if (!taken.contains(base)) return base;
     var n = 2;

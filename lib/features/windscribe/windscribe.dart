@@ -158,7 +158,7 @@ String _quote(String value) =>
 String _block(String text, String indent) =>
     text.trim().split('\n').map((line) => '$indent${line.trim()}').join('\n');
 
-const windscribeGroupName = 'Windscribe';
+const windscribeGroupName = 'windscribe';
 
 /// Listed first among the locations, so it is what a new profile is written for.
 const windscribeHomeCountryCode = 'NZ';

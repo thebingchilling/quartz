@@ -412,7 +412,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Server"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
-      "Picks a server in one of the profile\'s groups, e.g. a Windscribe city.",
+      "Picks a server in one of the profile\'s groups, e.g. a windscribe city.",
     ),
     "autoTunnelSimsDesc": MessageLookupByLibrary.simpleMessage(
       "Turn a SIM off to leave the tunnel off on its data. Tap a SIM to give it its own tunnel.",
@@ -1933,7 +1933,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "warpDaysLeft": m74,
     "warpDns": MessageLookupByLibrary.simpleMessage("DNS"),
-    "warpEmpty": MessageLookupByLibrary.simpleMessage("No WARP profiles yet"),
+    "warpEmpty": MessageLookupByLibrary.simpleMessage("No warp profiles yet"),
     "warpEndpoint": MessageLookupByLibrary.simpleMessage("Endpoint"),
     "warpEndpointAuto": MessageLookupByLibrary.simpleMessage(
       "Cloudflare\'s default",
@@ -1942,9 +1942,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpExpired": MessageLookupByLibrary.simpleMessage("Expired"),
     "warpGenerate": MessageLookupByLibrary.simpleMessage("Generate"),
     "warpGenerated": MessageLookupByLibrary.simpleMessage("Generated"),
-    "warpGenerator": MessageLookupByLibrary.simpleMessage("WARP generator"),
+    "warpGenerator": MessageLookupByLibrary.simpleMessage("warp generator"),
     "warpGeneratorDesc": MessageLookupByLibrary.simpleMessage(
-      "Free Cloudflare WARP profiles, valid for 90 days",
+      "Free Cloudflare warp profiles, valid for 90 days",
     ),
     "warpJunkCount": MessageLookupByLibrary.simpleMessage("Junk packets (Jc)"),
     "warpJunkMax": MessageLookupByLibrary.simpleMessage("Junk max size (Jmax)"),
@@ -1958,18 +1958,21 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
-    "windscribe": MessageLookupByLibrary.simpleMessage("Windscribe"),
+    "windscribe": MessageLookupByLibrary.simpleMessage("windscribe"),
     "windscribeChange": MessageLookupByLibrary.simpleMessage(
       "Change credentials",
+    ),
+    "windscribeChangeCountry": MessageLookupByLibrary.simpleMessage(
+      "Change country",
     ),
     "windscribeCredentials": MessageLookupByLibrary.simpleMessage(
       "OpenVPN credentials",
     ),
     "windscribeCredentialsDesc": MessageLookupByLibrary.simpleMessage(
-      "From Windscribe\'s config generator, not your account login. Saved on this device.",
+      "From windscribe\'s config generator, not your account login. Saved on this device.",
     ),
     "windscribeDesc": MessageLookupByLibrary.simpleMessage(
-      "Windscribe\'s servers as an OpenVPN profile",
+      "windscribe\'s servers as an OpenVPN profile",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
       "The list updates when Quartz starts if it\'s over 6 hours old.",
@@ -1979,6 +1982,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Update the server list to choose a location.",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("Not added yet"),
+    "windscribeOpenVpn": MessageLookupByLibrary.simpleMessage("OpenVPN"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage(
       "OpenVPN password",
     ),

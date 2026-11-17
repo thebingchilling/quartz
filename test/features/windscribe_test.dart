@@ -111,7 +111,7 @@ void main() {
     expect(yaml, contains('server: adl-354.whiskergalaxy.com'));
     expect(yaml, isNot(contains('tia-283')));
     expect(yaml, isNot(contains('akl-99')));
-    expect(yaml, contains('  - MATCH,Windscribe'));
+    expect(yaml, contains('  - MATCH,windscribe'));
     expect(yaml, isNot(contains('url-test')));
     expect(yaml, isNot(contains('hidden: true')));
     expect(yaml, contains('dev: tun'));

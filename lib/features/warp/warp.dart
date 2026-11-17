@@ -322,7 +322,7 @@ class WarpApi {
         last = error;
       }
     }
-    throw WarpException('WARP registration failed: ${last?.message}');
+    throw WarpException('warp registration failed: ${last?.message}');
   }
 
   /// Revokes a registration; one already gone counts as done.

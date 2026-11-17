@@ -429,7 +429,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Сервер"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
-      "Выбирает сервер в группе профиля, например город Windscribe.",
+      "Выбирает сервер в группе профиля, например город windscribe.",
     ),
     "autoTunnelSimsDesc": MessageLookupByLibrary.simpleMessage(
       "Выключите SIM-карту, чтобы не включать туннель на её данных. Нажмите на SIM-карту, чтобы выбрать для неё свой туннель.",
@@ -2028,7 +2028,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "warpDaysLeft": m74,
     "warpDns": MessageLookupByLibrary.simpleMessage("DNS"),
-    "warpEmpty": MessageLookupByLibrary.simpleMessage("Профилей WARP пока нет"),
+    "warpEmpty": MessageLookupByLibrary.simpleMessage("Профилей warp пока нет"),
     "warpEndpoint": MessageLookupByLibrary.simpleMessage("Конечная точка"),
     "warpEndpointAuto": MessageLookupByLibrary.simpleMessage(
       "По умолчанию Cloudflare",
@@ -2037,9 +2037,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpExpired": MessageLookupByLibrary.simpleMessage("Истёк"),
     "warpGenerate": MessageLookupByLibrary.simpleMessage("Создать"),
     "warpGenerated": MessageLookupByLibrary.simpleMessage("Созданные"),
-    "warpGenerator": MessageLookupByLibrary.simpleMessage("Генератор WARP"),
+    "warpGenerator": MessageLookupByLibrary.simpleMessage("Генератор warp"),
     "warpGeneratorDesc": MessageLookupByLibrary.simpleMessage(
-      "Бесплатные профили Cloudflare WARP на 90 дней",
+      "Бесплатные профили Cloudflare warp на 90 дней",
     ),
     "warpJunkCount": MessageLookupByLibrary.simpleMessage(
       "Мусорные пакеты (Jc)",
@@ -2061,16 +2061,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
-    "windscribe": MessageLookupByLibrary.simpleMessage("Windscribe"),
+    "windscribe": MessageLookupByLibrary.simpleMessage("windscribe"),
     "windscribeChange": MessageLookupByLibrary.simpleMessage("Изменить данные"),
+    "windscribeChangeCountry": MessageLookupByLibrary.simpleMessage(
+      "Сменить страну",
+    ),
     "windscribeCredentials": MessageLookupByLibrary.simpleMessage(
       "Данные OpenVPN",
     ),
     "windscribeCredentialsDesc": MessageLookupByLibrary.simpleMessage(
-      "Из генератора конфигураций Windscribe, а не логин аккаунта. Хранятся на этом устройстве.",
+      "Из генератора конфигураций windscribe, а не логин аккаунта. Хранятся на этом устройстве.",
     ),
     "windscribeDesc": MessageLookupByLibrary.simpleMessage(
-      "Серверы Windscribe как профиль OpenVPN",
+      "Серверы windscribe как профиль OpenVPN",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
       "Список обновляется при запуске Quartz, если ему больше 6 часов.",
@@ -2082,6 +2085,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage(
       "Ещё не добавлено",
     ),
+    "windscribeOpenVpn": MessageLookupByLibrary.simpleMessage("OpenVPN"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage(
       "Пароль OpenVPN",
     ),
