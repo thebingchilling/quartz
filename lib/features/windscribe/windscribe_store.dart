@@ -20,6 +20,7 @@ class WindscribeSettings {
     this.updatedAt,
     this.count = 0,
     this.servers = const [],
+    this.country,
   });
 
   /// The OpenVPN credentials from Windscribe's config generator, not the
@@ -35,6 +36,9 @@ class WindscribeSettings {
   /// The list the profile was last written from, for the location picker.
   final List<WindscribeServer> servers;
 
+  /// The location the profile holds the servers of; null until one is picked.
+  final String? country;
+
   bool get hasCredentials => username.isNotEmpty && password.isNotEmpty;
 
   WindscribeSettings copyWith({
@@ -46,6 +50,7 @@ class WindscribeSettings {
     DateTime? updatedAt,
     int? count,
     List<WindscribeServer>? servers,
+    String? country,
   }) => WindscribeSettings(
     username: username ?? this.username,
     password: password ?? this.password,
@@ -55,6 +60,7 @@ class WindscribeSettings {
     updatedAt: updatedAt ?? this.updatedAt,
     count: count ?? this.count,
     servers: servers ?? this.servers,
+    country: country ?? this.country,
   );
 
   Map<String, dynamic> toJson() => {
@@ -66,6 +72,7 @@ class WindscribeSettings {
     'updatedAt': updatedAt?.toIso8601String(),
     'count': count,
     'servers': [for (final server in servers) server.toJson()],
+    'country': country,
   };
 
   factory WindscribeSettings.fromJson(Map<String, dynamic> json) =>
@@ -83,22 +90,9 @@ class WindscribeSettings {
           for (final item in json['servers'] as List? ?? const [])
             ?WindscribeServer.fromJson(item),
         ],
+        country: json['country'] as String?,
       );
 }
-
-/// Windscribe turns away a burst of logins, so its profile is tested one
-/// country's servers at a time and never through a group of groups.
-final windscribeProfileActiveProvider = Provider<bool>((ref) {
-  final profileId = ref.watch(windscribeProvider.select((s) => s.profileId));
-  return profileId != null && profileId == ref.watch(currentProfileIdProvider);
-});
-
-/// The Windscribe group lists countries, which are groups, so it has no test.
-final groupDelayTestableProvider = Provider.family<bool, String>(
-  (ref, groupName) =>
-      groupName != windscribeGroupName ||
-      !ref.watch(windscribeProfileActiveProvider),
-);
 
 final windscribeProvider =
     NotifierProvider<WindscribeNotifier, WindscribeSettings>(
@@ -148,13 +142,35 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
   /// adding the profile the first time.
   Future<int> refresh() async {
     await _loaded.future;
-    final settings = state;
-    if (!settings.hasCredentials) {
+    if (!state.hasCredentials) {
       throw const FormatException('Enter the OpenVPN credentials first');
     }
     final servers = await WindscribeApi(request.dio).servers();
+    await _writeProfile(servers, state.country);
+    return servers.length;
+  }
+
+  /// Rewrites the profile with [country]'s servers and makes it the one that
+  /// runs, so the proxies page lists just that location.
+  Future<void> selectCountry(String country) async {
+    await _loaded.future;
+    if (state.servers.isEmpty || !state.hasCredentials) return;
+    await _writeProfile(state.servers, country);
+    final profileId = state.profileId;
+    if (profileId != null && ref.read(currentProfileIdProvider) != profileId) {
+      ref.read(currentProfileIdProvider.notifier).value = profileId;
+    }
+  }
+
+  Future<void> _writeProfile(
+    List<WindscribeServer> servers,
+    String? country,
+  ) async {
+    final settings = state;
+    final selected = windscribeCountryOf(servers, country);
     final yaml = buildWindscribeProfile(
       servers: servers,
+      country: selected,
       username: settings.username,
       password: settings.password,
       proto: settings.proto,
@@ -171,7 +187,7 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
     if (existing == null) {
       ref.read(profilesActionProvider.notifier).putProfile(profile);
     } else {
-      ref.read(profilesProvider.notifier).put(profile);
+      ref.read(profilesActionProvider.notifier).setProfileAndAutoApply(profile);
     }
     await update(
       (state) => state.copyWith(
@@ -179,43 +195,29 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
         updatedAt: DateTime.now(),
         count: servers.length,
         servers: servers,
+        country: selected,
       ),
     );
-    return servers.length;
-  }
-
-  /// Connects through [proxyName] in [country]: the Windscribe profile is
-  /// switched to first if another one runs, carrying the choice with it.
-  void select(String country, String proxyName) {
-    final profileId = state.profileId;
-    if (profileId == null) return;
-    if (ref.read(currentProfileIdProvider) == profileId) {
-      ref.read(proxiesActionProvider.notifier)
-        ..changeProxyDebounce(country, proxyName)
-        ..changeProxyDebounce(windscribeGroupName, country);
-      return;
-    }
-    final profile = ref.read(profilesProvider).getProfile(profileId);
-    if (profile == null) return;
-    ref
-        .read(profilesProvider.notifier)
-        .put(
-          profile.copyWith(
-            selectedMap: {
-              ...profile.selectedMap,
-              windscribeGroupName: country,
-              country: proxyName,
-            },
-          ),
-        );
-    ref.read(currentProfileIdProvider.notifier).value = profileId;
   }
 
   /// Run at startup: keeps an existing Windscribe profile's list current.
   Future<void> refreshIfStale() async {
     await _loaded.future;
     final updated = state.updatedAt;
-    if (state.profileId == null || !state.hasCredentials) return;
+    final profileId = state.profileId;
+    if (profileId == null || !state.hasCredentials) return;
+    if (state.country == null && state.servers.isNotEmpty) {
+      final picked = ref
+          .read(profilesProvider)
+          .getProfile(profileId)
+          ?.selectedMap[windscribeGroupName];
+      try {
+        await _writeProfile(state.servers, picked);
+      } on Object catch (error) {
+        commonPrint.log('Windscribe profile rewrite failed: $error');
+      }
+      return;
+    }
     if (updated != null && DateTime.now().difference(updated) < staleAfter) {
       return;
     }

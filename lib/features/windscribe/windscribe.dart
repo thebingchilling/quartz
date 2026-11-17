@@ -160,27 +160,34 @@ String _block(String text, String indent) =>
 
 const windscribeGroupName = 'Windscribe';
 
-/// Listed first in the Windscribe group, so it is what a new profile selects.
+/// Listed first among the locations, so it is what a new profile is written for.
 const windscribeHomeCountryCode = 'NZ';
 
 /// The resolver every Windscribe server offers inside its tunnel.
 const windscribeDns = '10.255.255.1';
 
-/// Every server as a mihomo `openvpn` proxy, grouped by country.
+/// The country a profile is written for: [chosen] while the list still has
+/// it, else the first one listed.
+String? windscribeCountryOf(List<WindscribeServer> servers, String? chosen) {
+  final countries = windscribeCountries(servers);
+  return countries.contains(chosen) ? chosen : countries.firstOrNull;
+}
+
+/// The servers of [country] as mihomo `openvpn` proxies in the one Windscribe
+/// group, so the proxies page offers only that country's nodes.
 String buildWindscribeProfile({
   required List<WindscribeServer> servers,
+  required String? country,
   required String username,
   required String password,
   required WindscribeProto proto,
   required int port,
 }) {
-  final named = windscribeProxyNames(servers);
-  final countries = {
-    for (final country in windscribeCountries(servers)) country: <String>[],
-  };
-  for (final (server, name) in named) {
-    countries[server.country]!.add(name);
-  }
+  final selected = windscribeCountryOf(servers, country);
+  final named = [
+    for (final entry in windscribeProxyNames(servers))
+      if (entry.$1.country == selected) entry,
+  ];
   final lines = <String>['proxies:'];
   for (final (server, name) in named) {
     lines.addAll([
@@ -209,13 +216,7 @@ String buildWindscribeProfile({
     'proxy-groups:',
     '  - name: $windscribeGroupName',
     '    type: select',
-    '    proxies: [${countries.keys.map(_quote).join(', ')}]',
-    for (final MapEntry(key: country, value: names) in countries.entries) ...[
-      '  - name: ${_quote(country)}',
-      '    type: select',
-      '    hidden: true',
-      '    proxies: [${names.map(_quote).join(', ')}]',
-    ],
+    '    proxies: [${named.map((entry) => _quote(entry.$2)).join(', ')}]',
     'rules:',
     '  - DOMAIN-SUFFIX,whiskergalaxy.com,DIRECT',
     '  - GEOIP,LAN,DIRECT,no-resolve',

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:fl_clash/features/windscribe/windscribe_store.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -399,13 +398,11 @@ class ListHeader extends ConsumerWidget {
               onScrollToSelected: () {
                 onScrollToSelected(groupName);
               },
-              onDelayTest: ref.watch(groupDelayTestableProvider(groupName))
-                  ? () {
-                      ref
-                          .read(proxiesActionProvider.notifier)
-                          .delayTestPageGroup(groupName);
-                    }
-                  : null,
+              onDelayTest: () {
+                ref
+                    .read(proxiesActionProvider.notifier)
+                    .delayTestPageGroup(groupName);
+              },
               onToggle: () {
                 onChange(groupName);
               },
@@ -539,7 +536,7 @@ class _GroupActions extends StatelessWidget {
   final bool isDelayTesting;
   final String groupType;
   final VoidCallback onScrollToSelected;
-  final VoidCallback? onDelayTest;
+  final VoidCallback onDelayTest;
   final VoidCallback onToggle;
 
   @override
@@ -558,20 +555,19 @@ class _GroupActions extends StatelessWidget {
                   iconSize: 19,
                   icon: const GlyphIcon(AppGlyphs.locate),
                 ),
-                if (onDelayTest != null)
-                  IconButton(
-                    tooltip: context.appLocalizations.delayTest,
-                    onPressed: isDelayTesting ? null : onDelayTest,
-                    icon: isDelayTesting
-                        ? SizedBox.square(
-                            dimension: TonalButtonSize.compact.icon,
-                            child: const Padding(
-                              padding: EdgeInsets.all(2),
-                              child: CommonCircleLoading(),
-                            ),
-                          )
-                        : const GlyphIcon(AppGlyphs.bolt),
-                  ),
+                IconButton(
+                  tooltip: context.appLocalizations.delayTest,
+                  onPressed: isDelayTesting ? null : onDelayTest,
+                  icon: isDelayTesting
+                      ? SizedBox.square(
+                          dimension: TonalButtonSize.compact.icon,
+                          child: const Padding(
+                            padding: EdgeInsets.all(2),
+                            child: CommonCircleLoading(),
+                          ),
+                        )
+                      : const GlyphIcon(AppGlyphs.bolt),
+                ),
               ],
             )
           else

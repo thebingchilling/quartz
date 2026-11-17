@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:fl_clash/features/windscribe/windscribe_store.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -169,15 +168,14 @@ class _ProxyGroupSheetState extends ConsumerState<_ProxyGroupSheet> {
     return CommonScaffold(
       title: groupName,
       iconActions: [
-        if (ref.watch(groupDelayTestableProvider(groupName)))
-          IconButtonData(
-            glyph: AppGlyphs.bolt,
-            tooltip: appLocalizations.delayTest,
-            isLoading: isDelayTesting,
-            onPressed: () => ref
-                .read(proxiesActionProvider.notifier)
-                .delayTestPageGroup(groupName, matchSearch: false),
-          ),
+        IconButtonData(
+          glyph: AppGlyphs.bolt,
+          tooltip: appLocalizations.delayTest,
+          isLoading: isDelayTesting,
+          onPressed: () => ref
+              .read(proxiesActionProvider.notifier)
+              .delayTestPageGroup(groupName, matchSearch: false),
+        ),
       ],
       body: group == null
           ? NullStatus(

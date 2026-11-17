@@ -295,7 +295,6 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   Future<void> delayTestGroups(List<Group> groups) async {
-    if (ref.read(windscribeProfileActiveProvider)) return;
     await _runDelayTests([
       for (final group in groups) (proxies: group.all, testUrl: group.testUrl),
     ]);
@@ -336,11 +335,9 @@ class ProxiesAction extends _$ProxiesAction {
     );
     final seen = <String>{};
     final targets = <_DelayTestTarget>[];
-    final serversOnly = ref.read(windscribeProfileActiveProvider);
     for (final batch in batches) {
       final fallbackTestUrl = ref.read(realTestUrlProvider(batch.testUrl));
       for (final proxy in batch.proxies) {
-        if (serversOnly && groups.getGroup(proxy.name) != null) continue;
         final state = computeRealSelectedProxyState(
           proxy.name,
           groups: groups,

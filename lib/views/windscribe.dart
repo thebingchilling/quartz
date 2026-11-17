@@ -6,7 +6,6 @@ import 'package:fl_clash/features/windscribe/windscribe.dart';
 import 'package:fl_clash/features/windscribe/windscribe_store.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -205,34 +204,6 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
   }
 }
 
-/// The Windscribe profile's choices: a country in the Windscribe group, and a
-/// server in that country's group.
-({String? country, Map<String, String> selected}) _choices(WidgetRef ref) {
-  final profileId = ref.watch(windscribeProvider.select((s) => s.profileId));
-  final selected = ref.watch(
-    profilesProvider.select(
-      (profiles) => profileId == null
-          ? const <String, String>{}
-          : profiles.getProfile(profileId)?.selectedMap ?? const {},
-    ),
-  );
-  final servers = ref.watch(windscribeProvider.select((s) => s.servers));
-  return (
-    country:
-        selected[windscribeGroupName] ??
-        windscribeCountries(servers).firstOrNull,
-    selected: selected,
-  );
-}
-
-List<(WindscribeServer, String)> _serversIn(WidgetRef ref, String country) {
-  final servers = ref.watch(windscribeProvider.select((s) => s.servers));
-  return [
-    for (final entry in windscribeProxyNames(servers))
-      if (entry.$1.country == country) entry,
-  ];
-}
-
 class _Flag extends StatelessWidget {
   const _Flag(this.countryCode);
 
@@ -249,6 +220,8 @@ class _Flag extends StatelessWidget {
   }
 }
 
+/// A location: a tap writes the profile with its servers, which the proxies
+/// page then offers.
 class _CountryItem extends ConsumerWidget {
   const _CountryItem({required this.country});
 
@@ -256,102 +229,30 @@ class _CountryItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final servers = _serversIn(ref, country);
-    final choices = _choices(ref);
-    final chosen = choices.country == country;
-    final server = choices.selected[country];
+    final (:code, :count, :chosen) = ref.watch(
+      windscribeProvider.select((s) {
+        final servers = s.servers.where((server) => server.country == country);
+        return (
+          code: servers.firstOrNull?.countryCode ?? '',
+          count: servers.length,
+          chosen: windscribeCountryOf(s.servers, s.country) == country,
+        );
+      }),
+    );
+    final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
     return ListItem(
-      leading: _Flag(servers.firstOrNull?.$1.countryCode ?? ''),
+      leading: _Flag(code),
       title: Text(country),
-      subtitle: Text(
-        chosen && server != null
-            ? server
-            : context.appLocalizations.windscribeServerCount(servers.length),
-      ),
-      trailing: GlyphIcon(
-        chosen ? AppGlyphs.checkCircle : AppGlyphs.chevronForward,
-      ),
-      onTap: () =>
-          BaseNavigator.push<void>(context, _CountryView(country: country)),
-    );
-  }
-}
-
-/// One country's servers: a tap connects through one, and each tests alone,
-/// since Windscribe turns away a burst of logins.
-class _CountryView extends ConsumerWidget {
-  const _CountryView({required this.country});
-
-  final String country;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final servers = _serversIn(ref, country);
-    final choices = _choices(ref);
-    final chosen = choices.selected[country] ?? servers.firstOrNull?.$2;
-    final testable = ref.watch(windscribeProfileActiveProvider);
-    return CommonScaffold(
-      title: country,
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 32),
-        children: [
-          generateSectionV3(
-            items: [
-              for (final (server, proxyName) in servers)
-                ListItem(
-                  leading: _Flag(server.countryCode),
-                  title: Text(server.name),
-                  subtitle: testable ? _ServerDelay(proxyName) : null,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (testable)
-                        IconButton(
-                          tooltip: context.appLocalizations.delayTest,
-                          icon: const GlyphIcon(AppGlyphs.bolt),
-                          onPressed: () => ref
-                              .read(proxiesActionProvider.notifier)
-                              .proxyDelayTest(
-                                Proxy(name: proxyName, type: 'OpenVPN'),
-                              ),
-                        ),
-                      if (proxyName == chosen && choices.country == country)
-                        const GlyphIcon(AppGlyphs.checkCircle),
-                    ],
-                  ),
-                  onTap: () => ref
-                      .read(windscribeProvider.notifier)
-                      .select(country, proxyName),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ServerDelay extends ConsumerWidget {
-  const _ServerDelay(this.proxyName);
-
-  final String proxyName;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final delay = ref.watch(delayProvider(proxyName: proxyName));
-    final phase = ref.watch(delayTestPhaseProvider(proxyName: proxyName));
-    final l = context.appLocalizations;
-    final text = switch ((phase, delay)) {
-      (DelayTestPhase _, _) => '…',
-      (null, final int delay) when delay > 0 => '$delay ms',
-      (null, final int delay) => delayFailureText(delay, l),
-      (null, null) => '—',
-    };
-    return Text(
-      text,
-      style: TextStyle(color: context.colorScheme.delayColor(delay)),
+      subtitle: Text(context.appLocalizations.windscribeServerCount(count)),
+      trailing: chosen ? const GlyphIcon(AppGlyphs.checkCircle) : null,
+      onTap: chosen || isLoading
+          ? null
+          : () => globalState.loadingRun(
+              () =>
+                  ref.read(windscribeProvider.notifier).selectCountry(country),
+              title: country,
+              tag: LoadingTag.profiles,
+            ),
     );
   }
 }

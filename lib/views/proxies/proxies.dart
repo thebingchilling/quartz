@@ -1,4 +1,3 @@
-import 'package:fl_clash/features/windscribe/windscribe_store.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -68,9 +67,6 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
         (state) => state.currentGroupName,
       ),
     );
-    if (!ref.watch(groupDelayTestableProvider(currentGroupName ?? ''))) {
-      return null;
-    }
     final isDelayTesting = ref.watch(
       delayTestingGroupsProvider.select(
         (state) => state.contains(currentGroupName),

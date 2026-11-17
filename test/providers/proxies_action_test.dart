@@ -5,7 +5,6 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/windscribe/windscribe_store.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -22,15 +21,6 @@ import 'package:riverpod/riverpod.dart';
 import '../helpers/test_profiles.dart';
 
 class MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
-
-class _WindscribeOn extends WindscribeNotifier {
-  _WindscribeOn(this.profileId);
-
-  final int profileId;
-
-  @override
-  WindscribeSettings build() => WindscribeSettings(profileId: profileId);
-}
 
 const _testUrl = 'http://delay.test';
 
@@ -521,64 +511,6 @@ void main() {
 
       verify(() => core.asyncTestDelay(_testUrl, 'HK-01')).called(1);
     });
-
-    test(
-      'on the Windscribe profile only a country\'s servers are probed',
-      () async {
-        when(() => core.asyncTestDelay(any(), any())).thenAnswer(
-          (invocation) async => Delay(
-            url: invocation.positionalArguments[0] as String,
-            name: invocation.positionalArguments[1] as String,
-            value: 10,
-          ),
-        );
-        const profile = Profile(
-          id: 7,
-          autoUpdateDuration: Duration.zero,
-          selectedMap: {'Windscribe': 'Australia', 'Australia': 'AU Perth'},
-        );
-        final container = _delayContainer(
-          () => ProviderContainer(
-            overrides: [
-              coreHandlerProvider.overrideWithValue(
-                CoreController.scoped(core),
-              ),
-              profilesProvider.overrideWith(() => TestProfiles([profile])),
-              currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-              windscribeProvider.overrideWith(() => _WindscribeOn(profile.id)),
-            ],
-          ),
-        );
-        addTearDown(container.dispose);
-        const perth = Proxy(name: 'AU Perth', type: 'OpenVPN');
-        const sydney = Proxy(name: 'AU Sydney', type: 'OpenVPN');
-        const east = Proxy(name: 'US East', type: 'OpenVPN');
-        final groups = [
-          _group('Windscribe', const [
-            Proxy(name: 'Australia', type: 'Selector'),
-            Proxy(name: 'US', type: 'Selector'),
-          ]),
-          _group('Australia', const [perth, sydney]),
-          _group('US', const [east]),
-        ];
-        container.read(groupsProvider.notifier).update((_) => groups);
-
-        await actionOf(container).delayTestPageGroup('Windscribe');
-        await actionOf(container).delayTestGroups(groups);
-        verifyNever(() => core.asyncTestDelay(any(), any()));
-
-        await actionOf(container).delayTestPageGroup('Australia');
-
-        verify(() => core.asyncTestDelay(_testUrl, 'AU Perth')).called(1);
-        verify(() => core.asyncTestDelay(_testUrl, 'AU Sydney')).called(1);
-        verifyNever(() => core.asyncTestDelay(any(), 'US East'));
-        expect(
-          container.read(groupDelayTestableProvider('Windscribe')),
-          isFalse,
-        );
-        expect(container.read(groupDelayTestableProvider('Australia')), isTrue);
-      },
-    );
 
     test('testing groups probes a shared node once per test URL', () async {
       const otherUrl = 'http://other.test';

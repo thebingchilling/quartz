@@ -93,9 +93,10 @@ void main() {
     expect(servers.first.premium, isTrue);
   });
 
-  test('builds OpenVPN proxies grouped by country', () {
+  test('builds OpenVPN proxies for the chosen country only', () {
     final yaml = buildWindscribeProfile(
       servers: WindscribeApi.parseServers(_status),
+      country: 'Australia',
       username: 'u',
       password: 'p',
       proto: WindscribeProto.tcp,
@@ -106,15 +107,25 @@ void main() {
     expect(yaml, contains('port: 8080'));
     expect(yaml, contains('-----BEGIN CERTIFICATE-----'));
     expect(yaml, contains('-----BEGIN OpenVPN Static key V1-----'));
-    expect(yaml, contains('proxies: ["New Zealand", "Albania", "Australia"]'));
+    expect(yaml, contains('proxies: ["AU Adelaide - Lofty"]'));
+    expect(yaml, contains('server: adl-354.whiskergalaxy.com'));
+    expect(yaml, isNot(contains('tia-283')));
+    expect(yaml, isNot(contains('akl-99')));
     expect(yaml, contains('  - MATCH,Windscribe'));
     expect(yaml, isNot(contains('url-test')));
+    expect(yaml, isNot(contains('hidden: true')));
     expect(yaml, contains('dev: tun'));
     expect(yaml, contains('remote-dns-resolve: true'));
     expect(yaml, contains('dns: ["10.255.255.1"]'));
-    expect(yaml, contains('hidden: true'));
     expect(yaml, contains('  - DOMAIN-SUFFIX,whiskergalaxy.com,DIRECT'));
     expect(yaml, contains('  - GEOIP,LAN,DIRECT,no-resolve'));
+  });
+
+  test('a country no longer listed falls back to the home country', () {
+    final servers = WindscribeApi.parseServers(_status);
+    expect(windscribeCountryOf(servers, 'Atlantis'), 'New Zealand');
+    expect(windscribeCountryOf(servers, null), 'New Zealand');
+    expect(windscribeCountryOf(servers, 'Albania'), 'Albania');
   });
 
   test('the server list survives a save, for the location picker', () {
