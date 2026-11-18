@@ -1699,7 +1699,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "サーバー一覧を更新するとロケーションを選べます。",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("まだ追加されていません"),
-    "windscribeOpenVpn": MessageLookupByLibrary.simpleMessage("OpenVPN"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage("OpenVPN パスワード"),
     "windscribePort": MessageLookupByLibrary.simpleMessage("ポート"),
     "windscribePro": MessageLookupByLibrary.simpleMessage("Pro サーバー"),

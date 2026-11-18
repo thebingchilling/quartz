@@ -961,7 +961,6 @@
   "autoTunnelBackgroundLocation": "Местоположение всегда, для фона",
   "autoTunnelPhone": "Телефон, чтобы различать SIM",
   "autoTunnelGrant": "Разрешить",
-  "windscribeOpenVpn": "OpenVPN",
   "windscribeChangeCountry": "Сменить страну",
   "windscribe": "windscribe",
   "windscribeDesc": "Серверы windscribe как профиль OpenVPN",

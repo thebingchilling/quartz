@@ -167,6 +167,14 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
     }
   }
 
+  /// Rewrites the profile from the list it holds with another protocol or
+  /// port; no download is needed for that.
+  Future<void> applyOptions({WindscribeProto? proto, int? port}) async {
+    await update((state) => state.copyWith(proto: proto, port: port));
+    if (state.profileId == null || state.servers.isEmpty) return;
+    await _writeProfile(state.servers, state.country);
+  }
+
   Future<void> _writeProfile(
     List<WindscribeServer> servers,
     String? country,

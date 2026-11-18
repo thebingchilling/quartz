@@ -1986,7 +1986,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Update the server list to choose a location.",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("Not added yet"),
-    "windscribeOpenVpn": MessageLookupByLibrary.simpleMessage("OpenVPN"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage(
       "OpenVPN password",
     ),

@@ -26,7 +26,6 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   bool _editing = false;
-  bool _openVpnExpanded = false;
 
   @override
   void dispose() {
@@ -54,13 +53,6 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
     );
     setState(() => _editing = false);
     await _refresh();
-  }
-
-  void _changeOptions(WindscribeSettings Function(WindscribeSettings) change) {
-    unawaited(() async {
-      await _store.update(change);
-      if (ref.read(windscribeProvider).profileId != null) await _refresh();
-    }());
   }
 
   Widget _credentialsForm(AppLocalizations l) {
@@ -120,10 +112,6 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
             _credentialsForm(l)
           else ...[
             generateSectionV3(
-              title: l.windscribeLocations,
-              items: _locationItems(l, settings),
-            ),
-            generateSectionV3(
               items: [
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.sync),
@@ -138,34 +126,30 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
                   ),
                   onTap: isLoading ? null : _refresh,
                 ),
+                ..._optionItems(l, settings),
               ],
               footer: l.windscribeListDesc,
             ),
             generateSectionV3(
+              title: l.windscribeLocations,
+              items: _locationItems(l, settings),
+            ),
+            generateSectionV3(
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.vpn),
-                  title: Text(l.windscribeOpenVpn),
-                  subtitle: Text(
-                    '${settings.proto.name.toUpperCase()} · ${settings.port}',
+                  leading: const GlyphIcon(AppGlyphs.key),
+                  title: Text(l.windscribeCredentials),
+                  subtitle: Text(settings.username),
+                  trailing: TextButton(
+                    onPressed: () => setState(() {
+                      _username.text = settings.username;
+                      _password.clear();
+                      _editing = true;
+                    }),
+                    child: Text(l.windscribeChange),
                   ),
-                  trailing: AnimatedRotation(
-                    turns: _openVpnExpanded ? 0.5 : 0,
-                    duration: commonDuration,
-                    child: const GlyphIcon(AppGlyphs.chevronDown),
-                  ),
-                  onTap: () =>
-                      setState(() => _openVpnExpanded = !_openVpnExpanded),
                 ),
               ],
-            ),
-            AnimatedSize(
-              duration: commonDuration,
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.topCenter,
-              child: _openVpnExpanded
-                  ? _openVpnSettings(l, settings)
-                  : const SizedBox(width: double.infinity),
             ),
           ],
         ],
@@ -183,55 +167,35 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
     ];
   }
 
-  Widget _openVpnSettings(AppLocalizations l, WindscribeSettings settings) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: generateSectionV3(
-        items: [
-          ListItem(
-            leading: const GlyphIcon(AppGlyphs.key),
-            title: Text(l.windscribeCredentials),
-            subtitle: Text(settings.username),
-            trailing: TextButton(
-              onPressed: () => setState(() {
-                _username.text = settings.username;
-                _password.clear();
-                _editing = true;
-              }),
-              child: Text(l.windscribeChange),
-            ),
-          ),
-          ListItem<WindscribeProto>.options(
-            leading: const GlyphIcon(AppGlyphs.vpn),
-            title: Text(l.windscribeProtocol),
-            subtitle: Text(settings.proto.name.toUpperCase()),
-            dialogTitle: l.windscribeProtocol,
-            options: WindscribeProto.values,
-            value: settings.proto,
-            textBuilder: (proto) => proto.name.toUpperCase(),
-            onChanged: (proto) {
-              if (proto == null || proto == settings.proto) return;
-              _changeOptions(
-                (state) => state.copyWith(proto: proto, port: 443),
-              );
-            },
-          ),
-          ListItem<int>.options(
-            leading: const GlyphIcon(AppGlyphs.link),
-            title: Text(l.windscribePort),
-            subtitle: Text('${settings.port}'),
-            dialogTitle: l.windscribePort,
-            options: settings.proto.ports,
-            value: settings.port,
-            textBuilder: (port) => '$port',
-            onChanged: (port) {
-              if (port == null || port == settings.port) return;
-              _changeOptions((state) => state.copyWith(port: port));
-            },
-          ),
-        ],
+  List<Widget> _optionItems(AppLocalizations l, WindscribeSettings settings) {
+    return [
+      ListItem<WindscribeProto>.options(
+        leading: const GlyphIcon(AppGlyphs.vpn),
+        title: Text(l.windscribeProtocol),
+        subtitle: Text(settings.proto.name.toUpperCase()),
+        dialogTitle: l.windscribeProtocol,
+        options: WindscribeProto.values,
+        value: settings.proto,
+        textBuilder: (proto) => proto.name.toUpperCase(),
+        onChanged: (proto) {
+          if (proto == null || proto == settings.proto) return;
+          unawaited(_store.applyOptions(proto: proto, port: 443));
+        },
       ),
-    );
+      ListItem<int>.options(
+        leading: const GlyphIcon(AppGlyphs.link),
+        title: Text(l.windscribePort),
+        subtitle: Text('${settings.port}'),
+        dialogTitle: l.windscribePort,
+        options: settings.proto.ports,
+        value: settings.port,
+        textBuilder: (port) => '$port',
+        onChanged: (port) {
+          if (port == null || port == settings.port) return;
+          unawaited(_store.applyOptions(port: port));
+        },
+      ),
+    ];
   }
 }
 
@@ -352,16 +316,102 @@ class WindscribeProxiesHeader extends ConsumerWidget {
         );
       }),
     );
+    final settings = ref.watch(
+      windscribeProvider.select((s) => (proto: s.proto, port: s.port)),
+    );
+    final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
+    final store = ref.read(windscribeProvider.notifier);
+    Future<void> pick<T>(
+      String title,
+      List<T> options,
+      T value,
+      String Function(T) text,
+      Future<void> Function(T) apply,
+    ) async {
+      final picked = await dialogs.showCommonDialog<T>(
+        child: OptionsDialog<T>(
+          title: title,
+          options: options,
+          value: value,
+          textBuilder: text,
+        ),
+      );
+      if (picked == null || picked == value) return;
+      await globalState.loadingRun(
+        () => apply(picked),
+        title: title,
+        tag: LoadingTag.profiles,
+      );
+    }
+
     return ProxiesTopBar(
       bar: CommonCard(
         radius: AppCorner.xl,
-        onPressed: () =>
-            BaseNavigator.push<void>(context, const WindscribeLocationsView()),
-        child: ListItem(
-          leading: _Flag(code),
-          title: Text(country ?? l.windscribe),
-          subtitle: Text(l.windscribeChangeCountry),
-          trailing: const GlyphIcon(AppGlyphs.chevronForward),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListItem(
+              leading: _Flag(code),
+              title: Text(country ?? l.windscribe),
+              subtitle: Text(l.windscribeChangeCountry),
+              trailing: const GlyphIcon(AppGlyphs.chevronForward),
+              onTap: () => BaseNavigator.push<void>(
+                context,
+                const WindscribeLocationsView(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: TextButton.icon(
+                      onPressed: isLoading
+                          ? null
+                          : () => globalState.loadingRun(
+                              store.refresh,
+                              title: l.windscribeUpdate,
+                              tag: LoadingTag.profiles,
+                            ),
+                      icon: const GlyphIcon(AppGlyphs.sync),
+                      label: Text(
+                        l.windscribeUpdate,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () => pick<WindscribeProto>(
+                            l.windscribeProtocol,
+                            WindscribeProto.values,
+                            settings.proto,
+                            (proto) => proto.name.toUpperCase(),
+                            (proto) =>
+                                store.applyOptions(proto: proto, port: 443),
+                          ),
+                    icon: const GlyphIcon(AppGlyphs.chevronDown),
+                    label: Text(settings.proto.name.toUpperCase()),
+                  ),
+                  TextButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () => pick<int>(
+                            l.windscribePort,
+                            settings.proto.ports,
+                            settings.port,
+                            (port) => '$port',
+                            (port) => store.applyOptions(port: port),
+                          ),
+                    icon: const GlyphIcon(AppGlyphs.chevronDown),
+                    label: Text('${settings.port}'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
       child: child,

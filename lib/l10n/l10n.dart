@@ -8014,16 +8014,6 @@ class AppLocalizations {
     return Intl.message('Allow', name: 'autoTunnelGrant', desc: '', args: []);
   }
 
-  /// `OpenVPN`
-  String get windscribeOpenVpn {
-    return Intl.message(
-      'OpenVPN',
-      name: 'windscribeOpenVpn',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Change country`
   String get windscribeChangeCountry {
     return Intl.message(

@@ -83,7 +83,10 @@ Dropped (VPN-only use doesn't need them):
 - **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): Windscribe's public server
   list as a Clash profile of `openvpn` proxies with the OpenVPN credentials from its config
   generator. The page picks one location (New Zealand first); the profile then holds only that
-  country's servers in its one Windscribe group, so the proxies page offers just those.
+  country's servers in its one Windscribe group, so the proxies page offers just those. The page
+  lists updating the server list, protocol and port first, then the locations, with the
+  credentials last; on the proxies page a bar shows the country and has buttons to update the
+  server list and change protocol or port (a rewrite from the saved list, no download).
 - **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows),
   modelled on WG Tunnel: a **default tunnel** (a profile with an optional server in one of its
   groups, or whichever profile is current); **tunnel on untrusted Wi-Fi** with **trusted

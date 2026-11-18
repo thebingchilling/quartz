@@ -968,7 +968,6 @@
   "autoTunnelBackgroundLocation": "Location all the time, for the background",
   "autoTunnelPhone": "Phone, to tell SIM cards apart",
   "autoTunnelGrant": "Allow",
-  "windscribeOpenVpn": "OpenVPN",
   "windscribeChangeCountry": "Change country",
   "windscribe": "windscribe",
   "windscribeDesc": "windscribe's servers as an OpenVPN profile",

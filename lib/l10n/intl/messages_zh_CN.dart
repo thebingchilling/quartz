@@ -1530,7 +1530,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "更新服务器列表后即可选择位置。",
     ),
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage("尚未添加"),
-    "windscribeOpenVpn": MessageLookupByLibrary.simpleMessage("OpenVPN"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage("OpenVPN 密码"),
     "windscribePort": MessageLookupByLibrary.simpleMessage("端口"),
     "windscribePro": MessageLookupByLibrary.simpleMessage("Pro 服务器"),

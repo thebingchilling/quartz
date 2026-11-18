@@ -2089,7 +2089,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "windscribeNotAdded": MessageLookupByLibrary.simpleMessage(
       "Ещё не добавлено",
     ),
-    "windscribeOpenVpn": MessageLookupByLibrary.simpleMessage("OpenVPN"),
     "windscribePassword": MessageLookupByLibrary.simpleMessage(
       "Пароль OpenVPN",
     ),

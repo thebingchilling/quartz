@@ -961,7 +961,6 @@
   "autoTunnelBackgroundLocation": "始终允许位置信息，用于后台",
   "autoTunnelPhone": "电话，用于区分 SIM 卡",
   "autoTunnelGrant": "允许",
-  "windscribeOpenVpn": "OpenVPN",
   "windscribeChangeCountry": "更换国家",
   "windscribe": "windscribe",
   "windscribeDesc": "将 windscribe 的服务器添加为 OpenVPN 配置",

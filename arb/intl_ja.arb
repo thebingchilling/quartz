@@ -961,7 +961,6 @@
   "autoTunnelBackgroundLocation": "常に位置情報（バックグラウンド用）",
   "autoTunnelPhone": "電話（SIM の識別）",
   "autoTunnelGrant": "許可",
-  "windscribeOpenVpn": "OpenVPN",
   "windscribeChangeCountry": "国を変更",
   "windscribe": "windscribe",
   "windscribeDesc": "windscribe のサーバーを OpenVPN プロファイルとして追加",
