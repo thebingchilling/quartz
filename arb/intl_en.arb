@@ -450,6 +450,8 @@
   "textScalePreview": "Text in the app will look like this",
   "followSystem": "Follow system",
   "internet": "Internet",
+  "accessTabAll": "All",
+  "accessTabUser": "User apps",
   "systemApp": "System apps",
   "noNetworkApp": "No-network apps",
   "restoreStrategy": "Restore strategy",

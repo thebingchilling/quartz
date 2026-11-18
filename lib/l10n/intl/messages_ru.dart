@@ -236,6 +236,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "accessControlSettings": MessageLookupByLibrary.simpleMessage(
       "Настройки контроля доступа",
     ),
+    "accessTabAll": MessageLookupByLibrary.simpleMessage("Все"),
+    "accessTabUser": MessageLookupByLibrary.simpleMessage("Пользовательские"),
     "account": MessageLookupByLibrary.simpleMessage("Аккаунт"),
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage(

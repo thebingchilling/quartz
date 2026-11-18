@@ -3625,6 +3625,16 @@ class AppLocalizations {
     return Intl.message('Internet', name: 'internet', desc: '', args: []);
   }
 
+  /// `All`
+  String get accessTabAll {
+    return Intl.message('All', name: 'accessTabAll', desc: '', args: []);
+  }
+
+  /// `User apps`
+  String get accessTabUser {
+    return Intl.message('User apps', name: 'accessTabUser', desc: '', args: []);
+  }
+
   /// `System apps`
   String get systemApp {
     return Intl.message('System apps', name: 'systemApp', desc: '', args: []);

@@ -450,6 +450,8 @@
   "textScalePreview": "Так будет выглядеть текст в приложении",
   "followSystem": "Как в системе",
   "internet": "Интернет",
+  "accessTabAll": "Все",
+  "accessTabUser": "Пользовательские",
   "systemApp": "Системные приложения",
   "noNetworkApp": "Приложения без сети",
   "restoreStrategy": "Стратегия восстановления",

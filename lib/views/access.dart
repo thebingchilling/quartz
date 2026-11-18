@@ -19,8 +19,14 @@ class AccessView extends ConsumerStatefulWidget {
   ConsumerState<AccessView> createState() => _AccessViewState();
 }
 
+enum _AccessTab { all, user, system, selected }
+
 class _AccessViewState extends ConsumerState<AccessView>
-    with RouteSettledMixin<AccessView> {
+    with RouteSettledMixin<AccessView>, SingleTickerProviderStateMixin {
+  late final _tabs = TabController(
+    length: _AccessTab.values.length,
+    vsync: this,
+  )..addListener(() => setState(() {}));
   late ScrollController _controller;
   List<String>? _pinedList;
   bool _isInit = false;
@@ -99,6 +105,7 @@ class _AccessViewState extends ConsumerState<AccessView>
 
   @override
   void dispose() {
+    _tabs.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -435,17 +442,27 @@ class _AccessViewState extends ConsumerState<AccessView>
     final query = SearchQuery(ref.watch(queryProvider(QueryTag.access)));
     final packages = ref.watch(packagesProvider);
     final accessControl = ref.watch(accessControlStateProvider);
+    final tab = _AccessTab.values[_tabs.index];
+    final mode = accessControl.mode;
+    final currentList = accessControl.currentList;
     final viewPackages = packages
         .getViewList(
           pinedList: _pinedList ?? [],
           sortType: accessControl.sort,
           isFilterNonInternetApp: accessControl.isFilterNonInternetApp,
-          isFilterSystemApp: accessControl.isFilterSystemApp,
+          isFilterSystemApp:
+              tab != _AccessTab.system && accessControl.isFilterSystemApp,
+        )
+        .where(
+          (package) => switch (tab) {
+            _AccessTab.all => true,
+            _AccessTab.user => !package.system,
+            _AccessTab.system => package.system,
+            _AccessTab.selected => currentList.contains(package.packageName),
+          },
         )
         .whereMatches(query, (package) => [package.label, package.packageName])
         .toList();
-    final mode = accessControl.mode;
-    final currentList = accessControl.currentList;
     final viewPackageNameList = viewPackages.map((e) => e.packageName).toList();
     final valueList = currentList.intersection(viewPackageNameList);
     final needsInstalledAppsPermission =
@@ -503,6 +520,26 @@ class _AccessViewState extends ConsumerState<AccessView>
                 enable: accessControl.enable,
                 mode: mode,
                 count: valueList.length,
+              ),
+              TabBar(
+                controller: _tabs,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                dividerColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                tabs: [
+                  for (final tab in _AccessTab.values)
+                    Tab(
+                      text: switch (tab) {
+                        _AccessTab.all => context.appLocalizations.accessTabAll,
+                        _AccessTab.user =>
+                          context.appLocalizations.accessTabUser,
+                        _AccessTab.system => context.appLocalizations.systemApp,
+                        _AccessTab.selected =>
+                          context.appLocalizations.selected,
+                      },
+                    ),
+                ],
               ),
               const SizedBox(height: 8),
               Expanded(

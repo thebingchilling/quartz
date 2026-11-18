@@ -450,6 +450,8 @@
   "textScalePreview": "应用内的文字将以这个大小显示",
   "followSystem": "跟随系统",
   "internet": "互联网",
+  "accessTabAll": "全部",
+  "accessTabUser": "用户应用",
   "systemApp": "系统应用",
   "noNetworkApp": "无网络应用",
   "restoreStrategy": "恢复策略",

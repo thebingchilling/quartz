@@ -141,6 +141,36 @@ void main() {
       await teardownView(tester);
     });
 
+    testWidgets('the tabs split user, system and selected apps', (
+      tester,
+    ) async {
+      seedAccessControl(
+        const AccessControlProps(
+          enable: true,
+          rejectList: ['com.example.chat'],
+        ),
+      );
+
+      await pumpAccessView(tester);
+
+      await tester.tap(find.widgetWithText(Tab, 'System apps'));
+      await tester.pumpAndSettle();
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Browser'), findsNothing);
+
+      await tester.tap(find.widgetWithText(Tab, 'User apps'));
+      await tester.pumpAndSettle();
+      expect(find.text('Browser'), findsOneWidget);
+      expect(find.text('Settings'), findsNothing);
+
+      await tester.tap(find.widgetWithText(Tab, 'Selected'));
+      await tester.pumpAndSettle();
+      expect(find.text('Chat'), findsOneWidget);
+      expect(find.text('Browser'), findsNothing);
+
+      await teardownView(tester);
+    });
+
     testWidgets('shows system apps once the filter is disabled', (
       tester,
     ) async {

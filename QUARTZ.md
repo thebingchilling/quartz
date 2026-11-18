@@ -151,6 +151,9 @@ Dropped (VPN-only use doesn't need them):
 - **IPv6 on (standing rule):** the Core's `ipv6`, the Android VPN's IPv6 route and the DNS a
   profile without its own is given all default to on (FlClash had them off, which left IPv6 traffic
   outside Android's VPN); existing installs are switched on once at startup. Don't turn it off.
+- **Access control tabs** (Android): All, User apps, System apps and Selected. Secure Folder and
+  the work profile have no tab: Android gives each profile its own VPN, so Quartz's VPN never
+  carries their apps' traffic; installing Quartz inside that profile is what covers them.
 - **Per-app bypass** (Settings → Quartz → Access control, Android and Windows): a blacklist
   (listed apps go around the tunnel) or a whitelist (only listed apps use it). Android uses
   FlClash's own access control in the VPN service; Windows stores program paths in the same

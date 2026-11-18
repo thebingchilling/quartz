@@ -233,6 +233,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "accessControlSettings": MessageLookupByLibrary.simpleMessage(
       "Access control settings",
     ),
+    "accessTabAll": MessageLookupByLibrary.simpleMessage("All"),
+    "accessTabUser": MessageLookupByLibrary.simpleMessage("User apps"),
     "account": MessageLookupByLibrary.simpleMessage("Account"),
     "action": MessageLookupByLibrary.simpleMessage("Action"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("Test all delays"),

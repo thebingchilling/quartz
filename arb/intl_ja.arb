@@ -450,6 +450,8 @@
   "textScalePreview": "アプリ内の文字はこの大きさで表示されます",
   "followSystem": "システムに従う",
   "internet": "インターネット",
+  "accessTabAll": "すべて",
+  "accessTabUser": "ユーザーアプリ",
   "systemApp": "システムアプリ",
   "noNetworkApp": "ネットワーク不使用アプリ",
   "restoreStrategy": "復元方式",
