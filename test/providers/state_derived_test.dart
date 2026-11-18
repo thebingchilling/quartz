@@ -67,6 +67,39 @@ void main() {
     expect(container.read(currentGroupsStateProvider).value, isEmpty);
   });
 
+  test('an automatic group offered by another group is not shown', () {
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => const [
+            Group(
+              name: 'Freesocks',
+              type: GroupType.Selector,
+              hidden: false,
+              all: [
+                Proxy(name: 'Auto', type: 'URLTest'),
+                Proxy(name: 's1', type: 'Socks5'),
+              ],
+            ),
+            Group(
+              name: 'Auto',
+              type: GroupType.URLTest,
+              hidden: false,
+              all: [Proxy(name: 's1', type: 'Socks5')],
+            ),
+            Group(name: 'Lone', type: GroupType.URLTest, hidden: false),
+          ],
+        );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.rule));
+
+    expect(
+      container.read(currentGroupsStateProvider).value.map((g) => g.name),
+      ['Freesocks', 'Lone'],
+    );
+  });
+
   test('a GLOBAL group of the profile\'s own shows in rule mode', () {
     container
         .read(groupsProvider.notifier)

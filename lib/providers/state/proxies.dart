@@ -11,8 +11,26 @@ GroupsState currentGroupsState(Ref ref) {
     Mode.global => groups,
     Mode.rule => groups.where((item) => item.hidden == false),
   };
-  return GroupsState(value: shown.map(_withoutSelection).toList());
+  final members = {
+    for (final group in groups)
+      for (final proxy in group.all) proxy.name,
+  };
+  return GroupsState(
+    value: shown
+        .where((group) => !_isPickedWithin(group, members))
+        .map(_withoutSelection)
+        .toList(),
+  );
 }
+
+/// An automatic group that another group offers, like a subscription's Auto
+/// beside its servers, is a choice in that group rather than a group to show.
+bool _isPickedWithin(Group group, Set<String> members) =>
+    members.contains(group.name) &&
+    switch (group.type) {
+      GroupType.URLTest || GroupType.Fallback || GroupType.LoadBalance => true,
+      GroupType.Selector || GroupType.Relay => false,
+    };
 
 Group _withoutSelection(Group group) {
   final all = group.all.any(_hasSelection)

@@ -352,10 +352,10 @@ class WarpProxiesHeader extends ConsumerWidget {
               ),
             ],
           ),
-          trailing: FilledButton.tonalIcon(
+          trailing: IconButton.filledTonal(
+            tooltip: l.warpRegenerate,
             onPressed: isLoading ? null : () => _regenerate(ref, entry),
             icon: const GlyphIcon(AppGlyphs.refresh, fill: 1),
-            label: Text(l.warpRegenerate),
           ),
         ),
       ),

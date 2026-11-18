@@ -21,9 +21,9 @@ void selectGroupProxy(
       true => currentProxyName == proxyName ? '' : proxyName,
       false => proxyName,
     };
-    ref
-        .read(proxiesActionProvider.notifier)
-        .changeProxyDebounce(groupName, nextProxyName);
+    final proxies = ref.read(proxiesActionProvider.notifier)
+      ..changeProxyDebounce(groupName, nextProxyName);
+    if (nextProxyName.isNotEmpty) proxies.selectUpward(groupName);
     return;
   }
   dialogs.showNotifier(

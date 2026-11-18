@@ -512,6 +512,43 @@ void main() {
       verify(() => core.asyncTestDelay(_testUrl, 'HK-01')).called(1);
     });
 
+    test('picking inside a subgroup picks the subgroup above it', () {
+      final container = buildContainer(
+        profile: const Profile(id: 1, autoUpdateDuration: Duration.zero),
+      );
+      container
+          .read(groupsProvider.notifier)
+          .update(
+            (_) => [
+              const Group(
+                name: 'PROXY',
+                type: GroupType.Selector,
+                now: 'Other',
+                all: [
+                  Proxy(name: 'Freesocks', type: 'Selector'),
+                  Proxy(name: 'Other', type: 'Selector'),
+                ],
+              ),
+              const Group(
+                name: 'Freesocks',
+                type: GroupType.Selector,
+                all: [Proxy(name: 's1', type: 'Socks5')],
+              ),
+              const Group(
+                name: 'Auto',
+                type: GroupType.URLTest,
+                all: [Proxy(name: 'Freesocks', type: 'Selector')],
+              ),
+            ],
+          );
+
+      actionOf(container).selectUpward('Freesocks');
+
+      final picked = container.read(currentProfileProvider)?.selectedMap;
+      expect(picked?['PROXY'], 'Freesocks');
+      expect(picked?.containsKey('Auto'), isFalse);
+    });
+
     test('a failed test runs once more, except on OpenVPN', () async {
       final calls = <String, int>{};
       when(() => core.asyncTestDelay(any(), any())).thenAnswer((invocation) {

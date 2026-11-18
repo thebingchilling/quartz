@@ -113,6 +113,21 @@ class ProxiesAction extends _$ProxiesAction {
     }, args: [groupName, proxyName]);
   }
 
+  /// Picks [groupName] in every selector that offers it, and on up, so a
+  /// server chosen inside a subgroup is the one in use without a second pick.
+  void selectUpward(String groupName, [Set<String>? visited]) {
+    final seen = visited ?? {groupName};
+    for (final parent in ref.read(groupsProvider)) {
+      if (parent.type != GroupType.Selector ||
+          !parent.all.any((proxy) => proxy.name == groupName) ||
+          !seen.add(parent.name)) {
+        continue;
+      }
+      if (parent.now != groupName) changeProxyDebounce(parent.name, groupName);
+      selectUpward(parent.name, seen);
+    }
+  }
+
   String _currentSelectedName(String groupName) {
     return ref.read(currentProfileProvider)?.selectedMap[groupName] ?? '';
   }
