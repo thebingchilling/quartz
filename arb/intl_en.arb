@@ -936,43 +936,25 @@
   },
   "warpExpired": "Expired",
   "warpAwgDesc": "AmneziaWG hides the WireGuard handshake from networks that block it",
-  "autoTunnelDefaultTunnel": "Default tunnel",
-  "autoTunnelCurrentProfile": "Current profile",
   "autoTunnelWifi": "Wi-Fi",
-  "autoTunnelAdvanced": "Advanced",
-  "autoTunnelStopNoNetwork": "Stop the tunnel with no network",
-  "autoTunnelDebounce": "Debounce delay",
-  "autoTunnelDebounceDesc": "How long the network has to settle before the tunnel follows it.",
-  "autoTunnelSeconds": "{count} s",
-  "@autoTunnelSeconds": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "autoTunnelRules": "Rules",
-  "autoTunnelRulesDesc": "Rules with apps are checked first, then the others from the top; the first that matches wins.",
+  "autoTunnelRulesDesc": "Long press a rule to move it. Rules with apps go first, for the app opened last; then the rest from the top. The first that matches wins. When it stops matching, the next one that matches takes over; if none does, the tunnel disconnects. With no network the tunnel stops, unless the rule in effect has a kill switch.",
   "autoTunnelAddRule": "Add rule",
   "autoTunnelRule": "Rule",
   "autoTunnelAnyNetwork": "Any network",
   "autoTunnelAnyWifi": "Any Wi-Fi",
   "autoTunnelAnyMobile": "Any mobile data",
-  "autoTunnelWhenOn": "When connected to",
-  "autoTunnelWhenOnDesc": "Any of these counts. None means any network.",
-  "autoTunnelWhileOpen": "While open",
-  "autoTunnelWhileOpenDesc": "Any of these apps being open counts. None means no app is needed.",
+  "autoTunnelWhenOnDesc": "Any of these networks counts.",
+  "autoTunnelWhileOpenDesc": "Any of these apps being open counts.",
   "autoTunnelChooseApps": "Choose apps",
   "autoTunnelThen": "Then",
   "autoTunnelConnect": "Connect",
   "autoTunnelDisconnect": "Disconnect",
-  "autoTunnelOtherwise": "Disconnect when no rule matches",
-  "autoTunnelOtherwiseDesc": "Saves battery. Off leaves the tunnel as it is.",
-  "autoTunnelKillSwitchDesc": "Blocks all traffic while a rule wants the tunnel up and it isn't, so nothing leaks if it drops. It never blocks when a rule disconnects or when you turn the tunnel off yourself.",
+  "autoTunnelKillSwitchDesc": "Blocks all traffic while this rule is in effect and its tunnel isn't up: while it connects, if it drops, with no network, or after you turn it off. It lifts once the tunnel is back or a rule without a kill switch takes over.",
   "autoTunnelOtherProfiles": "Other profiles",
   "autoTunnelOtherProfilesDesc": "Apps from Secure Folder and the work profile appear here once opened with app detection on. A rule matches an app in any profile.",
   "autoTunnel": "Auto-tunnel",
-  "autoTunnelDesc": "Rules connect or disconnect the tunnel as your network and open apps change. A manual change holds until they change again.",
+  "autoTunnelDesc": "Each rule says: IF you're on certain networks and/or certain apps are open, THEN connect a tunnel or disconnect. A tunnel you start yourself stays on until you turn it off; then the rules take over again.",
   "autoTunnelAddNetwork": "Add network",
   "autoTunnelEnterName": "Type a name",
   "autoTunnelWifiDesc": "Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can't be listed: pick a nearby one or type its name.",
@@ -1058,5 +1040,28 @@
   "appBypassMode": "Mode",
   "appBypassBlacklist": "Listed programs go around the tunnel",
   "appBypassWhitelist": "Only listed programs use the tunnel",
-  "appBypassDesc": "Programs are matched by file name. Everything else always goes through the tunnel."
+  "appBypassDesc": "Programs are matched by file name. Everything else always goes through the tunnel.",
+  "autoTunnelCategories": "Categories",
+  "autoTunnelCategoriesDesc": "Group rules, e.g. the ones for a trip, and turn them all on or off together.",
+  "autoTunnelAddCategory": "Add category",
+  "autoTunnelCategory": "Category",
+  "autoTunnelNoCategory": "None",
+  "autoTunnelName": "Name",
+  "autoTunnelIfNetwork": "If on",
+  "autoTunnelIfApps": "If open",
+  "autoTunnelMatchAll": "Network and app (both needed)",
+  "autoTunnelMatchAny": "Network or app (either is enough)",
+  "autoTunnelAndWord": "and",
+  "autoTunnelOrWord": "or",
+  "autoTunnelChooseTunnel": "Choose a tunnel",
+  "autoTunnelThenDesc": "Connect replaces any other tunnel while the rule is in effect.",
+  "autoTunnelCategoryKillSwitchDesc": "Turns the kill switch on for every rule in this category that connects.",
+  "autoTunnelKillSwitchFromCategory": "On for every rule in {name}",
+  "@autoTunnelKillSwitchFromCategory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

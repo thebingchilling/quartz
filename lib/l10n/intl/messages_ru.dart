@@ -20,7 +20,7 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ru';
 
-  static String m0(count) => "${count} с";
+  static String m0(name) => "Включён для всех правил в «${name}»";
 
   static String m1(count, skipped) =>
       "Будет добавлено: ${count}, пропущено (уже есть): ${skipped}";
@@ -361,13 +361,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage(
       "Добавить приложение",
     ),
+    "autoTunnelAddCategory": MessageLookupByLibrary.simpleMessage(
+      "Добавить категорию",
+    ),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage(
       "Добавить сеть",
     ),
     "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage(
       "Добавить правило",
     ),
-    "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("Дополнительно"),
+    "autoTunnelAndWord": MessageLookupByLibrary.simpleMessage("и"),
     "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage(
       "Любая мобильная сеть",
     ),
@@ -382,24 +385,23 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение всегда, для фона",
     ),
+    "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("Категории"),
+    "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
+      "Объединяйте правила, например для поездки, и включайте или выключайте их вместе.",
+    ),
+    "autoTunnelCategory": MessageLookupByLibrary.simpleMessage("Категория"),
+    "autoTunnelCategoryKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "Включает kill switch для всех подключающих правил этой категории.",
+    ),
     "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage(
       "Выбрать приложения",
     ),
+    "autoTunnelChooseTunnel": MessageLookupByLibrary.simpleMessage(
+      "Выберите туннель",
+    ),
     "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("Подключить"),
-    "autoTunnelCurrentProfile": MessageLookupByLibrary.simpleMessage(
-      "Текущий профиль",
-    ),
-    "autoTunnelDebounce": MessageLookupByLibrary.simpleMessage(
-      "Задержка срабатывания",
-    ),
-    "autoTunnelDebounceDesc": MessageLookupByLibrary.simpleMessage(
-      "Сколько сеть должна оставаться неизменной, прежде чем туннель переключится.",
-    ),
-    "autoTunnelDefaultTunnel": MessageLookupByLibrary.simpleMessage(
-      "Туннель по умолчанию",
-    ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Правила подключают или отключают туннель при смене сети и открытых приложений. Ручное изменение действует до следующей смены.",
+      "Каждое правило: ЕСЛИ вы в определённых сетях и/или открыты определённые приложения, ТО подключить туннель или отключить его. Туннель, включённый вручную, работает, пока вы его не выключите; затем правила сразу снова берут управление.",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Отключить"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Ввести имя"),
@@ -408,27 +410,33 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Разрешить"),
     "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("Группа"),
+    "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("Если открыто"),
+    "autoTunnelIfNetwork": MessageLookupByLibrary.simpleMessage("Если в сети"),
     "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage(
       "Оставить выбранный сервер",
     ),
     "autoTunnelKillSwitch": MessageLookupByLibrary.simpleMessage("Kill switch"),
     "autoTunnelKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
-      "Блокирует весь трафик, пока правило требует туннель, а он не работает, чтобы ничего не утекло при обрыве. Не блокирует, когда правило отключает туннель или вы выключаете его сами.",
+      "Блокирует весь трафик, пока это правило действует, а его туннель не работает: при подключении, обрыве, без сети или после ручного выключения. Снимается, когда туннель вернётся или управление возьмёт правило без kill switch.",
     ),
+    "autoTunnelKillSwitchFromCategory": m0,
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение, чтобы видеть имена Wi-Fi",
     ),
+    "autoTunnelMatchAll": MessageLookupByLibrary.simpleMessage(
+      "Сеть и приложение (нужно оба)",
+    ),
+    "autoTunnelMatchAny": MessageLookupByLibrary.simpleMessage(
+      "Сеть или приложение (хватит одного)",
+    ),
+    "autoTunnelName": MessageLookupByLibrary.simpleMessage("Название"),
+    "autoTunnelNoCategory": MessageLookupByLibrary.simpleMessage("Нет"),
+    "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("или"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage(
       "Другие профили",
     ),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
       "Приложения из Защищённой папки и рабочего профиля появятся здесь, после того как их откроют при включённом определении приложений. Правило срабатывает для приложения в любом профиле.",
-    ),
-    "autoTunnelOtherwise": MessageLookupByLibrary.simpleMessage(
-      "Отключать, если ни одно правило не подходит",
-    ),
-    "autoTunnelOtherwiseDesc": MessageLookupByLibrary.simpleMessage(
-      "Экономит батарею. Если выключено, туннель остаётся как есть.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Введите имя пакета",
@@ -440,15 +448,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Правило"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Правила"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
-      "Сначала проверяются правила с приложениями, затем остальные сверху вниз; срабатывает первое подходящее.",
+      "Удерживайте правило, чтобы переместить его. Сначала правила с приложениями (для последнего открытого), затем остальные сверху вниз; срабатывает первое подходящее. Когда оно перестаёт подходить, его сменяет следующее подходящее, а если такого нет — туннель отключается. Без сети туннель останавливается, если у действующего правила нет kill switch.",
     ),
-    "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Сервер"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Выбирает сервер в группе профиля, например город windscribe.",
-    ),
-    "autoTunnelStopNoNetwork": MessageLookupByLibrary.simpleMessage(
-      "Отключать туннель без сети",
     ),
     "autoTunnelSystemKillSwitch": MessageLookupByLibrary.simpleMessage(
       "Встроенный kill switch Android",
@@ -458,21 +462,20 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("Подключить"),
     "autoTunnelThen": MessageLookupByLibrary.simpleMessage("Тогда"),
+    "autoTunnelThenDesc": MessageLookupByLibrary.simpleMessage(
+      "Подключение заменяет любой другой туннель, пока правило действует.",
+    ),
     "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
       "Доступ к истории использования",
     ),
     "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
       "Определяет, когда приложение закрыто из недавних",
     ),
-    "autoTunnelWhenOn": MessageLookupByLibrary.simpleMessage(
-      "При подключении к",
-    ),
     "autoTunnelWhenOnDesc": MessageLookupByLibrary.simpleMessage(
-      "Подходит любая из них. Если пусто — любая сеть.",
+      "Подходит любая из этих сетей.",
     ),
-    "autoTunnelWhileOpen": MessageLookupByLibrary.simpleMessage("Пока открыто"),
     "autoTunnelWhileOpenDesc": MessageLookupByLibrary.simpleMessage(
-      "Достаточно, чтобы было открыто любое из них. Если пусто — приложение не нужно.",
+      "Достаточно, чтобы было открыто любое из этих приложений.",
     ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
@@ -1098,10 +1101,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),

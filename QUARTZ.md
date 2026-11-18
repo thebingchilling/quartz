@@ -97,31 +97,34 @@ Dropped (VPN-only use doesn't need them):
   reconnects); converted OpenVPN nodes stay out of the automatic url-test group; WARP's
   registration API is only called to generate, regenerate or delete.
 - **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows): a
-  list of **rules**. Each has networks (any Wi-Fi, a named Wi-Fi with `*`/`?` wildcards, any
-  mobile data, a SIM; any of them counts, none means any network), optional apps (any of them
-  open counts), and an action: connect a tunnel (the default one, or a profile with an optional
-  server) or disconnect. Rules with apps are checked first for the most recently opened app, then
-  the network rules from the top; the first match wins. When nothing matches it disconnects (to
-  save battery) unless told to leave the tunnel alone, and with no network it stops by default.
-  The app picker is access control's list and tabs plus **Other profiles**: Secure Folder and
-  work-profile apps app detection has seen. It acts only when the network, the open apps or the
-  settings change, so a manual change holds until then (`decideAutoTunnel`, `blocksAll`,
-  `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin; keep them the same). Settings from before
-  rules are turned into rules. An app counts as open while on screen or until it's closed
-  (removed from recents on Android, exited on Windows), with 4 s of grace.
-  - Kill switch: one switch. While a rule wants a tunnel and it isn't up it blocks every app;
-    never after a rule disconnects or the user turns the tunnel off.
-  - Battery: app detection (which polls usage data) only runs while a rule has apps, the service
-    parses its settings once per change instead of on every network callback, and the defaults
-    disconnect when nothing matches and with no network.
+  list of **rules**, each IF networks (any Wi-Fi, a named Wi-Fi with `*`/`?` wildcards, any
+  mobile data, a SIM) AND or OR apps (any of them open) THEN connect its own tunnel (a profile
+  with an optional server) or disconnect. An empty condition isn't asked; there is no default
+  tunnel and no built-in rule. Rules can sit in **categories** that turn on and off together.
+  Rules with apps are checked first for the most recently opened app, then the rest from the top
+  (long press to reorder); the first match wins and becomes the rule in effect. When it stops
+  matching, the next match takes over; if none does, the tunnel disconnects, and with no rule in
+  effect nothing changes. With no network the tunnel stops, unless the rule in effect has a kill
+  switch. A tunnel the user starts holds until the user stops it, and then the rules judge again
+  at once (`decideAutoTunnel`, `blocksAll`, `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin;
+  keep them the same). Settings from the version with one default tunnel and kill switch keep
+  their rules, take that tunnel and kill switch, and lose the seeded "any Wi-Fi: disconnect".
+  An app counts as open while on screen or until it's closed (removed from recents on Android,
+  exited on Windows), with 4 s of grace; networks settle for 2 s before a decision.
+  - Kill switch: per rule, or for every connecting rule of a category. While that rule is in
+    effect and its tunnel isn't up (connecting, dropped, no network, or stopped by the user)
+    every app is blocked, until the tunnel is back or a rule without one takes over.
+  - Battery: app detection (which polls usage data) only runs while a rule has apps, and the
+    service parses its settings once per change instead of on every network callback.
   - Android: `AutoTunnelService` (foreground, `specialUse`, back after a reboot; running
-    whenever auto-tunnel or any kill switch is on) watches the network and, through
+    whenever auto-tunnel is on) watches the network and, through
     `AppWatcherService` (accessibility, sees which app is in front in every profile) or
     usage access, the apps. While Quartz's UI runs it asks Dart to switch (`apply` on the
     `autotunnel` channel); otherwise it switches itself from configs Dart renders into
     `files/autotunnel/<profile>.yaml` (keyed by `TunnelTarget.key`, the current profile
     included), leaving the decision in `quartz.autoTunnel.applied` for Dart to adopt.
-    `KillSwitch` watches `ServiceState.runState` and starts `KillSwitchService`, a VPN
+    `AutoTunnelState` holds the rule in effect and tells the rules' starts and stops from the
+    user's. `KillSwitch` watches `ServiceState.runState` and starts `KillSwitchService`, a VPN
     interface nothing reads (every app but Quartz, or only the kill-switch apps); the real
     tunnel's interface replaces it on start. It can't outlive the app's process, so the page
     links to Android's Always-on VPN + "Block connections without VPN" as well.

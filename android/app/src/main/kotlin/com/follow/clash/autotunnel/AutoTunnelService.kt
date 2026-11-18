@@ -30,14 +30,15 @@ import com.follow.clash.plugins.AutoTunnelPlugin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
- * Acts only when the network, the open rule apps or the rules change, so a manual toggle holds
- * until then.
+ * Acts only when the network, the open rule apps or the rules change, or the user stops a tunnel.
  */
 class AutoTunnelService : Service() {
     private val connectivity by lazy { getSystemService(ConnectivityManager::class.java) }
@@ -61,6 +62,12 @@ class AutoTunnelService : Service() {
         startForegroundCompat()
         register()
         syncAppWatch()
+        AutoTunnelState.rejudge = {
+            handler.post {
+                lastKey = null
+                schedule(REJUDGE_MS)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -74,16 +81,17 @@ class AutoTunnelService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(evaluate)
+        AutoTunnelState.rejudge = null
         callback?.let { runCatching { connectivity.unregisterNetworkCallback(it) } }
         callback = null
         scope.cancel()
         super.onDestroy()
     }
 
-    private fun schedule() {
+    private fun schedule(delayMs: Long = SETTLE_MS) {
         handler.removeCallbacks(evaluate)
         // Networks come and go in bursts while switching; judge once they settle.
-        handler.postDelayed(evaluate, AutoTunnel.settings(this).debounceSeconds * 1_000L)
+        handler.postDelayed(evaluate, delayMs)
     }
 
     private fun register() {
@@ -195,24 +203,30 @@ class AutoTunnelService : Service() {
 
     private fun apply() {
         val settings = AutoTunnel.settings(this)
-        if (!settings.enabled && !settings.killSwitch) {
+        if (!settings.enabled) {
+            AutoTunnelState.active = null
+            KillSwitch.evaluate()
             stopSelf()
             return
         }
+        if (AutoTunnelState.manual) return
         val network = snapshot()
-        if (!settings.enabled) return
-        val decision = AutoTunnelRules.decide(settings, network, appsForRules)
+        val decision = AutoTunnelRules.decide(settings, network, appsForRules, AutoTunnelState.active)
         val key = "${network.kind}|${network.ssid}|${network.subscriptionId}|${decision?.key}"
         if (key == lastKey) return
         lastKey = key
         decision ?: return
         GlobalState.log("Auto-tunnel: $network -> ${decision.key}")
-        KillSwitch.onDecision(decision.connect)
+        AutoTunnelState.active = decision.ruleId
+        KillSwitch.evaluate()
         applying?.cancel()
         applying = scope.launch {
-            if (AutoTunnelPlugin.apply(AutoTunnel.toJson(decision))) return@launch
-            GlobalState.launch {
-                AutoTunnel.applyWithoutFlutter(this@AutoTunnelService, decision)
+            AutoTunnelState.auto(decision.connect) {
+                if (!AutoTunnelPlugin.apply(AutoTunnel.toJson(decision))) {
+                    withContext(NonCancellable) {
+                        AutoTunnel.applyWithoutFlutter(this@AutoTunnelService, decision)
+                    }
+                }
             }
         }
     }
@@ -260,6 +274,8 @@ class AutoTunnelService : Service() {
         const val CHANNEL = "auto_tunnel"
         const val NOTIFICATION_ID = 7
         const val LINGER_MS = 4_000L
+        const val SETTLE_MS = 2_000L
+        const val REJUDGE_MS = 500L
         const val UNKNOWN_SSID = "<unknown ssid>"
     }
 }

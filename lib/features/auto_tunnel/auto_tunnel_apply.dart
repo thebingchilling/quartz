@@ -23,6 +23,7 @@ AutoTunnelAction? actionFromJson(Object? json) {
     key: map['key'] as String? ?? '',
     connect: map['connect'] == true,
     target: TunnelTarget.fromJson(map['target']),
+    ruleId: map['ruleId'] as String?,
   );
 }
 

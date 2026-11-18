@@ -99,10 +99,11 @@ class DesktopAutoTunnel extends ConsumerStatefulWidget {
 class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   static const _appPoll = Duration(seconds: 2);
   static const _linger = Duration(seconds: 4);
+  static const _settle = Duration(seconds: 2);
+  static const _rejudge = Duration(milliseconds: 500);
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   List<ConnectivityResult> _results = const [];
-  NetworkSnapshot _network = (kind: NetworkKind.none, ssid: null, simId: null);
   Timer? _timer;
   Timer? _appTimer;
   Timer? _lingerTimer;
@@ -110,9 +111,9 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   List<String> _appsForRules = const [];
   String? _lastKey;
   String? _lastFirewall;
-  bool _manualOff = false;
+  String? _active;
+  bool _manual = false;
   bool _switching = false;
-  bool _wanted = false;
 
   @override
   void initState() {
@@ -132,11 +133,15 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
       _schedule();
     });
     ref.listenManual(isStartProvider, (previous, running) {
-      if (running) {
-        _manualOff = false;
-        _wanted = true;
-      } else if (previous == true && !_switching) {
-        _manualOff = true;
+      if (!_switching && previous != null && previous != running) {
+        if (running) {
+          _manual = true;
+          _active = null;
+        } else {
+          _manual = false;
+          _lastKey = null;
+          _schedule(_rejudge);
+        }
       }
       _lastFirewall = null;
       unawaited(_syncFirewall());
@@ -189,12 +194,9 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     });
   }
 
-  void _schedule() {
+  void _schedule([Duration delay = _settle]) {
     _timer?.cancel();
-    final settle = Duration(
-      seconds: ref.read(autoTunnelProvider).debounceSeconds,
-    );
-    _timer = Timer(settle, () => unawaited(_apply()));
+    _timer = Timer(delay, () => unawaited(_apply()));
   }
 
   Future<NetworkSnapshot> _snapshot() async {
@@ -217,18 +219,23 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     if (!mounted) return;
     final settings = ref.read(autoTunnelProvider);
     final network = await _snapshot();
-    if (network != _network) _manualOff = false;
-    _network = network;
+    if (!settings.enabled) _active = null;
     await _syncFirewall();
-    if (!settings.enabled || !mounted) return;
-    final action = decideAutoTunnel(settings, network, openApps: _appsForRules);
+    if (!settings.enabled || _manual || !mounted) return;
+    final action = decideAutoTunnel(
+      settings,
+      network,
+      openApps: _appsForRules,
+      active: _active,
+    );
     final key = '${network.kind}|${network.ssid}|${action?.key}';
     if (!mounted || key == _lastKey) return;
     _lastKey = key;
     if (action == null) return;
     commonPrint.log('Auto-tunnel: $network -> ${action.key}');
-    _switching = action.connect;
-    _wanted = action.connect;
+    _active = action.ruleId;
+    await _syncFirewall();
+    _switching = true;
     try {
       await applyAutoTunnelAction(ref, action);
     } finally {
@@ -236,13 +243,14 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     }
   }
 
-  /// The kill switch blocks every app but the Core and the TUN adapter while
-  /// a tunnel is wanted and isn't up; a manual stop releases it.
+  /// The kill switch blocks every app but the Core and the TUN adapter.
   Future<void> _syncFirewall() async {
     if (!mounted || !system.isWindows) return;
-    final settings = ref.read(autoTunnelProvider);
-    final blockAll =
-        !_manualOff && blocksAll(settings, tunnelWanted: _wanted);
+    final blockAll = blocksAll(
+      ref.read(autoTunnelProvider),
+      active: _active,
+      running: ref.read(isStartProvider),
+    );
     final tunAlias = ref.read(patchClashConfigProvider).tun.device;
     final key = '$blockAll|$tunAlias';
     if (key == _lastFirewall) return;

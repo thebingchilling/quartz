@@ -20,7 +20,7 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
-  static String m0(count) => "${count} s";
+  static String m0(name) => "On for every rule in ${name}";
 
   static String m1(count, skipped) =>
       "${count} to add, ${skipped} skipped as existing";
@@ -346,9 +346,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnel": MessageLookupByLibrary.simpleMessage("Auto-tunnel"),
     "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage("Add app"),
+    "autoTunnelAddCategory": MessageLookupByLibrary.simpleMessage(
+      "Add category",
+    ),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("Add network"),
     "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("Add rule"),
-    "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("Advanced"),
+    "autoTunnelAndWord": MessageLookupByLibrary.simpleMessage("and"),
     "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage(
       "Any mobile data",
     ),
@@ -363,22 +366,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Location all the time, for the background",
     ),
+    "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("Categories"),
+    "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
+      "Group rules, e.g. the ones for a trip, and turn them all on or off together.",
+    ),
+    "autoTunnelCategory": MessageLookupByLibrary.simpleMessage("Category"),
+    "autoTunnelCategoryKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "Turns the kill switch on for every rule in this category that connects.",
+    ),
     "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage("Choose apps"),
+    "autoTunnelChooseTunnel": MessageLookupByLibrary.simpleMessage(
+      "Choose a tunnel",
+    ),
     "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("Connect"),
-    "autoTunnelCurrentProfile": MessageLookupByLibrary.simpleMessage(
-      "Current profile",
-    ),
-    "autoTunnelDebounce": MessageLookupByLibrary.simpleMessage(
-      "Debounce delay",
-    ),
-    "autoTunnelDebounceDesc": MessageLookupByLibrary.simpleMessage(
-      "How long the network has to settle before the tunnel follows it.",
-    ),
-    "autoTunnelDefaultTunnel": MessageLookupByLibrary.simpleMessage(
-      "Default tunnel",
-    ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Rules connect or disconnect the tunnel as your network and open apps change. A manual change holds until they change again.",
+      "Each rule says: IF you\'re on certain networks and/or certain apps are open, THEN connect a tunnel or disconnect. A tunnel you start yourself stays on until you turn it off; then the rules take over again.",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Type a name"),
@@ -387,27 +389,33 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Allow"),
     "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("Group"),
+    "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("If open"),
+    "autoTunnelIfNetwork": MessageLookupByLibrary.simpleMessage("If on"),
     "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage(
       "Keep the selected server",
     ),
     "autoTunnelKillSwitch": MessageLookupByLibrary.simpleMessage("Kill switch"),
     "autoTunnelKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
-      "Blocks all traffic while a rule wants the tunnel up and it isn\'t, so nothing leaks if it drops. It never blocks when a rule disconnects or when you turn the tunnel off yourself.",
+      "Blocks all traffic while this rule is in effect and its tunnel isn\'t up: while it connects, if it drops, with no network, or after you turn it off. It lifts once the tunnel is back or a rule without a kill switch takes over.",
     ),
+    "autoTunnelKillSwitchFromCategory": m0,
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Location, to read Wi-Fi names",
     ),
+    "autoTunnelMatchAll": MessageLookupByLibrary.simpleMessage(
+      "Network and app (both needed)",
+    ),
+    "autoTunnelMatchAny": MessageLookupByLibrary.simpleMessage(
+      "Network or app (either is enough)",
+    ),
+    "autoTunnelName": MessageLookupByLibrary.simpleMessage("Name"),
+    "autoTunnelNoCategory": MessageLookupByLibrary.simpleMessage("None"),
+    "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("or"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage(
       "Other profiles",
     ),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
       "Apps from Secure Folder and the work profile appear here once opened with app detection on. A rule matches an app in any profile.",
-    ),
-    "autoTunnelOtherwise": MessageLookupByLibrary.simpleMessage(
-      "Disconnect when no rule matches",
-    ),
-    "autoTunnelOtherwiseDesc": MessageLookupByLibrary.simpleMessage(
-      "Saves battery. Off leaves the tunnel as it is.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Type a package name",
@@ -421,15 +429,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Rule"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Rules"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
-      "Rules with apps are checked first, then the others from the top; the first that matches wins.",
+      "Long press a rule to move it. Rules with apps go first, for the app opened last; then the rest from the top. The first that matches wins. When it stops matching, the next one that matches takes over; if none does, the tunnel disconnects. With no network the tunnel stops, unless the rule in effect has a kill switch.",
     ),
-    "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Server"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Picks a server in one of the profile\'s groups, e.g. a windscribe city.",
-    ),
-    "autoTunnelStopNoNetwork": MessageLookupByLibrary.simpleMessage(
-      "Stop the tunnel with no network",
     ),
     "autoTunnelSystemKillSwitch": MessageLookupByLibrary.simpleMessage(
       "Android\'s own kill switch",
@@ -439,21 +443,20 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("Connect to"),
     "autoTunnelThen": MessageLookupByLibrary.simpleMessage("Then"),
+    "autoTunnelThenDesc": MessageLookupByLibrary.simpleMessage(
+      "Connect replaces any other tunnel while the rule is in effect.",
+    ),
     "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
       "Usage access",
     ),
     "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
       "Tells when an app is closed from the recent apps",
     ),
-    "autoTunnelWhenOn": MessageLookupByLibrary.simpleMessage(
-      "When connected to",
-    ),
     "autoTunnelWhenOnDesc": MessageLookupByLibrary.simpleMessage(
-      "Any of these counts. None means any network.",
+      "Any of these networks counts.",
     ),
-    "autoTunnelWhileOpen": MessageLookupByLibrary.simpleMessage("While open"),
     "autoTunnelWhileOpenDesc": MessageLookupByLibrary.simpleMessage(
-      "Any of these apps being open counts. None means no app is needed.",
+      "Any of these apps being open counts.",
     ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
@@ -1057,10 +1060,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),

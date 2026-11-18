@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/desktop/helper_client.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/auto_tunnel/auto_tunnel.dart';
 import 'package:fl_clash/features/auto_tunnel/windows_apps.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -19,15 +20,14 @@ import 'package:wifi_ssid/wifi_ssid.dart';
 
 const _platform = AutoTunnelNotifier.platform;
 const _manual = '\u0000manual';
-const _fallback = -1;
 
 Future<void> _update(
   WidgetRef ref,
   AutoTunnelSettings Function(AutoTunnelSettings) change,
 ) async {
-  final before = ref.read(autoTunnelProvider).killSwitch;
+  final before = ref.read(autoTunnelProvider).anyKillSwitch;
   await ref.read(autoTunnelProvider.notifier).update(change);
-  final after = ref.read(autoTunnelProvider).killSwitch;
+  final after = ref.read(autoTunnelProvider).anyKillSwitch;
   if (system.isWindows && after && !before) await _ensureHelper();
 }
 
@@ -44,22 +44,6 @@ String _targetText(List<Profile> profiles, TunnelTarget target) {
   return target.proxy == null ? name : '$name · ${target.proxy}';
 }
 
-/// [fallback] names what a null target connects.
-String _tunnelText(
-  List<Profile> profiles,
-  TunnelTarget? target,
-  String fallback,
-) => target == null ? fallback : _targetText(profiles, target);
-
-Future<(TunnelTarget?,)?> _pickTunnel(
-  BuildContext context, {
-  required TunnelTarget? initial,
-  required String fallback,
-}) => BaseNavigator.push<(TunnelTarget?,)>(
-  context,
-  _TunnelPicker(initial: initial, fallback: fallback),
-);
-
 String _networkText(
   AppLocalizations l,
   NetworkMatch match,
@@ -73,21 +57,29 @@ String _networkText(
               'SIM ${match.simId}',
 };
 
-String _ruleTitle(AppLocalizations l, AutoTunnelRule rule, List<SimCard> sims) {
-  final networks = rule.networks.isEmpty
-      ? l.autoTunnelAnyNetwork
-      : rule.networks.map((m) => _networkText(l, m, sims)).join(', ');
+String _conditionText(
+  AppLocalizations l,
+  AutoTunnelRule rule,
+  List<SimCard> sims,
+) {
+  final networks = rule.networks
+      .map((m) => _networkText(l, m, sims))
+      .join(', ');
   final apps = rule.apps.map((app) => app.label).join(', ');
-  return apps.isEmpty ? networks : '$apps · $networks';
+  if (networks.isEmpty && apps.isEmpty) return l.autoTunnelAnyNetwork;
+  if (networks.isEmpty) return apps;
+  if (apps.isEmpty) return networks;
+  final joiner = rule.matchAll ? l.autoTunnelAndWord : l.autoTunnelOrWord;
+  return '$networks $joiner $apps';
 }
 
-String _ruleAction(
+String _actionText(
   AppLocalizations l,
   AutoTunnelRule rule,
   List<Profile> profiles,
-) => rule.connect
-    ? '${l.autoTunnelConnect}: ${_tunnelText(profiles, rule.target, l.autoTunnelDefaultTunnel)}'
-    : l.autoTunnelDisconnect;
+) => !rule.connect
+    ? l.autoTunnelDisconnect
+    : '${l.autoTunnelConnect}: ${rule.target == null ? l.autoTunnelChooseTunnel : _targetText(profiles, rule.target!)}';
 
 class AutoTunnelView extends ConsumerStatefulWidget {
   const AutoTunnelView({super.key});
@@ -142,8 +134,7 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
   List<Widget> _permissionItems(AppLocalizations l, AutoTunnelSettings s) {
     final permissions = _permissions;
     if (permissions == null) return const [];
-    final rules = s.rules.where((rule) => rule.enabled);
-    final namesWifi = rules.any(
+    final namesWifi = s.activeRules.any(
       (rule) => rule.networks.any((m) => m.ssid != null),
     );
     final hasApps = s.watchedApps.isNotEmpty;
@@ -189,153 +180,167 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
     BaseNavigator.push<void>(context, _RuleEditor(rule: rule, sims: _sims)),
   );
 
+  void _openCategory(RuleCategory category) => unawaited(
+    BaseNavigator.push<void>(context, _CategoryEditor(category: category)),
+  );
+
+  Widget _ruleRow(
+    AppLocalizations l,
+    AutoTunnelSettings settings,
+    List<Profile> profiles,
+    int index,
+  ) {
+    final rule = settings.rules[index];
+    final category = settings.categoryOf(rule);
+    final condition = _conditionText(l, rule, _sims);
+    final details = [
+      ?category?.name,
+      if (rule.name.isNotEmpty) condition,
+      _actionText(l, rule, profiles),
+      if (settings.killSwitchOf(rule)) l.autoTunnelKillSwitch,
+    ].join(' · ');
+    return ReorderableDelayedDragStartListener(
+      key: ValueKey(rule.id),
+      index: index,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ItemPositionProvider(
+          position: ItemPosition.get(index, settings.rules.length),
+          child: ListItem(
+            leading: GlyphIcon(
+              rule.apps.isNotEmpty
+                  ? AppGlyphs.appsList
+                  : rule.networks.any((m) => m.kind == NetworkMatchKind.mobile)
+                  ? AppGlyphs.dataUsage
+                  : AppGlyphs.wifi,
+            ),
+            title: Text(rule.name.isEmpty ? condition : rule.name),
+            subtitle: Text(details),
+            trailing: Switch(
+              value: rule.enabled,
+              onChanged: (value) =>
+                  _update(ref, (s) => s.putRule(rule.copyWith(enabled: value))),
+            ),
+            onTap: () => _openRule(rule),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     final settings = ref.watch(autoTunnelProvider);
     final profiles = ref.watch(profilesProvider);
     final permissionItems = _permissionItems(l, settings);
+    Widget box(Widget child) => SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverToBoxAdapter(child: child),
+    );
     return CommonScaffold(
       title: l.autoTunnel,
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 32),
-        children: [
-          generateSectionV3(
-            items: [
-              ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.vpn),
-                title: Text(l.autoTunnel),
-                value: settings.enabled,
-                onChanged: (value) =>
-                    _update(ref, (state) => state.copyWith(enabled: value)),
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+            ).copyWith(top: context.contentTopPadding),
+            sliver: SliverToBoxAdapter(
+              child: generateSectionV3(
+                items: [
+                  ListItem.toggle(
+                    leading: const GlyphIcon(AppGlyphs.vpn),
+                    title: Text(l.autoTunnel),
+                    value: settings.enabled,
+                    onChanged: (value) =>
+                        _update(ref, (state) => state.copyWith(enabled: value)),
+                  ),
+                ],
+                footer: l.autoTunnelDesc,
               ),
-            ],
-            footer: l.autoTunnelDesc,
+            ),
           ),
           if (permissionItems.isNotEmpty)
-            generateSectionV3(
-              title: l.autoTunnelPermissions,
-              items: permissionItems,
+            box(
+              generateSectionV3(
+                title: l.autoTunnelPermissions,
+                items: permissionItems,
+              ),
             ),
-          generateSectionV3(
-            title: l.autoTunnelRules,
-            items: [
-              for (final rule in settings.rules)
-                ListItem(
-                  leading: GlyphIcon(
-                    rule.apps.isNotEmpty
-                        ? AppGlyphs.appsList
-                        : rule.networks.any(
-                            (m) => m.kind == NetworkMatchKind.mobile,
-                          )
-                        ? AppGlyphs.dataUsage
-                        : AppGlyphs.wifi,
-                  ),
-                  title: Text(_ruleTitle(l, rule, _sims)),
-                  subtitle: Text(_ruleAction(l, rule, profiles)),
-                  trailing: Switch(
-                    value: rule.enabled,
-                    onChanged: (value) => _update(
-                      ref,
-                      (s) => s.putRule(rule.copyWith(enabled: value)),
+          box(
+            generateSectionV3(
+              title: l.autoTunnelCategories,
+              items: [
+                for (final category in settings.categories)
+                  ListItem(
+                    leading: const GlyphIcon(AppGlyphs.layers),
+                    title: Text(category.name),
+                    subtitle: category.killSwitch
+                        ? Text(l.autoTunnelKillSwitch)
+                        : null,
+                    trailing: Switch(
+                      value: category.enabled,
+                      onChanged: (value) => _update(
+                        ref,
+                        (s) => s.putCategory(category.copyWith(enabled: value)),
+                      ),
                     ),
+                    onTap: () => _openCategory(category),
                   ),
-                  onTap: () => _openRule(rule),
-                ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.add),
-                title: Text(l.autoTunnelAddRule),
-                onTap: () =>
-                    _openRule(AutoTunnelRule(id: AutoTunnelRule.newId())),
-              ),
-            ],
-            footer: l.autoTunnelRulesDesc,
-          ),
-          generateSectionV3(
-            title: l.autoTunnelAdvanced,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.target),
-                title: Text(l.autoTunnelDefaultTunnel),
-                subtitle: Text(
-                  _tunnelText(
-                    profiles,
-                    settings.defaultTunnel,
-                    l.autoTunnelCurrentProfile,
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.add),
+                  title: Text(l.autoTunnelAddCategory),
+                  onTap: () => _openCategory(
+                    RuleCategory(id: AutoTunnelRule.newId(), name: ''),
                   ),
                 ),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward),
-                onTap: () async {
-                  final picked = await _pickTunnel(
-                    context,
-                    initial: settings.defaultTunnel,
-                    fallback: l.autoTunnelCurrentProfile,
-                  );
-                  if (picked == null) return;
-                  await _update(
-                    ref,
-                    (s) => s.copyWith(defaultTunnel: () => picked.$1),
-                  );
-                },
-              ),
-              ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.close),
-                title: Text(l.autoTunnelOtherwise),
-                subtitle: Text(l.autoTunnelOtherwiseDesc),
-                value: settings.disconnectOtherwise,
-                onChanged: (value) =>
-                    _update(ref, (s) => s.copyWith(disconnectOtherwise: value)),
-              ),
-              ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.networkCheck),
-                title: Text(l.autoTunnelStopNoNetwork),
-                value: settings.stopOnNoNetwork,
-                onChanged: (value) =>
-                    _update(ref, (s) => s.copyWith(stopOnNoNetwork: value)),
-              ),
-              ListItem<int>.options(
-                leading: const GlyphIcon(AppGlyphs.history),
-                title: Text(l.autoTunnelDebounce),
-                subtitle: Text(l.autoTunnelSeconds(settings.debounceSeconds)),
-                dialogTitle: l.autoTunnelDebounce,
-                options: AutoTunnelSettings.debounceChoices,
-                value: settings.debounceSeconds,
-                textBuilder: l.autoTunnelSeconds,
-                onChanged: (value) {
-                  if (value == null) return;
-                  _update(ref, (s) => s.copyWith(debounceSeconds: value));
-                },
-              ),
-            ],
-            footer: l.autoTunnelDebounceDesc,
+              ],
+              footer: l.autoTunnelCategoriesDesc,
+            ),
           ),
-          generateSectionV3(
-            items: [
-              ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.lock),
-                title: Text(l.autoTunnelKillSwitch),
-                value: settings.killSwitch,
-                onChanged: (value) =>
-                    _update(ref, (s) => s.copyWith(killSwitch: value)),
-              ),
-            ],
-            footer: system.isWindows
-                ? '${l.autoTunnelKillSwitchDesc} ${l.autoTunnelWindowsKillDesc}'
-                : l.autoTunnelKillSwitchDesc,
+          box(ListHeader(title: l.autoTunnelRules)),
+          SliverReorderableList(
+            itemCount: settings.rules.length,
+            itemBuilder: (_, index) => _ruleRow(l, settings, profiles, index),
+            proxyDecorator: (_, index, animation) => commonProxyDecorator(
+              _ruleRow(l, settings, profiles, index),
+              index,
+              animation,
+            ),
+            onReorderItem: (oldIndex, newIndex) => _update(
+              ref,
+              (s) =>
+                  s.copyWith(rules: s.rules.copyAndReorder(oldIndex, newIndex)),
+            ),
           ),
-          if (system.isAndroid)
+          box(
             generateSectionV3(
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.openExternal),
-                  title: Text(l.autoTunnelSystemKillSwitch),
-                  onTap: () => _request('systemKillSwitch'),
+                  leading: const GlyphIcon(AppGlyphs.add),
+                  title: Text(l.autoTunnelAddRule),
+                  onTap: () =>
+                      _openRule(AutoTunnelRule(id: AutoTunnelRule.newId())),
                 ),
               ],
-              footer: l.autoTunnelSystemKillSwitchDesc,
+              footer: l.autoTunnelRulesDesc,
             ),
+          ),
+          if (system.isAndroid)
+            box(
+              generateSectionV3(
+                items: [
+                  ListItem(
+                    leading: const GlyphIcon(AppGlyphs.openExternal),
+                    title: Text(l.autoTunnelSystemKillSwitch),
+                    onTap: () => _request('systemKillSwitch'),
+                  ),
+                ],
+                footer: l.autoTunnelSystemKillSwitchDesc,
+              ),
+            ),
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
       ),
     );
@@ -345,6 +350,81 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
 Future<List<String>> _nearbyNetworks() async => system.isAndroid
     ? await _platform.wifiNetworks().catchError((_) => const <String>[])
     : [?await WifiSsidManager.instance.getSsid().catchError((_) => null)];
+
+/// One category, edited as a draft and saved with the check.
+class _CategoryEditor extends ConsumerStatefulWidget {
+  const _CategoryEditor({required this.category});
+
+  final RuleCategory category;
+
+  @override
+  ConsumerState<_CategoryEditor> createState() => _CategoryEditorState();
+}
+
+class _CategoryEditorState extends ConsumerState<_CategoryEditor> {
+  late RuleCategory _category = widget.category;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    final category = _category;
+    return CommonScaffold(
+      title: l.autoTunnelCategory,
+      actions: [
+        IconButton(
+          tooltip: l.delete,
+          onPressed: () {
+            unawaited(_update(ref, (s) => s.removeCategory(category.id)));
+            Navigator.of(context).pop();
+          },
+          icon: const GlyphIcon(AppGlyphs.delete),
+        ),
+        IconButton(
+          tooltip: l.save,
+          onPressed: category.name.trim().isEmpty
+              ? null
+              : () {
+                  unawaited(_update(ref, (s) => s.putCategory(category)));
+                  Navigator.of(context).pop();
+                },
+          icon: const GlyphIcon(AppGlyphs.check),
+        ),
+      ],
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(top: context.contentTopPadding, bottom: 32),
+        children: [
+          generateSectionV3(
+            items: [
+              ListItem.input(
+                leading: const GlyphIcon(AppGlyphs.edit),
+                title: Text(l.autoTunnelName),
+                subtitle: category.name.isEmpty ? null : Text(category.name),
+                dialogTitle: l.autoTunnelName,
+                value: category.name,
+                onChanged: (value) => setState(
+                  () => _category = category.copyWith(name: value?.trim()),
+                ),
+              ),
+              ListItem.toggle(
+                leading: const GlyphIcon(AppGlyphs.lock),
+                title: Text(l.autoTunnelKillSwitch),
+                value: category.killSwitch,
+                onChanged: (value) => setState(
+                  () => _category = category.copyWith(killSwitch: value),
+                ),
+              ),
+            ],
+            footer: system.isWindows
+                ? '${l.autoTunnelCategoryKillSwitchDesc} ${l.autoTunnelWindowsKillDesc}'
+                : l.autoTunnelCategoryKillSwitchDesc,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// One rule, edited as a draft and saved with the check.
 class _RuleEditor extends ConsumerStatefulWidget {
@@ -371,13 +451,13 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
       child: OptionsDialog<(String, String)>(
         title: l.autoTunnelAddNetwork,
         options: [
-          (anyWifi, l.autoTunnelAnyWifi),
           (namedWifi, l.autoTunnelWifi),
+          (anyWifi, l.autoTunnelAnyWifi),
           (anyMobile, l.autoTunnelAnyMobile),
           for (final sim in widget.sims) ('${sim.id}', sim.title),
         ],
         textBuilder: (option) => option.$2,
-        value: (anyWifi, l.autoTunnelAnyWifi),
+        value: (namedWifi, l.autoTunnelWifi),
       ),
     );
     if (picked == null || !mounted) return;
@@ -411,7 +491,20 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
     _edit((r) => r.copyWith(apps: picked));
   }
 
+  Future<void> _chooseTunnel() async {
+    final picked = await BaseNavigator.push<TunnelTarget>(
+      context,
+      _TunnelPicker(initial: _rule.target),
+    );
+    if (picked == null) return;
+    _edit((r) => r.copyWith(target: () => picked));
+  }
+
   void _save() {
+    if (_rule.connect && _rule.target == null) {
+      unawaited(_chooseTunnel());
+      return;
+    }
     unawaited(_update(ref, (s) => s.putRule(_rule)));
     Navigator.of(context).pop();
   }
@@ -420,7 +513,13 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     final profiles = ref.watch(profilesProvider);
+    final categories = ref.watch(
+      autoTunnelProvider.select((s) => s.categories),
+    );
     final rule = _rule;
+    final category = categories.firstWhereOrNull(
+      (c) => c.id == rule.categoryId,
+    );
     return CommonScaffold(
       title: l.autoTunnelRule,
       actions: [
@@ -444,7 +543,41 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
         ).copyWith(top: context.contentTopPadding, bottom: 32),
         children: [
           generateSectionV3(
-            title: l.autoTunnelWhenOn,
+            items: [
+              ListItem.input(
+                leading: const GlyphIcon(AppGlyphs.edit),
+                title: Text(l.autoTunnelName),
+                subtitle: Text(
+                  rule.name.isEmpty
+                      ? _conditionText(l, rule, widget.sims)
+                      : rule.name,
+                ),
+                dialogTitle: l.autoTunnelName,
+                value: rule.name,
+                onChanged: (value) =>
+                    _edit((r) => r.copyWith(name: value?.trim() ?? '')),
+              ),
+              if (categories.isNotEmpty)
+                ListItem<String>.options(
+                  leading: const GlyphIcon(AppGlyphs.layers),
+                  title: Text(l.autoTunnelCategory),
+                  subtitle: Text(category?.name ?? l.autoTunnelNoCategory),
+                  dialogTitle: l.autoTunnelCategory,
+                  options: ['', ...categories.map((c) => c.id)],
+                  value: category?.id ?? '',
+                  textBuilder: (id) => id.isEmpty
+                      ? l.autoTunnelNoCategory
+                      : categories.firstWhere((c) => c.id == id).name,
+                  onChanged: (id) => _edit(
+                    (r) => r.copyWith(
+                      categoryId: () => id == null || id.isEmpty ? null : id,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          generateSectionV3(
+            title: l.autoTunnelIfNetwork,
             items: [
               for (final match in rule.networks)
                 ListItem(
@@ -475,8 +608,27 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
             ],
             footer: l.autoTunnelWhenOnDesc,
           ),
+          if (rule.networks.isNotEmpty && rule.apps.isNotEmpty)
+            RadioGroup<bool>(
+              groupValue: rule.matchAll,
+              onChanged: (value) {
+                if (value != null) _edit((r) => r.copyWith(matchAll: value));
+              },
+              child: generateSectionV3(
+                items: [
+                  ListItem<bool>.radio(
+                    title: Text(l.autoTunnelMatchAll),
+                    value: true,
+                  ),
+                  ListItem<bool>.radio(
+                    title: Text(l.autoTunnelMatchAny),
+                    value: false,
+                  ),
+                ],
+              ),
+            ),
           generateSectionV3(
-            title: l.autoTunnelWhileOpen,
+            title: l.autoTunnelIfApps,
             items: [
               for (final app in rule.apps)
                 ListItem(
@@ -522,30 +674,40 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
                     leading: const GlyphIcon(AppGlyphs.target),
                     title: Text(l.autoTunnelTarget),
                     subtitle: Text(
-                      _tunnelText(
-                        profiles,
-                        rule.target,
-                        l.autoTunnelDefaultTunnel,
-                      ),
+                      rule.target == null
+                          ? l.autoTunnelChooseTunnel
+                          : _targetText(profiles, rule.target!),
                     ),
-                    trailing: const GlyphIcon(AppGlyphs.chevronForward),
-                    onTap: () async {
-                      final picked = await _pickTunnel(
-                        context,
-                        initial: rule.target,
-                        fallback: l.autoTunnelDefaultTunnel,
-                      );
-                      if (picked == null) return;
-                      _edit((r) => r.copyWith(target: () => picked.$1));
-                    },
+                    trailing: const DisclosureIndicator(),
+                    onTap: _chooseTunnel,
                   ),
                 ListItem<bool>.radio(
                   title: Text(l.autoTunnelDisconnect),
                   value: false,
                 ),
               ],
+              footer: l.autoTunnelThenDesc,
             ),
           ),
+          if (rule.connect)
+            generateSectionV3(
+              items: [
+                ListItem.toggle(
+                  leading: const GlyphIcon(AppGlyphs.lock),
+                  title: Text(l.autoTunnelKillSwitch),
+                  subtitle: category?.killSwitch ?? false
+                      ? Text(l.autoTunnelKillSwitchFromCategory(category!.name))
+                      : null,
+                  value: rule.killSwitch || (category?.killSwitch ?? false),
+                  onChanged: category?.killSwitch ?? false
+                      ? null
+                      : (value) => _edit((r) => r.copyWith(killSwitch: value)),
+                ),
+              ],
+              footer: system.isWindows
+                  ? '${l.autoTunnelKillSwitchDesc} ${l.autoTunnelWindowsKillDesc}'
+                  : l.autoTunnelKillSwitchDesc,
+            ),
         ],
       ),
     );
@@ -811,12 +973,11 @@ Future<_Groups> _groupsOf(int profileId) async {
   }
 }
 
-/// Pops `(target,)`, where a null target is the [fallback] choice.
+/// Pops the chosen tunnel.
 class _TunnelPicker extends ConsumerStatefulWidget {
-  const _TunnelPicker({required this.initial, required this.fallback});
+  const _TunnelPicker({required this.initial});
 
   final TunnelTarget? initial;
-  final String fallback;
 
   @override
   ConsumerState<_TunnelPicker> createState() => _TunnelPickerState();
@@ -840,12 +1001,8 @@ class _TunnelPickerState extends ConsumerState<_TunnelPicker> {
     if (mounted) setState(() => _groups = groups);
   }
 
-  void _pick(int choice) {
-    setState(
-      () => _target = choice == _fallback
-          ? null
-          : TunnelTarget(profileId: choice),
-    );
+  void _pick(int profileId) {
+    setState(() => _target = TunnelTarget(profileId: profileId));
     unawaited(_loadGroups());
   }
 
@@ -863,7 +1020,9 @@ class _TunnelPickerState extends ConsumerState<_TunnelPicker> {
       actions: [
         IconButton(
           tooltip: l.save,
-          onPressed: () => Navigator.of(context).pop((_target,)),
+          onPressed: target == null
+              ? null
+              : () => Navigator.of(context).pop(target),
           icon: const GlyphIcon(AppGlyphs.check),
         ),
       ],
@@ -873,16 +1032,12 @@ class _TunnelPickerState extends ConsumerState<_TunnelPicker> {
         ).copyWith(top: context.contentTopPadding, bottom: 32),
         children: [
           RadioGroup<int>(
-            groupValue: target?.profileId ?? _fallback,
+            groupValue: target?.profileId,
             onChanged: (choice) {
               if (choice != null) _pick(choice);
             },
             child: generateSectionV3(
               items: [
-                ListItem<int>.radio(
-                  title: Text(widget.fallback),
-                  value: _fallback,
-                ),
                 for (final profile in profiles)
                   ListItem<int>.radio(
                     title: Text(profile.realLabel),

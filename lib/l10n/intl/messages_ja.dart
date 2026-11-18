@@ -20,7 +20,7 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ja';
 
-  static String m0(count) => "${count} 秒";
+  static String m0(name) => "${name} のすべてのルールで有効";
 
   static String m1(count, skipped) => "${count}件を追加、${skipped}件は既存のためスキップ";
 
@@ -295,9 +295,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを自動設定"),
     "autoTunnel": MessageLookupByLibrary.simpleMessage("自動トンネル"),
     "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage("アプリを追加"),
+    "autoTunnelAddCategory": MessageLookupByLibrary.simpleMessage("カテゴリを追加"),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("ネットワークを追加"),
     "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("ルールを追加"),
-    "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("詳細"),
+    "autoTunnelAndWord": MessageLookupByLibrary.simpleMessage("かつ"),
     "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage("すべてのモバイルデータ"),
     "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("すべてのネットワーク"),
     "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("すべての Wi-Fi"),
@@ -308,18 +309,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "常に位置情報（バックグラウンド用）",
     ),
+    "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("カテゴリ"),
+    "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
+      "旅行用などのルールをまとめて、まとめてオン・オフできます。",
+    ),
+    "autoTunnelCategory": MessageLookupByLibrary.simpleMessage("カテゴリ"),
+    "autoTunnelCategoryKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "このカテゴリ内で接続するすべてのルールでキルスイッチを有効にします。",
+    ),
     "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage("アプリを選択"),
+    "autoTunnelChooseTunnel": MessageLookupByLibrary.simpleMessage("トンネルを選択"),
     "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("接続"),
-    "autoTunnelCurrentProfile": MessageLookupByLibrary.simpleMessage(
-      "現在のプロファイル",
-    ),
-    "autoTunnelDebounce": MessageLookupByLibrary.simpleMessage("待機時間"),
-    "autoTunnelDebounceDesc": MessageLookupByLibrary.simpleMessage(
-      "ネットワークが安定してからトンネルが切り替わるまでの時間です。",
-    ),
-    "autoTunnelDefaultTunnel": MessageLookupByLibrary.simpleMessage("既定のトンネル"),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "ネットワークや起動中のアプリが変わると、ルールに従ってトンネルを接続・切断します。手動の変更は次に変わるまで保たれます。",
+      "各ルールは「特定のネットワークに接続中、または特定のアプリを起動中なら、トンネルを接続または切断する」という形です。手動で開始したトンネルはオフにするまで保たれ、その後はルールがすぐに再開します。",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("切断"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("名前を入力"),
@@ -328,23 +330,29 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("許可"),
     "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("グループ"),
+    "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("起動中のアプリ"),
+    "autoTunnelIfNetwork": MessageLookupByLibrary.simpleMessage("接続中のネットワーク"),
     "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage("選択中のサーバーを維持"),
     "autoTunnelKillSwitch": MessageLookupByLibrary.simpleMessage("キルスイッチ"),
     "autoTunnelKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
-      "ルールがトンネルを必要としているのに動いていない間はすべての通信をブロックし、切断時の漏れを防ぎます。ルールによる切断や手動でオフにしたときはブロックしません。",
+      "このルールが有効でトンネルが動いていない間（接続中、切断時、ネットワークなし、手動でオフにした後）はすべての通信をブロックします。トンネルが戻るか、キルスイッチのないルールに切り替わると解除されます。",
     ),
+    "autoTunnelKillSwitchFromCategory": m0,
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "位置情報（Wi-Fi 名の取得）",
     ),
+    "autoTunnelMatchAll": MessageLookupByLibrary.simpleMessage(
+      "ネットワークとアプリ（両方必要）",
+    ),
+    "autoTunnelMatchAny": MessageLookupByLibrary.simpleMessage(
+      "ネットワークまたはアプリ（どちらかで可）",
+    ),
+    "autoTunnelName": MessageLookupByLibrary.simpleMessage("名前"),
+    "autoTunnelNoCategory": MessageLookupByLibrary.simpleMessage("なし"),
+    "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("または"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("他のプロファイル"),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
       "アプリ検出をオンにした状態で一度開くと、セキュアフォルダや仕事用プロファイルのアプリがここに表示されます。ルールはどのプロファイルのアプリにも一致します。",
-    ),
-    "autoTunnelOtherwise": MessageLookupByLibrary.simpleMessage(
-      "どのルールにも一致しないときは切断",
-    ),
-    "autoTunnelOtherwiseDesc": MessageLookupByLibrary.simpleMessage(
-      "電池を節約できます。オフにするとトンネルはそのままです。",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("パッケージ名を入力"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),
@@ -352,15 +360,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
-      "アプリを含むルールを先に、その後ほかのルールを上から順に確認し、最初に一致したものが使われます。",
+      "長押しでルールを移動できます。アプリを含むルールが先（最後に開いたアプリ優先）、その後ほかのルールを上から確認し、最初に一致したものが使われます。一致しなくなると次に一致するルールに切り替わり、どれも一致しなければ切断します。ネットワークがないときは、有効なルールにキルスイッチがない限りトンネルを停止します。",
     ),
-    "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("サーバー"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "プロファイルのグループ内のサーバーを選びます（例：windscribeの都市）。",
-    ),
-    "autoTunnelStopNoNetwork": MessageLookupByLibrary.simpleMessage(
-      "ネットワークがないときはトンネルを停止",
     ),
     "autoTunnelSystemKillSwitch": MessageLookupByLibrary.simpleMessage(
       "Android 標準のキルスイッチ",
@@ -370,17 +374,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("接続先"),
     "autoTunnelThen": MessageLookupByLibrary.simpleMessage("動作"),
+    "autoTunnelThenDesc": MessageLookupByLibrary.simpleMessage(
+      "接続を選ぶと、ルールが有効な間はほかのトンネルを置き換えます。",
+    ),
     "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage("使用状況へのアクセス"),
     "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
       "最近のアプリから閉じたことを検知します",
     ),
-    "autoTunnelWhenOn": MessageLookupByLibrary.simpleMessage("接続中のネットワーク"),
     "autoTunnelWhenOnDesc": MessageLookupByLibrary.simpleMessage(
-      "どれか一つに一致すれば対象です。何もなければすべてのネットワークが対象です。",
+      "どれか一つのネットワークに一致すれば対象です。",
     ),
-    "autoTunnelWhileOpen": MessageLookupByLibrary.simpleMessage("起動中のアプリ"),
     "autoTunnelWhileOpenDesc": MessageLookupByLibrary.simpleMessage(
-      "どれか一つが起動していれば対象です。何もなければアプリは不要です。",
+      "どれか一つのアプリが起動していれば対象です。",
     ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(

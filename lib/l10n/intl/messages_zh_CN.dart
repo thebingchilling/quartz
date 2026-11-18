@@ -20,7 +20,7 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'zh_CN';
 
-  static String m0(count) => "${count} 秒";
+  static String m0(name) => "已为 ${name} 中的所有规则开启";
 
   static String m1(count, skipped) => "将添加 ${count} 项，跳过 ${skipped} 项已存在";
 
@@ -282,9 +282,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("自动设置系统DNS"),
     "autoTunnel": MessageLookupByLibrary.simpleMessage("自动隧道"),
     "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage("添加应用"),
+    "autoTunnelAddCategory": MessageLookupByLibrary.simpleMessage("添加分类"),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("添加网络"),
     "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("添加规则"),
-    "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("高级"),
+    "autoTunnelAndWord": MessageLookupByLibrary.simpleMessage("且"),
     "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage("任意移动数据"),
     "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("任意网络"),
     "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("任意 Wi-Fi"),
@@ -295,16 +296,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "始终允许位置信息，用于后台",
     ),
-    "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage("选择应用"),
-    "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("连接"),
-    "autoTunnelCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
-    "autoTunnelDebounce": MessageLookupByLibrary.simpleMessage("防抖延迟"),
-    "autoTunnelDebounceDesc": MessageLookupByLibrary.simpleMessage(
-      "网络稳定多久之后隧道才跟随变化。",
+    "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("分类"),
+    "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
+      "将规则分组（例如旅行用的规则），一起开启或关闭。",
     ),
-    "autoTunnelDefaultTunnel": MessageLookupByLibrary.simpleMessage("默认隧道"),
+    "autoTunnelCategory": MessageLookupByLibrary.simpleMessage("分类"),
+    "autoTunnelCategoryKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "为该分类中所有连接隧道的规则开启断网保护。",
+    ),
+    "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage("选择应用"),
+    "autoTunnelChooseTunnel": MessageLookupByLibrary.simpleMessage("选择隧道"),
+    "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("连接"),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "规则会随着网络和打开的应用变化自动连接或断开隧道。手动更改会保持到它们再次变化为止。",
+      "每条规则的形式是：如果连接到特定网络和/或打开了特定应用，那么连接隧道或断开。你手动开启的隧道会一直保持，直到你手动关闭；之后规则会立即重新接管。",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("断开"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("输入名称"),
@@ -313,21 +317,25 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("允许"),
     "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("分组"),
+    "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("如果打开"),
+    "autoTunnelIfNetwork": MessageLookupByLibrary.simpleMessage("如果连接到"),
     "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage("保留已选服务器"),
     "autoTunnelKillSwitch": MessageLookupByLibrary.simpleMessage("断网保护"),
     "autoTunnelKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
-      "当规则需要隧道但隧道未运行时阻止所有流量，避免断线时泄露。规则主动断开或你手动关闭隧道时不会阻止。",
+      "当该规则生效而其隧道未运行时（连接中、断线、无网络或你手动关闭后）阻止所有流量。隧道恢复或由没有断网保护的规则接管后解除。",
     ),
+    "autoTunnelKillSwitchFromCategory": m0,
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "位置信息，用于读取 Wi-Fi 名称",
     ),
+    "autoTunnelMatchAll": MessageLookupByLibrary.simpleMessage("网络和应用（两者都需要）"),
+    "autoTunnelMatchAny": MessageLookupByLibrary.simpleMessage("网络或应用（满足其一即可）"),
+    "autoTunnelName": MessageLookupByLibrary.simpleMessage("名称"),
+    "autoTunnelNoCategory": MessageLookupByLibrary.simpleMessage("无"),
+    "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("或"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("其他空间"),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
       "开启应用检测后，安全文件夹和工作资料中的应用打开过一次就会出现在这里。规则会匹配任何空间中的该应用。",
-    ),
-    "autoTunnelOtherwise": MessageLookupByLibrary.simpleMessage("没有规则匹配时断开"),
-    "autoTunnelOtherwiseDesc": MessageLookupByLibrary.simpleMessage(
-      "更省电。关闭后隧道保持原状。",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("输入包名"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("权限"),
@@ -335,14 +343,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("规则"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("规则"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
-      "先检查带应用的规则，再从上往下检查其他规则；第一条匹配的规则生效。",
+      "长按规则可移动。带应用的规则优先（以最后打开的应用为准），然后从上往下检查其他规则；第一条匹配的规则生效。不再匹配时，由下一条匹配的规则接管；若都不匹配则断开隧道。没有网络时停止隧道，除非当前生效的规则开启了断网保护。",
     ),
-    "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("服务器"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "在配置的某个分组中选择服务器，例如 windscribe 城市。",
     ),
-    "autoTunnelStopNoNetwork": MessageLookupByLibrary.simpleMessage("无网络时停止隧道"),
     "autoTunnelSystemKillSwitch": MessageLookupByLibrary.simpleMessage(
       "Android 自带的断网保护",
     ),
@@ -351,17 +357,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("连接到"),
     "autoTunnelThen": MessageLookupByLibrary.simpleMessage("然后"),
+    "autoTunnelThenDesc": MessageLookupByLibrary.simpleMessage(
+      "选择连接时，规则生效期间会替换其他隧道。",
+    ),
     "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage("使用情况访问权限"),
     "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
       "检测应用何时从最近应用中关闭",
     ),
-    "autoTunnelWhenOn": MessageLookupByLibrary.simpleMessage("连接到以下网络时"),
     "autoTunnelWhenOnDesc": MessageLookupByLibrary.simpleMessage(
-      "满足其中任意一项即可。未添加表示任意网络。",
+      "满足其中任意一个网络即可。",
     ),
-    "autoTunnelWhileOpen": MessageLookupByLibrary.simpleMessage("以下应用打开时"),
     "autoTunnelWhileOpenDesc": MessageLookupByLibrary.simpleMessage(
-      "其中任意应用打开即可。未添加表示不需要应用。",
+      "其中任意应用打开即可。",
     ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(

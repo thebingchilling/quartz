@@ -7769,79 +7769,9 @@ class AppLocalizations {
     );
   }
 
-  /// `Default tunnel`
-  String get autoTunnelDefaultTunnel {
-    return Intl.message(
-      'Default tunnel',
-      name: 'autoTunnelDefaultTunnel',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Current profile`
-  String get autoTunnelCurrentProfile {
-    return Intl.message(
-      'Current profile',
-      name: 'autoTunnelCurrentProfile',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Wi-Fi`
   String get autoTunnelWifi {
     return Intl.message('Wi-Fi', name: 'autoTunnelWifi', desc: '', args: []);
-  }
-
-  /// `Advanced`
-  String get autoTunnelAdvanced {
-    return Intl.message(
-      'Advanced',
-      name: 'autoTunnelAdvanced',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Stop the tunnel with no network`
-  String get autoTunnelStopNoNetwork {
-    return Intl.message(
-      'Stop the tunnel with no network',
-      name: 'autoTunnelStopNoNetwork',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Debounce delay`
-  String get autoTunnelDebounce {
-    return Intl.message(
-      'Debounce delay',
-      name: 'autoTunnelDebounce',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `How long the network has to settle before the tunnel follows it.`
-  String get autoTunnelDebounceDesc {
-    return Intl.message(
-      'How long the network has to settle before the tunnel follows it.',
-      name: 'autoTunnelDebounceDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `{count} s`
-  String autoTunnelSeconds(int count) {
-    return Intl.message(
-      '$count s',
-      name: 'autoTunnelSeconds',
-      desc: '',
-      args: [count],
-    );
   }
 
   /// `Rules`
@@ -7849,10 +7779,10 @@ class AppLocalizations {
     return Intl.message('Rules', name: 'autoTunnelRules', desc: '', args: []);
   }
 
-  /// `Rules with apps are checked first, then the others from the top; the first that matches wins.`
+  /// `Long press a rule to move it. Rules with apps go first, for the app opened last; then the rest from the top. The first that matches wins. When it stops matching, the next one that matches takes over; if none does, the tunnel disconnects. With no network the tunnel stops, unless the rule in effect has a kill switch.`
   String get autoTunnelRulesDesc {
     return Intl.message(
-      'Rules with apps are checked first, then the others from the top; the first that matches wins.',
+      'Long press a rule to move it. Rules with apps go first, for the app opened last; then the rest from the top. The first that matches wins. When it stops matching, the next one that matches takes over; if none does, the tunnel disconnects. With no network the tunnel stops, unless the rule in effect has a kill switch.',
       name: 'autoTunnelRulesDesc',
       desc: '',
       args: [],
@@ -7904,40 +7834,20 @@ class AppLocalizations {
     );
   }
 
-  /// `When connected to`
-  String get autoTunnelWhenOn {
-    return Intl.message(
-      'When connected to',
-      name: 'autoTunnelWhenOn',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Any of these counts. None means any network.`
+  /// `Any of these networks counts.`
   String get autoTunnelWhenOnDesc {
     return Intl.message(
-      'Any of these counts. None means any network.',
+      'Any of these networks counts.',
       name: 'autoTunnelWhenOnDesc',
       desc: '',
       args: [],
     );
   }
 
-  /// `While open`
-  String get autoTunnelWhileOpen {
-    return Intl.message(
-      'While open',
-      name: 'autoTunnelWhileOpen',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Any of these apps being open counts. None means no app is needed.`
+  /// `Any of these apps being open counts.`
   String get autoTunnelWhileOpenDesc {
     return Intl.message(
-      'Any of these apps being open counts. None means no app is needed.',
+      'Any of these apps being open counts.',
       name: 'autoTunnelWhileOpenDesc',
       desc: '',
       args: [],
@@ -7979,30 +7889,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Disconnect when no rule matches`
-  String get autoTunnelOtherwise {
-    return Intl.message(
-      'Disconnect when no rule matches',
-      name: 'autoTunnelOtherwise',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Saves battery. Off leaves the tunnel as it is.`
-  String get autoTunnelOtherwiseDesc {
-    return Intl.message(
-      'Saves battery. Off leaves the tunnel as it is.',
-      name: 'autoTunnelOtherwiseDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Blocks all traffic while a rule wants the tunnel up and it isn't, so nothing leaks if it drops. It never blocks when a rule disconnects or when you turn the tunnel off yourself.`
+  /// `Blocks all traffic while this rule is in effect and its tunnel isn't up: while it connects, if it drops, with no network, or after you turn it off. It lifts once the tunnel is back or a rule without a kill switch takes over.`
   String get autoTunnelKillSwitchDesc {
     return Intl.message(
-      'Blocks all traffic while a rule wants the tunnel up and it isn\'t, so nothing leaks if it drops. It never blocks when a rule disconnects or when you turn the tunnel off yourself.',
+      'Blocks all traffic while this rule is in effect and its tunnel isn\'t up: while it connects, if it drops, with no network, or after you turn it off. It lifts once the tunnel is back or a rule without a kill switch takes over.',
       name: 'autoTunnelKillSwitchDesc',
       desc: '',
       args: [],
@@ -8034,10 +7924,10 @@ class AppLocalizations {
     return Intl.message('Auto-tunnel', name: 'autoTunnel', desc: '', args: []);
   }
 
-  /// `Rules connect or disconnect the tunnel as your network and open apps change. A manual change holds until they change again.`
+  /// `Each rule says: IF you're on certain networks and/or certain apps are open, THEN connect a tunnel or disconnect. A tunnel you start yourself stays on until you turn it off; then the rules take over again.`
   String get autoTunnelDesc {
     return Intl.message(
-      'Rules connect or disconnect the tunnel as your network and open apps change. A manual change holds until they change again.',
+      'Each rule says: IF you\'re on certain networks and/or certain apps are open, THEN connect a tunnel or disconnect. A tunnel you start yourself stays on until you turn it off; then the rules take over again.',
       name: 'autoTunnelDesc',
       desc: '',
       args: [],
@@ -8601,6 +8491,151 @@ class AppLocalizations {
       name: 'appBypassDesc',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Categories`
+  String get autoTunnelCategories {
+    return Intl.message(
+      'Categories',
+      name: 'autoTunnelCategories',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Group rules, e.g. the ones for a trip, and turn them all on or off together.`
+  String get autoTunnelCategoriesDesc {
+    return Intl.message(
+      'Group rules, e.g. the ones for a trip, and turn them all on or off together.',
+      name: 'autoTunnelCategoriesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add category`
+  String get autoTunnelAddCategory {
+    return Intl.message(
+      'Add category',
+      name: 'autoTunnelAddCategory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Category`
+  String get autoTunnelCategory {
+    return Intl.message(
+      'Category',
+      name: 'autoTunnelCategory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `None`
+  String get autoTunnelNoCategory {
+    return Intl.message(
+      'None',
+      name: 'autoTunnelNoCategory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Name`
+  String get autoTunnelName {
+    return Intl.message('Name', name: 'autoTunnelName', desc: '', args: []);
+  }
+
+  /// `If on`
+  String get autoTunnelIfNetwork {
+    return Intl.message(
+      'If on',
+      name: 'autoTunnelIfNetwork',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `If open`
+  String get autoTunnelIfApps {
+    return Intl.message(
+      'If open',
+      name: 'autoTunnelIfApps',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network and app (both needed)`
+  String get autoTunnelMatchAll {
+    return Intl.message(
+      'Network and app (both needed)',
+      name: 'autoTunnelMatchAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network or app (either is enough)`
+  String get autoTunnelMatchAny {
+    return Intl.message(
+      'Network or app (either is enough)',
+      name: 'autoTunnelMatchAny',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `and`
+  String get autoTunnelAndWord {
+    return Intl.message('and', name: 'autoTunnelAndWord', desc: '', args: []);
+  }
+
+  /// `or`
+  String get autoTunnelOrWord {
+    return Intl.message('or', name: 'autoTunnelOrWord', desc: '', args: []);
+  }
+
+  /// `Choose a tunnel`
+  String get autoTunnelChooseTunnel {
+    return Intl.message(
+      'Choose a tunnel',
+      name: 'autoTunnelChooseTunnel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connect replaces any other tunnel while the rule is in effect.`
+  String get autoTunnelThenDesc {
+    return Intl.message(
+      'Connect replaces any other tunnel while the rule is in effect.',
+      name: 'autoTunnelThenDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Turns the kill switch on for every rule in this category that connects.`
+  String get autoTunnelCategoryKillSwitchDesc {
+    return Intl.message(
+      'Turns the kill switch on for every rule in this category that connects.',
+      name: 'autoTunnelCategoryKillSwitchDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `On for every rule in {name}`
+  String autoTunnelKillSwitchFromCategory(String name) {
+    return Intl.message(
+      'On for every rule in $name',
+      name: 'autoTunnelKillSwitchFromCategory',
+      desc: '',
+      args: [name],
     );
   }
 }

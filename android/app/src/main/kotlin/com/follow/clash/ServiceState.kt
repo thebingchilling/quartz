@@ -1,6 +1,6 @@
 package com.follow.clash
 
-import com.follow.clash.autotunnel.KillSwitch
+import com.follow.clash.autotunnel.AutoTunnelState
 import com.follow.clash.models.SharedState
 import io.flutter.embedding.engine.FlutterEngine
 import kotlinx.coroutines.Deferred
@@ -20,18 +20,18 @@ object ServiceState {
         AndroidServiceStateHost.detachFlutterEngine(engine)
 
     suspend fun handleToggleAction() {
-        if (isRunRequested) KillSwitch.onManualStop()
+        if (isRunRequested) AutoTunnelState.onUserStop()
         machine.handleToggleAction()
     }
 
     suspend fun handleStartAction() = machine.handleStartAction()
 
     suspend fun handleStopAction() {
-        KillSwitch.onManualStop()
+        AutoTunnelState.onUserStop()
         machine.handleStopAction()
     }
 
-    /** A stop on the way to another tunnel, which kill switches keep blocking through. */
+    /** A stop auto-tunnel makes, which isn't the user's. */
     suspend fun handleSwitchStop() = machine.handleStopAction()
 
     suspend fun handleVpnRevokeAction() = machine.handleVpnRevokeAction()
@@ -41,7 +41,7 @@ object ServiceState {
     fun requestStart(): Deferred<Boolean> = machine.requestStart()
 
     fun requestStop(): Deferred<Boolean> {
-        KillSwitch.onManualStop()
+        AutoTunnelState.onUserStop()
         return machine.requestStop()
     }
 

@@ -6,18 +6,10 @@ import com.follow.clash.common.GlobalState
 import kotlinx.coroutines.launch
 
 /**
- * Blocks every app while a tunnel is wanted and isn't up, so nothing leaks if it drops. A manual
- * stop or an auto-tunnel disconnect means no tunnel is wanted, which releases it.
+ * Blocks every app while the rule in effect has a kill switch and its tunnel isn't up: while it
+ * connects, drops, or after the user stops it, until a tunnel is back or another rule takes over.
  */
 object KillSwitch {
-    @Volatile
-    private var manualOff = false
-
-    @Volatile
-    private var tunnelWanted = false
-
-    @Volatile
-    private var blocking: List<String>? = null
     private var released = true
     private var watching = false
 
@@ -26,56 +18,34 @@ object KillSwitch {
         if (watching) return
         watching = true
         GlobalState.launch {
+            var seenStopped = false
             ServiceState.runState.collect { state ->
                 if (state == RunState.STARTED) {
-                    manualOff = false
-                    tunnelWanted = true
+                    if (seenStopped) AutoTunnelState.onStarted()
+                } else if (state == RunState.STOPPED) {
+                    seenStopped = true
                 }
                 evaluate()
             }
         }
     }
 
-    fun onManualStop() {
-        manualOff = true
-    }
-
-    fun onDecision(connect: Boolean) {
-        tunnelWanted = connect
-        if (connect) manualOff = false
-        evaluate()
-    }
-
-    /** What to block now: null for nothing, an empty list for every app. */
-    internal fun decide(
-        settings: AutoTunnelSettings,
-        state: RunState,
-        manualOff: Boolean,
-        tunnelWanted: Boolean,
-    ): List<String>? = when {
-        state == RunState.STARTED || state == RunState.STARTING -> null
-        !manualOff && AutoTunnelRules.blocksAll(settings, tunnelWanted) -> emptyList()
-        else -> null
-    }
-
     @Synchronized
     fun evaluate() {
         val context = GlobalState.application
-        val next = decide(
+        val state = ServiceState.runState.value
+        val block = AutoTunnelRules.blocksAll(
             AutoTunnel.settings(context),
-            ServiceState.runState.value,
-            manualOff,
-            tunnelWanted,
+            AutoTunnelState.active,
+            running = state == RunState.STARTED || state == RunState.STARTING,
         )
-        if (next == null) {
+        if (!block) {
             if (!released) KillSwitchService.release(context)
             released = true
-            blocking = null
             return
         }
-        if (!released && next == blocking) return
+        if (!released) return
         released = false
-        blocking = next
-        KillSwitchService.block(context, next.ifEmpty { null })
+        KillSwitchService.block(context, null)
     }
 }

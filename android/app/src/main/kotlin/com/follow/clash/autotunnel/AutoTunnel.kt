@@ -43,7 +43,7 @@ object AutoTunnel {
         KillSwitch.watch()
         val intent = Intent(context, AutoTunnelService::class.java)
         val settings = settings(context)
-        if (settings.enabled || settings.killSwitch) {
+        if (settings.enabled) {
             runCatching { ContextCompat.startForegroundService(context, intent) }
         } else {
             context.stopService(intent)
@@ -70,8 +70,7 @@ object AutoTunnel {
     /** Points the service at the decision's rendered config and restarts it if it was running. */
     suspend fun applyWithoutFlutter(context: Context, decision: Decision) {
         if (!decision.connect) {
-            KillSwitch.onManualStop()
-            ServiceState.handleSwitchStop()
+            if (ServiceState.isRunRequested) ServiceState.handleSwitchStop()
             return
         }
         if (decision.target == null && ServiceState.isRunRequested) return
@@ -106,6 +105,7 @@ object AutoTunnel {
             .putString(APPLIED, applied)
             .commit()
         if (ServiceState.isRunRequested) ServiceState.handleSwitchStop()
+        AutoTunnelState.expectStart()
         ServiceState.handleStartAction()
     }
 }
