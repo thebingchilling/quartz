@@ -6,7 +6,7 @@ import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show compute, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
@@ -112,7 +112,10 @@ class CoreController {
     }
     final message = await validateConfig(path);
     if (message.isEmpty) {
-      return message;
+      final grouped = await compute(_groupedYaml, await file.readAsString());
+      if (grouped == null) return message;
+      await file.safeWriteAsString(grouped);
+      return validateConfig(path);
     }
     final List<Map<String, dynamic>> proxies;
     try {
@@ -123,7 +126,8 @@ class CoreController {
     if (proxies.isEmpty) {
       return message;
     }
-    await file.safeWriteAsString(await encodeYamlTask({'proxies': proxies}));
+    final config = withProxyGroup({'proxies': proxies}) ?? {'proxies': proxies};
+    await file.safeWriteAsString(await encodeYamlTask(config));
     return validateConfig(path);
   }
 
@@ -339,3 +343,53 @@ class CoreController {
 }
 
 final coreController = CoreController();
+
+String? _groupedYaml(String text) {
+  if (text.contains('proxy-groups') || !text.contains('proxies')) return null;
+  final Object? config;
+  try {
+    config = loadPlainYaml(text);
+  } on Exception {
+    return null;
+  }
+  final grouped = withProxyGroup(config);
+  return grouped == null ? null : yaml.encode(grouped);
+}
+
+/// Proxies in no group end up only in mihomo's built-in GLOBAL, which the
+/// proxies page hides, so a list of them gets the config converter's PROXY
+/// group with an Auto pick and everything routed through it.
+@visibleForTesting
+Map<String, dynamic>? withProxyGroup(Object? config) {
+  if (config is! Map) return null;
+  final groups = config['proxy-groups'];
+  if (groups is List && groups.isNotEmpty) return null;
+  final names = [
+    for (final proxy in (config['proxies'] as List?) ?? const [])
+      if (proxy is Map && proxy['name'] is String) proxy['name'] as String,
+  ];
+  if (names.isEmpty) return null;
+  const group = 'PROXY';
+  const auto = 'Auto';
+  final rules = config['rules'];
+  return {
+    ...config.cast<String, dynamic>(),
+    'proxy-groups': [
+      {
+        'name': group,
+        'type': 'select',
+        'proxies': [if (names.length > 1) auto, ...names],
+      },
+      if (names.length > 1)
+        {
+          'name': auto,
+          'type': 'url-test',
+          'url': 'https://cp.cloudflare.com/generate_204',
+          'interval': 600,
+          'lazy': true,
+          'proxies': names,
+        },
+    ],
+    'rules': rules is List && rules.isNotEmpty ? rules : ['MATCH,$group'],
+  };
+}

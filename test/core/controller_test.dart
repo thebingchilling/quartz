@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/exception.dart';
+import 'package:fl_clash/common/yaml.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -144,6 +145,67 @@ void main() {
           throwsA(isA<AgeSecretKeyRequiredException>()),
         );
         verifyNever(() => mock.decryptConfig(any(), any()));
+      });
+
+      test('gives a converted share-link list a group to pick from', () async {
+        File(path).writeAsStringSync('1.2.3.4:1080\n5.6.7.8:1080\n');
+        var calls = 0;
+        when(
+          () => mock.validateConfig(path),
+        ).thenAnswer((_) async => calls++ == 0 ? 'not a config' : '');
+        when(() => mock.convertProxies(path)).thenAnswer(
+          (_) async => [
+            {'name': 'a', 'type': 'socks5', 'server': '1.2.3.4', 'port': 1080},
+            {'name': 'b', 'type': 'socks5', 'server': '5.6.7.8', 'port': 1080},
+          ],
+        );
+
+        expect(await controller.validateProfile(path), '');
+        final config = loadPlainYaml(File(path).readAsStringSync()) as Map;
+        expect((config['proxy-groups'] as List).first, {
+          'name': 'PROXY',
+          'type': 'select',
+          'proxies': ['Auto', 'a', 'b'],
+        });
+        expect(config['rules'], ['MATCH,PROXY']);
+      });
+
+      test('a config of bare proxies gets the same group', () async {
+        File(
+          path,
+        ).writeAsStringSync('proxies:\n  - name: a\n    type: direct\n');
+
+        expect(await controller.validateProfile(path), '');
+        final config = loadPlainYaml(File(path).readAsStringSync()) as Map;
+        expect((config['proxy-groups'] as List).single['proxies'], ['a']);
+        expect(config['rules'], ['MATCH,PROXY']);
+      });
+
+      test('keeps the groups and rules a config already has', () {
+        expect(
+          withProxyGroup({
+            'proxies': [
+              {'name': 'a'},
+            ],
+            'proxy-groups': [
+              {
+                'name': 'G',
+                'type': 'select',
+                'proxies': ['a'],
+              },
+            ],
+          }),
+          isNull,
+        );
+        expect(
+          withProxyGroup({
+            'proxies': [
+              {'name': 'a'},
+            ],
+            'rules': ['DOMAIN,x.com,DIRECT'],
+          })!['rules'],
+          ['DOMAIN,x.com,DIRECT'],
+        );
       });
 
       test('leaves a plain config as it is', () async {

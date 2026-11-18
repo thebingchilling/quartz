@@ -3,8 +3,11 @@ package core
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -208,11 +211,72 @@ func handleValidateProxies(mappings []map[string]any) []string {
 	return results
 }
 
-// The share-link list a proxy provider also accepts, plain or base64.
+// The share-link list a proxy provider also accepts, plain or base64, or a
+// bare list of SOCKS5 servers as free proxy lists publish them.
 func handleConvertProxies(path string) ([]map[string]any, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return convert.ConvertsV2Ray(buf)
+	proxies, err := convert.ConvertsV2Ray(buf)
+	if err == nil && len(proxies) > 0 {
+		return proxies, nil
+	}
+	if bare, ok := parseBareSocksList(string(buf)); ok {
+		return bare, nil
+	}
+	return proxies, err
+}
+
+// parseBareSocksList reads lines of host:port, host:port:user:pass or
+// user:pass@host:port; any other line means the text is something else.
+func parseBareSocksList(text string) ([]map[string]any, bool) {
+	var proxies []map[string]any
+	seen := map[string]bool{}
+	for _, line := range strings.Split(text, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		proxy, ok := parseBareSocks(line)
+		if !ok {
+			return nil, false
+		}
+		name := fmt.Sprintf("%s:%v", proxy["server"], proxy["port"])
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		proxy["name"] = name
+		proxies = append(proxies, proxy)
+	}
+	return proxies, len(proxies) > 0
+}
+
+func parseBareSocks(line string) (map[string]any, bool) {
+	var user, pass string
+	if at := strings.LastIndex(line, "@"); at >= 0 {
+		credentials := strings.SplitN(line[:at], ":", 2)
+		if len(credentials) != 2 {
+			return nil, false
+		}
+		user, pass, line = credentials[0], credentials[1], line[at+1:]
+	} else if !strings.HasPrefix(line, "[") && strings.Count(line, ":") == 3 {
+		parts := strings.Split(line, ":")
+		line, user, pass = parts[0]+":"+parts[1], parts[2], parts[3]
+	}
+	host, portText, err := net.SplitHostPort(line)
+	if err != nil || host == "" || strings.ContainsAny(host, " \t/") {
+		return nil, false
+	}
+	port, err := strconv.Atoi(portText)
+	if err != nil || port < 1 || port > 65535 {
+		return nil, false
+	}
+	proxy := map[string]any{"type": "socks5", "server": host, "port": port, "udp": true}
+	if user != "" {
+		proxy["username"] = user
+		proxy["password"] = pass
+	}
+	return proxy, true
 }

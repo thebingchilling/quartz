@@ -64,6 +64,11 @@ Dropped (VPN-only use doesn't need them):
   `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
   TTL) with regenerate (new registration into the same profile) and delete (revokes it);
   the profile list shows the same days left on the profile and greys it out once expired.
+- **Proxy lists as subscriptions** (`validateProfile` in `lib/core/controller.dart`,
+  `handleConvertProxies` in `core/proxy.go`): a link that serves share links, or bare
+  `host:port` / `host:port:user:pass` lines (read as SOCKS5), becomes a profile; one whose
+  proxies sit in no group gets a PROXY group with an Auto pick and `MATCH,PROXY`, since
+  stock mihomo leaves them only in its built-in GLOBAL, which the proxies page hides.
 - **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): Windscribe's public server
   list as a Clash profile of `openvpn` proxies with the OpenVPN credentials from its config
   generator. The page picks one location (New Zealand first); the profile then holds only that
