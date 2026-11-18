@@ -2918,7 +2918,7 @@ final class ProxyDescProvider
   }
 }
 
-String _$proxyDescHash() => r'16dbf0d090ba4699b1a282d804d1e75a9910696f';
+String _$proxyDescHash() => r'3cbff2de7b7a86c74197315b1f5c74c2bda245a3';
 
 final class ProxyDescFamily extends $Family
     with $FunctionalFamilyOverride<String, Proxy> {

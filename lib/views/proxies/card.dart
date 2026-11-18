@@ -129,7 +129,7 @@ class ProxyCard extends ConsumerWidget {
                           flex: 1,
                           child: TooltipText(
                             text: Text(
-                              proxy.type,
+                              ref.watch(proxyDescProvider(proxy)),
                               maxLines: 1,
                               style: context.textTheme.bodySmall?.copyWith(
                                 overflow: TextOverflow.ellipsis,

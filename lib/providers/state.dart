@@ -16,6 +16,7 @@ import 'app.dart';
 import 'config.dart';
 import 'core.dart';
 import 'database.dart';
+import 'node_summaries.dart';
 
 part 'generated/state.g.dart';
 part 'state/proxies.dart';

@@ -71,6 +71,12 @@ Dropped (VPN-only use doesn't need them):
   `host:port` / `host:port:user:pass` lines (read as SOCKS5), becomes a profile; one whose
   proxies sit in no group gets a PROXY group with an Auto pick and `MATCH,PROXY`, since
   stock mihomo leaves them only in its built-in GLOBAL, which the proxies page hides.
+- **Node summaries** (`lib/common/node_summary.dart`, `nodeSummariesProvider`): each proxy
+  card's second line reads like `VLESS · Vision · Reality`, `Shadowsocks · rc4-md5`,
+  `WireGuard · AmneziaWG` or `OpenVPN · UDP 443`. The app reads them from the config it applied
+  (overrides and scripts included) and each proxy provider's file, renamed the way the
+  provider's `override` renames them; share-link provider files go through the Core's existing
+  `convertProxies`. Nothing in `core/` is involved.
 - **Windscribe** (Tools → Windscribe, `lib/features/windscribe`): Windscribe's public server
   list as a Clash profile of `openvpn` proxies with the OpenVPN credentials from its config
   generator. The page picks one location (New Zealand first); the profile then holds only that

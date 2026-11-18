@@ -136,6 +136,10 @@ class CoreController {
     return validateConfig(path);
   }
 
+  /// A share-link list, plain or base64, as proxy mappings.
+  Future<List<Map<String, dynamic>>> convertProxies(String path) =>
+      _interface.convertProxies(path);
+
   Future<List<String>> validateProxies(List<Map<String, dynamic>> proxies) {
     if (proxies.isEmpty) {
       return Future.value(const []);

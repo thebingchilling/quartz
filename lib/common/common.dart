@@ -37,6 +37,7 @@ export 'motion.dart';
 export 'navigator.dart';
 export 'network.dart';
 export 'network_error.dart';
+export 'node_summary.dart';
 export 'num.dart';
 export 'package.dart';
 export 'path.dart';
