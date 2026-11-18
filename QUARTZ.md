@@ -198,4 +198,3 @@ to `main` and by hand, with FlClash's own `setup.dart` (`--env stable`, so no PR
 arm and arm64 APKs only), and publishes both as the latest Quartz release
 `quartz-flclash-0.9.0-<run>`; the release needs both builds.
 Android builds are signed with the committed debug key `.github/signing/debug.keystore`.
-FlClash's own `build.yaml` only runs by hand.

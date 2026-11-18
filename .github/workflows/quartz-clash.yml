@@ -6,8 +6,6 @@ on:
       - main
     paths-ignore:
       - '**.md'
-      - 'site/**'
-      - 'snapshots/**'
   workflow_dispatch:
 
 concurrency:

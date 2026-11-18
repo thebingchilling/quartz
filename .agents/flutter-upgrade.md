@@ -1,6 +1,6 @@
 # Flutter Upgrade Checklist
 
-Read this before changing `FLUTTER_VERSION` in `.github/workflows/build.yaml` or `.fvmrc`. Each entry is a
+Read this before changing `FLUTTER_VERSION` in `.github/workflows/quartz-clash.yml` or `.fvmrc`. Each entry is a
 workaround tied to a Flutter bug: what it does, where it lives, and what has to be true before it can go. Remove an
 entry together with its workaround; add one whenever a new workaround is pinned to the SDK.
 
