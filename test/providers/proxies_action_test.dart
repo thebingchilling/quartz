@@ -578,7 +578,7 @@ void main() {
       );
     });
 
-    test('OpenVPN nodes are probed one at a time, others together', () async {
+    test('every node of a group is probed at once, OpenVPN too', () async {
       final answers = <String, Completer<Delay>>{};
       when(() => core.asyncTestDelay(any(), any())).thenAnswer((invocation) {
         final name = invocation.positionalArguments[1] as String;
@@ -603,15 +603,12 @@ void main() {
 
       final testing = actionOf(container).delayTest(const [...vpn, ...ss]);
       await Future<void>.delayed(Duration.zero);
-      expect(answers.keys, unorderedEquals(['NZ-1', 'SS-1', 'SS-2']));
+      expect(answers.keys, unorderedEquals(['NZ-1', 'NZ-2', 'SS-1', 'SS-2']));
 
-      void answer(String name) =>
-          answers[name]!.complete(Delay(url: _testUrl, name: name, value: 10));
-      answer('NZ-1');
-      await Future<void>.delayed(Duration.zero);
-      expect(answers.keys, contains('NZ-2'));
-      for (final name in ['NZ-2', 'SS-1', 'SS-2']) {
-        answer(name);
+      for (final completer in answers.entries) {
+        completer.value.complete(
+          Delay(url: _testUrl, name: completer.key, value: 10),
+        );
       }
       await testing;
     });

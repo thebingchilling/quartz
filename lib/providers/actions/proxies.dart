@@ -5,16 +5,15 @@ class _DelayTestTarget {
     required this.proxyName,
     required this.testUrl,
     required this.key,
-    this.serial = false,
+    this.logsIn = false,
   });
 
   final String proxyName;
   final String testUrl;
   final String key;
 
-  /// Each test of an OpenVPN node is a full login, and providers such as
-  /// Windscribe turn away a burst of them from one account.
-  final bool serial;
+  /// Each test of an OpenVPN node is a full login, so a failure isn't retried.
+  final bool logsIn;
 }
 
 typedef _DelayTestBatch = ({List<Proxy> proxies, String? testUrl});
@@ -32,7 +31,6 @@ class ProxiesAction extends _$ProxiesAction {
   CoreController get _core => ref.read(coreHandlerProvider);
 
   final TaskPool _delayTestPool = TaskPool(maxConcurrentDelayTests);
-  final TaskPool _serialDelayTestPool = TaskPool(1);
 
   final List<_DelayTestJob> _delayTestJobs = [];
 
@@ -381,7 +379,7 @@ class ProxiesAction extends _$ProxiesAction {
             proxyName: state.proxyName,
             testUrl: currentTestUrl,
             key: key,
-            serial:
+            logsIn:
                 types[state.proxyName]?.toLowerCase().contains('openvpn') ??
                 false,
           ),
@@ -400,23 +398,14 @@ class ProxiesAction extends _$ProxiesAction {
     final job = _DelayTestJob(targets.map((target) => target.key));
     _delayTestJobs.add(job);
     // TaskPool.run starts a task synchronously while it has an idle slot.
-    for (final (pool, serial) in [
-      (_delayTestPool, false),
-      (_serialDelayTestPool, true),
-    ]) {
-      job.startedOnDispatch.addAll(
-        targets
-            .where((target) => target.serial == serial)
-            .take(pool.idleSlots)
-            .map((target) => target.key),
-      );
-    }
+    job.startedOnDispatch.addAll(
+      targets.take(_delayTestPool.idleSlots).map((target) => target.key),
+    );
     pending.apply(acquired: job.held, started: job.startedOnDispatch);
     try {
       await Future.wait(
         targets.map(
-          (target) => (target.serial ? _serialDelayTestPool : _delayTestPool)
-              .run(() => _runDelayTest(job, target)),
+          (target) => _delayTestPool.run(() => _runDelayTest(job, target)),
         ),
       );
     } finally {
@@ -447,7 +436,7 @@ class ProxiesAction extends _$ProxiesAction {
       // the retry reuses it. Not for OpenVPN, where it is another login.
       if (delay != null &&
           (delay.value ?? 0) <= 0 &&
-          !target.serial &&
+          !target.logsIn &&
           !job.cancelled) {
         delay = await _core.getDelay(target.testUrl, target.proxyName) ?? delay;
       }

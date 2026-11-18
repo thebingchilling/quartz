@@ -78,7 +78,8 @@ Dropped (VPN-only use doesn't need them):
   stock mihomo leaves them only in its built-in GLOBAL, which the proxies page hides.
 - **Node summaries** (`lib/common/node_summary.dart`, `nodeSummariesProvider`): each proxy
   card's second line reads like `VLESS · Vision · Reality`, `Shadowsocks · rc4-md5`,
-  `WireGuard · AmneziaWG` or `OpenVPN · UDP 443`. The app reads them from the config it applied
+  `WireGuard · AmneziaWG · UDP 2408 · MTU 1280` or `OpenVPN · UDP 443`: every protocol names what
+  sets its nodes apart, not only the type. The app reads them from the config it applied
   (overrides and scripts included) and each proxy provider's file, renamed the way the
   provider's `override` renames them; share-link provider files go through the Core's existing
   `convertProxies`. Nothing in `core/` is involved.
@@ -91,8 +92,7 @@ Dropped (VPN-only use doesn't need them):
   protocol or port (a rewrite from the saved list, no download) above the country. The list
   refreshes at startup when it is over 24 hours old, or by hand.
 - **No excess logins (standing rule):** nothing contacts Windscribe or WARP on its own beyond
-  that daily list refresh. Delay tests run only when asked, OpenVPN nodes one at a time (each test
-  is a login); a failed test of any other node runs once more on the tunnel the first attempt set
+  that daily list refresh. Delay tests run only when asked, every node of a group at once; a failed test runs once more on the tunnel the first attempt set
   up, never an OpenVPN one; a rewrite that leaves the Windscribe profile unchanged doesn't re-apply it (an apply
   reconnects); converted OpenVPN nodes stay out of the automatic url-test group; WARP's
   registration API is only called to generate, regenerate or delete.

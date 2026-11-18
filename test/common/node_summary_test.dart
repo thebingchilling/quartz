@@ -38,9 +38,20 @@ void main() {
     expect(
       nodeSummary({
         'type': 'wireguard',
+        'port': 2408,
+        'mtu': 1280,
         'amnezia-wg-option': {'jc': 4},
       }),
-      'WireGuard · AmneziaWG',
+      'WireGuard · AmneziaWG · UDP 2408 · MTU 1280',
+    );
+    expect(
+      nodeSummary({
+        'type': 'wireguard',
+        'peers': [
+          {'server': 'a', 'port': 51820},
+        ],
+      }),
+      'WireGuard · UDP 51820',
     );
     expect(
       nodeSummary({'type': 'openvpn', 'proto': 'udp', 'port': 443}),
@@ -51,6 +62,37 @@ void main() {
       'Hysteria2 · Salamander',
     );
     expect(nodeSummary({'type': 'tuic', 'uuid': 'u'}), 'TUIC · v5');
+    expect(
+      nodeSummary({'type': 'tuic', 'congestion-controller': 'bbr'}),
+      'TUIC · v5 · BBR',
+    );
+    expect(
+      nodeSummary({'type': 'hysteria2', 'ports': '20000-30000'}),
+      'Hysteria2 · Port hopping',
+    );
+    expect(
+      nodeSummary({'type': 'vmess', 'cipher': 'auto', 'network': 'ws'}),
+      'VMess · WS',
+    );
+    expect(
+      nodeSummary({
+        'type': 'ssr',
+        'cipher': 'aes-256-cfb',
+        'protocol': 'auth_sha1_v4',
+        'obfs': 'tls1.2_ticket_auth',
+      }),
+      'ShadowsocksR · aes-256-cfb · auth_sha1_v4 · tls1.2_ticket_auth',
+    );
+    expect(
+      nodeSummary({
+        'type': 'snell',
+        'version': 3,
+        'obfs-opts': {'mode': 'tls'},
+      }),
+      'Snell · v3 · TLS',
+    );
+    expect(nodeSummary({'type': 'ssh', 'private-key': 'k'}), 'SSH · key');
+    expect(nodeSummary({'type': 'mieru', 'transport': 'tcp'}), 'Mieru · TCP');
     expect(nodeSummary({'type': 'socks5', 'username': 'me'}), 'SOCKS5 · auth');
     expect(nodeSummary({'name': 'no type'}), isNull);
   });
