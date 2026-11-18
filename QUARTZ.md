@@ -92,7 +92,8 @@ Dropped (VPN-only use doesn't need them):
   refreshes at startup when it is over 24 hours old, or by hand.
 - **No excess logins (standing rule):** nothing contacts Windscribe or WARP on its own beyond
   that daily list refresh. Delay tests run only when asked, OpenVPN nodes one at a time (each test
-  is a login); a rewrite that leaves the Windscribe profile unchanged doesn't re-apply it (an apply
+  is a login); a failed test of any other node runs once more on the tunnel the first attempt set
+  up, never an OpenVPN one; a rewrite that leaves the Windscribe profile unchanged doesn't re-apply it (an apply
   reconnects); converted OpenVPN nodes stay out of the automatic url-test group; WARP's
   registration API is only called to generate, regenerate or delete.
 - **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows),

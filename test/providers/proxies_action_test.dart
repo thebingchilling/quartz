@@ -512,6 +512,35 @@ void main() {
       verify(() => core.asyncTestDelay(_testUrl, 'HK-01')).called(1);
     });
 
+    test('a failed test runs once more, except on OpenVPN', () async {
+      final calls = <String, int>{};
+      when(() => core.asyncTestDelay(any(), any())).thenAnswer((invocation) {
+        final name = invocation.positionalArguments[1] as String;
+        final call = calls[name] = (calls[name] ?? 0) + 1;
+        return Future.value(
+          Delay(url: _testUrl, name: name, value: call == 1 ? -1 : 42),
+        );
+      });
+      final container = _delayContainer(buildContainer);
+      const warp = Proxy(name: 'warp', type: 'WireGuard');
+      const vpn = Proxy(name: 'NZ-1', type: 'OpenVPN');
+      container
+          .read(groupsProvider.notifier)
+          .update(
+            (_) => [
+              _group('G', const [warp, vpn]),
+            ],
+          );
+
+      await actionOf(container).delayTest(const [warp, vpn]);
+
+      expect(calls, {'warp': 2, 'NZ-1': 1});
+      expect(
+        container.read(delayProvider(proxyName: 'warp', testUrl: _testUrl)),
+        42,
+      );
+    });
+
     test('OpenVPN nodes are probed one at a time, others together', () async {
       final answers = <String, Completer<Delay>>{};
       when(() => core.asyncTestDelay(any(), any())).thenAnswer((invocation) {

@@ -427,7 +427,15 @@ class ProxiesAction extends _$ProxiesAction {
       _scheduleDelayFlush();
     }
     try {
-      final delay = await _core.getDelay(target.testUrl, target.proxyName);
+      var delay = await _core.getDelay(target.testUrl, target.proxyName);
+      // A tunnel set up on first use spends its first test on the handshake;
+      // the retry reuses it. Not for OpenVPN, where it is another login.
+      if (delay != null &&
+          (delay.value ?? 0) <= 0 &&
+          !target.serial &&
+          !job.cancelled) {
+        delay = await _core.getDelay(target.testUrl, target.proxyName) ?? delay;
+      }
       if (delay != null && !job.cancelled) {
         setDelay(delay);
       }
