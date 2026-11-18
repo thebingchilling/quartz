@@ -188,6 +188,7 @@ void main() {
         'enhanced-mode': 'fake-ip',
         'default-nameserver': ['system://'],
         'nameserver': ['system://'],
+        'ipv6': true,
       });
     });
 

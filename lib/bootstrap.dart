@@ -176,6 +176,21 @@ class Bootstrap {
 
   ProviderContainer get _container => globalState.container;
 
+  /// FlClash shipped with IPv6 off in the Core and the Android VPN, so saved
+  /// settings still say off; turned on once, and a later choice sticks.
+  Future<void> _turnIpv6OnOnce() async {
+    const key = 'quartz.ipv6.turnedOn';
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(key) == true) return;
+    _container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(ipv6: true));
+    _container
+        .read(vpnSettingProvider.notifier)
+        .update((state) => state.copyWith(ipv6: true));
+    await prefs.setBool(key, true);
+  }
+
   /// The standalone EXE is meant to run all the time, so its first run turns
   /// start at login on; turning it off later sticks.
   Future<void> _startPortableAtLogin() async {
@@ -195,6 +210,7 @@ class Bootstrap {
       _container.read(profilesActionProvider.notifier).autoUpdateProfiles(),
     );
     unawaited(_container.read(commonActionProvider.notifier).autoCheckUpdate());
+    await _turnIpv6OnOnce();
     await _startPortableAtLogin();
     unawaited(
       autoLaunch?.updateStatus(_container.read(appSettingProvider).autoLaunch),

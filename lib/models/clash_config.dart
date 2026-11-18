@@ -24,9 +24,11 @@ const baselineDnsOverrideKeys = {
   DnsOverrideKey.enhancedMode,
   DnsOverrideKey.defaultNameserver,
   DnsOverrideKey.nameserver,
+  DnsOverrideKey.ipv6,
 };
 const baselineDns = Dns(
   enable: true,
+  ipv6: true,
   enhancedMode: DnsMode.fakeIp,
   defaultNameserver: ['system://'],
   nameserver: ['system://'],
@@ -1907,7 +1909,7 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default(Mode.rule) Mode mode,
     @Default(false) @JsonKey(name: 'allow-lan') bool allowLan,
     @Default(LogLevel.error) @JsonKey(name: 'log-level') LogLevel logLevel,
-    @Default(false) bool ipv6,
+    @Default(true) bool ipv6,
     @Default(FindProcessMode.off)
     @JsonKey(name: 'find-process-mode', unknownEnumValue: FindProcessMode.off)
     FindProcessMode findProcessMode,
