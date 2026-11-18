@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
@@ -108,8 +109,9 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
   static const _key = 'quartz.windscribe';
   static const label = 'windscribe';
 
-  /// Load changes constantly, the set of servers rarely.
-  static const staleAfter = Duration(hours: 6);
+  /// The same as a subscription's default; the list can always be updated
+  /// by hand.
+  static const staleAfter = Duration(hours: 24);
 
   final Completer<void> _loaded = Completer();
 
@@ -192,16 +194,23 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
     final existing = settings.profileId == null
         ? null
         : ref.read(profilesProvider).getProfile(settings.profileId!);
-    final profile =
-        await (existing?.copyWith(label: label) ?? Profile.normal(label: label))
-            .saveFile(
-              Uint8List.fromList(utf8.encode(yaml)),
-              validate: (path, key) =>
-                  ref.read(coreHandlerProvider).validateProfile(path, key),
-            );
+    // Every apply reconnects, which is a fresh login to Windscribe.
+    final unchanged =
+        existing != null &&
+        existing.label == label &&
+        await _holds(existing, yaml);
+    final profile = unchanged
+        ? existing
+        : await (existing?.copyWith(label: label) ??
+                  Profile.normal(label: label))
+              .saveFile(
+                Uint8List.fromList(utf8.encode(yaml)),
+                validate: (path, key) =>
+                    ref.read(coreHandlerProvider).validateProfile(path, key),
+              );
     if (existing == null) {
       ref.read(profilesActionProvider.notifier).putProfile(profile);
-    } else {
+    } else if (!unchanged) {
       ref.read(profilesActionProvider.notifier).setProfileAndAutoApply(profile);
     }
     await update(
@@ -213,6 +222,15 @@ class WindscribeNotifier extends Notifier<WindscribeSettings> {
         country: selected,
       ),
     );
+  }
+
+  Future<bool> _holds(Profile profile, String yaml) async {
+    try {
+      final file = await profile.file;
+      return await file.exists() && await file.readAsString() == yaml;
+    } on FileSystemException {
+      return false;
+    }
   }
 
   /// Run at startup: keeps an existing Windscribe profile's list current.

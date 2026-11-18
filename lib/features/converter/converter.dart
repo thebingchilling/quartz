@@ -345,6 +345,12 @@ String buildConvertedProfile(List<ConvertedConfig> configs) {
   if (names.isEmpty) {
     throw const ConvertException('Nothing to convert');
   }
+  // An automatic group tests every member every few minutes, and each test of
+  // an OpenVPN node is a login.
+  final tested = [
+    for (final config in configs)
+      if (config.kind != ConfigKind.openvpn) ...config.names,
+  ];
   const group = 'PROXY';
   const auto = 'Auto';
   return [
@@ -353,14 +359,14 @@ String buildConvertedProfile(List<ConvertedConfig> configs) {
     'proxy-groups:',
     '  - name: $group',
     '    type: select',
-    '    proxies: ${_list([if (names.length > 1) auto, ...names])}',
-    if (names.length > 1) ...[
+    '    proxies: ${_list([if (tested.length > 1) auto, ...names])}',
+    if (tested.length > 1) ...[
       '  - name: $auto',
       '    type: url-test',
       '    url: https://cp.cloudflare.com/generate_204',
       '    interval: 600',
       '    lazy: true',
-      '    proxies: ${_list(names)}',
+      '    proxies: ${_list(tested)}',
     ],
     'rules:',
     '  - MATCH,$group',

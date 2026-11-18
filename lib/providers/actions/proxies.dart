@@ -5,11 +5,16 @@ class _DelayTestTarget {
     required this.proxyName,
     required this.testUrl,
     required this.key,
+    this.serial = false,
   });
 
   final String proxyName;
   final String testUrl;
   final String key;
+
+  /// Each test of an OpenVPN node is a full login, and providers such as
+  /// Windscribe turn away a burst of them from one account.
+  final bool serial;
 }
 
 typedef _DelayTestBatch = ({List<Proxy> proxies, String? testUrl});
@@ -27,6 +32,7 @@ class ProxiesAction extends _$ProxiesAction {
   CoreController get _core => ref.read(coreHandlerProvider);
 
   final TaskPool _delayTestPool = TaskPool(maxConcurrentDelayTests);
+  final TaskPool _serialDelayTestPool = TaskPool(1);
 
   final List<_DelayTestJob> _delayTestJobs = [];
 
@@ -335,6 +341,10 @@ class ProxiesAction extends _$ProxiesAction {
     );
     final seen = <String>{};
     final targets = <_DelayTestTarget>[];
+    final types = {
+      for (final group in groups)
+        for (final proxy in group.all) proxy.name: proxy.type,
+    };
     for (final batch in batches) {
       final fallbackTestUrl = ref.read(realTestUrlProvider(batch.testUrl));
       for (final proxy in batch.proxies) {
@@ -356,6 +366,9 @@ class ProxiesAction extends _$ProxiesAction {
             proxyName: state.proxyName,
             testUrl: currentTestUrl,
             key: key,
+            serial:
+                types[state.proxyName]?.toLowerCase().contains('openvpn') ??
+                false,
           ),
         );
       }
@@ -372,14 +385,23 @@ class ProxiesAction extends _$ProxiesAction {
     final job = _DelayTestJob(targets.map((target) => target.key));
     _delayTestJobs.add(job);
     // TaskPool.run starts a task synchronously while it has an idle slot.
-    job.startedOnDispatch.addAll(
-      targets.take(_delayTestPool.idleSlots).map((target) => target.key),
-    );
+    for (final (pool, serial) in [
+      (_delayTestPool, false),
+      (_serialDelayTestPool, true),
+    ]) {
+      job.startedOnDispatch.addAll(
+        targets
+            .where((target) => target.serial == serial)
+            .take(pool.idleSlots)
+            .map((target) => target.key),
+      );
+    }
     pending.apply(acquired: job.held, started: job.startedOnDispatch);
     try {
       await Future.wait(
         targets.map(
-          (target) => _delayTestPool.run(() => _runDelayTest(job, target)),
+          (target) => (target.serial ? _serialDelayTestPool : _delayTestPool)
+              .run(() => _runDelayTest(job, target)),
         ),
       );
     } finally {

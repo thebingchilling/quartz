@@ -512,6 +512,44 @@ void main() {
       verify(() => core.asyncTestDelay(_testUrl, 'HK-01')).called(1);
     });
 
+    test('OpenVPN nodes are probed one at a time, others together', () async {
+      final answers = <String, Completer<Delay>>{};
+      when(() => core.asyncTestDelay(any(), any())).thenAnswer((invocation) {
+        final name = invocation.positionalArguments[1] as String;
+        return (answers[name] = Completer<Delay>()).future;
+      });
+      final container = _delayContainer(buildContainer);
+      const vpn = [
+        Proxy(name: 'NZ-1', type: 'OpenVPN'),
+        Proxy(name: 'NZ-2', type: 'OpenVPN'),
+      ];
+      const ss = [
+        Proxy(name: 'SS-1', type: 'Shadowsocks'),
+        Proxy(name: 'SS-2', type: 'Shadowsocks'),
+      ];
+      container
+          .read(groupsProvider.notifier)
+          .update(
+            (_) => [
+              _group('G', const [...vpn, ...ss]),
+            ],
+          );
+
+      final testing = actionOf(container).delayTest(const [...vpn, ...ss]);
+      await Future<void>.delayed(Duration.zero);
+      expect(answers.keys, unorderedEquals(['NZ-1', 'SS-1', 'SS-2']));
+
+      void answer(String name) =>
+          answers[name]!.complete(Delay(url: _testUrl, name: name, value: 10));
+      answer('NZ-1');
+      await Future<void>.delayed(Duration.zero);
+      expect(answers.keys, contains('NZ-2'));
+      for (final name in ['NZ-2', 'SS-1', 'SS-2']) {
+        answer(name);
+      }
+      await testing;
+    });
+
     test('testing groups probes a shared node once per test URL', () async {
       const otherUrl = 'http://other.test';
       when(() => core.asyncTestDelay(any(), any())).thenAnswer(

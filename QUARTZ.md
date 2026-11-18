@@ -68,7 +68,9 @@ Dropped (VPN-only use doesn't need them):
   `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
   TTL) with regenerate (new registration into the same profile) and delete (revokes it);
   the profile list greys a WARP profile out once expired, and while one runs a bar above its
-  proxies shows the days left with a regenerate button that asks before replacing it.
+  proxies shows the days left and the expiry date with a regenerate button that replaces the
+  registration straight away. There is one profile per variant (`warp`, `warp awg`): generating
+  a variant that exists regenerates it with the chosen options.
 - **Proxy lists as subscriptions** (`validateProfile` in `lib/core/controller.dart`,
   `parseBareSocksList` in `lib/common/proxy_list.dart`): a link that serves share links, or bare
   `host:port` / `host:port:user:pass` lines (read as SOCKS5), becomes a profile; one whose
@@ -85,8 +87,14 @@ Dropped (VPN-only use doesn't need them):
   generator. The page picks one location (New Zealand first); the profile then holds only that
   country's servers in its one Windscribe group, so the proxies page offers just those. The page
   lists updating the server list, protocol and port first, then the locations, with the
-  credentials last; on the proxies page a bar shows the country and has buttons to update the
-  server list and change protocol or port (a rewrite from the saved list, no download).
+  credentials last; on the proxies page a bar has buttons to refresh the server list and change
+  protocol or port (a rewrite from the saved list, no download) above the country. The list
+  refreshes at startup when it is over 24 hours old, or by hand.
+- **No excess logins (standing rule):** nothing contacts Windscribe or WARP on its own beyond
+  that daily list refresh. Delay tests run only when asked, OpenVPN nodes one at a time (each test
+  is a login); a rewrite that leaves the Windscribe profile unchanged doesn't re-apply it (an apply
+  reconnects); converted OpenVPN nodes stay out of the automatic url-test group; WARP's
+  registration API is only called to generate, regenerate or delete.
 - **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows),
   modelled on WG Tunnel: a **default tunnel** (a profile with an optional server in one of its
   groups, or whichever profile is current); **tunnel on untrusted Wi-Fi** with **trusted

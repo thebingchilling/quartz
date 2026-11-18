@@ -104,7 +104,22 @@ Endpoint = vpn.example.com:51820
       convertConfig(_wg, name: 'Home'),
       convertConfig(_ovpn, name: 'Work', username: 'u', password: 'p'),
     ]);
-    expect(yaml, contains('proxies: ["Auto", "Home", "Work 1", "Work 2"]'));
+    expect(yaml, contains('proxies: ["Home", "Work 1", "Work 2"]'));
+    expect(yaml, isNot(contains('url-test')));
     expect(yaml, contains('  - MATCH,PROXY'));
+  });
+
+  test('the automatic group never tests OpenVPN nodes', () {
+    final yaml = buildConvertedProfile([
+      convertConfig(_wg, name: 'Home'),
+      convertConfig(_wg, name: 'Cafe'),
+      convertConfig(_ovpn, name: 'Work', username: 'u', password: 'p'),
+    ]);
+    expect(
+      yaml,
+      contains('proxies: ["Auto", "Home", "Cafe", "Work 1", "Work 2"]'),
+    );
+    expect(yaml, contains('type: url-test'));
+    expect(yaml, contains('    proxies: ["Home", "Cafe"]'));
   });
 }
