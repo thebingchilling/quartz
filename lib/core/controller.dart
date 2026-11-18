@@ -338,6 +338,10 @@ class CoreController {
     _interface.stopLog();
   }
 
+  void setRequestsWanted(bool wanted) {
+    _interface.setRequestsWanted(wanted);
+  }
+
   Future<void> requestGc() async {
     await _interface.forceGc();
   }

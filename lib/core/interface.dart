@@ -89,6 +89,9 @@ mixin CoreInterface {
 
   FutureOr<void> stopLog();
 
+  /// The request log polls for new connections, so it is off while hidden.
+  FutureOr<void> setRequestsWanted(bool wanted);
+
   Future<bool> crash();
 
   FutureOr<List<TrackerInfo>> getConnections();
@@ -490,11 +493,15 @@ abstract class CoreHandlerInterface with CoreInterface {
   @override
   FutureOr<void> stopLog() => _invokeUnobserved(CoreMethod.stopLog);
 
+  @override
+  FutureOr<void> setRequestsWanted(bool wanted) =>
+      _invokeUnobserved(CoreMethod.setRequestsWanted, wanted);
+
   /// For calls whose callers never wait on them, so a Core that is gone or
   /// restarting cannot surface as an unhandled asynchronous error.
-  Future<void> _invokeUnobserved(CoreMethod method) async {
+  Future<void> _invokeUnobserved(CoreMethod method, [Object? arguments]) async {
     try {
-      await _invokeMethod<Object?>(method: method);
+      await _invokeMethod<Object?>(method: method, arguments: arguments);
     } catch (error) {
       commonPrint.log(
         '${method.name} failed: $error',

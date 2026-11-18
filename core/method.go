@@ -186,6 +186,7 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	getMemoryStatsMethod:           withoutArguments(handleGetMemoryStats),
 	startLogMethod:                 acknowledged(handleStartLog),
 	stopLogMethod:                  acknowledged(handleStopLog),
+	setRequestsWantedMethod:        withArguments(handleSetRequestsWanted),
 	validateConfigMethod:           withMessage(handleValidateConfig),
 	decryptConfigMethod:            withFallible(handleDecryptConfig),
 	getConfigMethod:                withFallible(handleGetConfig),

@@ -40,6 +40,7 @@ enum CoreMethod {
   sideLoadExternalProvider,
   startLog,
   stopLog,
+  setRequestsWanted,
   startListener,
   stopListener,
   getMemoryStats,

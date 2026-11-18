@@ -315,6 +315,9 @@ func SetEventListener(listener func([]byte)) {
 	eventListener = listener
 	listening.Store(listener != nil)
 	eventListenerLock.Unlock()
+	if listener != nil {
+		wakeConnectionPoll()
+	}
 	if listener == nil {
 		stopRouteWatch()
 	}

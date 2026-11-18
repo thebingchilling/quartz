@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
@@ -214,22 +215,47 @@ func geoUpdatedAt() (time.Time, error) {
 }
 
 // Stock mihomo has no hook for new connections, so they're found by polling:
-// for the request log and for probes waiting to learn their route.
+// for the request log and for probes waiting to learn their route. With
+// neither wanted the poll sleeps, since a 300 ms ticker running for the life
+// of the VPN keeps waking the phone.
 const connectionPollInterval = 300 * time.Millisecond
 
-var connectionPoll sync.Once
+var (
+	connectionPoll     sync.Once
+	connectionPollWake = make(chan struct{}, 1)
+	requestsWanted     atomic.Bool
+)
+
+func init() {
+	requestsWanted.Store(true)
+}
+
+func wakeConnectionPoll() {
+	select {
+	case connectionPollWake <- struct{}{}:
+	default:
+	}
+}
+
+// The host turns request events off while its window or activity is hidden.
+func handleSetRequestsWanted(wanted bool) bool {
+	requestsWanted.Store(wanted)
+	if wanted {
+		wakeConnectionPoll()
+	}
+	return true
+}
 
 func startConnectionPoll() {
 	connectionPoll.Do(func() {
 		safeGo("connectionPoll", func() {
 			seen := map[string]struct{}{}
-			ticker := time.NewTicker(connectionPollInterval)
-			defer ticker.Stop()
-			for range ticker.C {
-				listening := hasEventListener()
+			for {
+				listening := hasEventListener() && requestsWanted.Load()
 				probing := hasPendingProbeRoutes()
 				if !listening && !probing {
 					clear(seen)
+					<-connectionPollWake
 					continue
 				}
 				alive := make(map[string]struct{}, len(seen))
@@ -247,6 +273,7 @@ func startConnectionPoll() {
 					return true
 				})
 				seen = alive
+				time.Sleep(connectionPollInterval)
 			}
 		})
 	})

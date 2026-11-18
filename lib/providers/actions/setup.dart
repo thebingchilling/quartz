@@ -33,7 +33,13 @@ class SetupAction extends _$SetupAction {
   @override
   void build() {
     ref.onDispose(_stopRuntimeTicker);
-    ref.listen(appVisibleProvider, (_, _) => _syncRuntimeTicker());
+    ref.listen(appVisibleProvider, (_, visible) {
+      _syncRuntimeTicker();
+      if (ref.read(coreStatusProvider) == CoreStatus.connected) {
+        _core.setRequestsWanted(visible);
+      }
+    });
+
     ref.listen(
       appSettingProvider.select((state) => state.showTrayTitle),
       (_, _) => _syncRuntimeTicker(),
