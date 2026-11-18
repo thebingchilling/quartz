@@ -52,12 +52,76 @@ jobs:
           sed -i "s/^core_version: .*/core_version: $VERSION/" ../build_config.yaml
 
       - name: Check the Core still builds
+        id: checks
         working-directory: core
         run: |
-          CGO_ENABLED=0 go vet . ./cmd/...
-          CGO_ENABLED=0 go test .
-          GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet -tags=with_gvisor,cmfa . ./mobile ./tun ./platform
-          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go vet . ./cmd/...
+          mkdir -p ../checks
+          check() {
+            local name="$1"
+            shift
+            if ! env "$@" > "../checks/$name.log" 2>&1; then
+              echo "$name|$*" >> ../checks/failed.txt
+            fi
+          }
+          check linux-vet CGO_ENABLED=0 go vet . ./cmd/...
+          check linux-test CGO_ENABLED=0 go test .
+          check android-vet GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet -tags=with_gvisor,cmfa . ./mobile ./tun ./platform
+          check windows-vet GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go vet . ./cmd/...
+          if [ -f ../checks/failed.txt ]; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write the failure report
+        if: steps.checks.outputs.failed == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          previous=$(git show HEAD:build_config.yaml | sed -n 's/^core_version: //p')
+          {
+            echo "# mihomo $VERSION breaks the Quartz Core"
+            echo
+            echo "The update-mihomo workflow moved \`core/go.mod\` from mihomo $previous to $VERSION and these checks failed ($RUN_URL)."
+            echo
+            echo "Quartz stays on mihomo $previous; nothing was pushed."
+            echo
+            echo "Task for the agent: do not change \`core/\`; AGENTS.md keeps it 100% stock, so the fix can't be there."
+            echo "Using the errors below, say which mihomo API change breaks it, then find the newest mihomo release after"
+            echo "$previous that passes every check (rerun update-mihomo with that tag), or report that none does yet."
+            echo
+            while IFS='|' read -r name command; do
+              echo "## $name"
+              echo
+              echo "\`cd core && $command\`"
+              echo
+              echo '```'
+              grep -E -e '--- FAIL|^FAIL|panic:|\.go:[0-9]+' "checks/$name.log" | head -n 60 || true
+              echo '```'
+              echo
+              echo '<details><summary>Full output (last 150 lines)</summary>'
+              echo
+              echo '```'
+              tail -n 150 "checks/$name.log"
+              echo '```'
+              echo
+              echo '</details>'
+              echo
+            done < checks/failed.txt
+          } > mihomo-update-report.md
+          cat mihomo-update-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the report
+        if: steps.checks.outputs.failed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mihomo-update-report
+          path: |
+            mihomo-update-report.md
+            checks/
+
+      - name: Stop on failed checks
+        if: steps.checks.outputs.failed == 'true'
+        run: exit 1
 
       - name: Commit and build a release
         env:
