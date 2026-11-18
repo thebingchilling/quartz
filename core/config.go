@@ -17,7 +17,6 @@ import (
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	authStore "github.com/metacubex/mihomo/listener/auth"
 	LC "github.com/metacubex/mihomo/listener/config"
@@ -70,8 +69,11 @@ func handleGetConfig(path string) (*config.RawConfig, error) {
 }
 
 func handleValidateConfig(path string) error {
-	_, err := handleGetConfig(path)
-	return err
+	raw, err := handleGetConfig(path)
+	if err != nil {
+		return err
+	}
+	return dialerProxyLoop(raw)
 }
 
 func handleDecryptConfig(params DecryptConfigParams) (string, error) {
@@ -95,7 +97,14 @@ func loadConfig(path string) (*config.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg, err := executor.ParseWithBytes(buf)
+	raw, err := config.UnmarshalRawConfig(buf)
+	if err != nil {
+		return nil, err
+	}
+	if err := dialerProxyLoop(raw); err != nil {
+		return nil, err
+	}
+	cfg, err := config.ParseRawConfig(raw)
 	if err != nil {
 		return nil, err
 	}

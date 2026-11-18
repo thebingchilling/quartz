@@ -490,7 +490,8 @@ enum DashboardWidget {
   intranetIp,
   memoryInfo,
   serviceStatus,
-  dnsQueries,
+  // Stock mihomo reports no DNS queries.
+  dnsQueries(platforms: []),
   requests,
   connections,
   runTime,

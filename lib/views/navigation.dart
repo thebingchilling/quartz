@@ -55,7 +55,8 @@ class Navigation implements NavigationPort {
         label: PageLabel.dns,
         builder: (_) =>
             const DnsQueriesView(key: GlobalObjectKey(PageLabel.dns)),
-        modes: [NavigationItemMode.moreFull],
+        // Stock mihomo reports no DNS queries, so the page would stay empty.
+        modes: const [],
       ),
       NavigationItem(
         glyph: AppGlyphs.resources,

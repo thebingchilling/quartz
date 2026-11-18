@@ -24,14 +24,13 @@ What the patched mihomo did, and what replaces it (`core/stock.go`):
 | New-connection hook | `startConnectionPoll()` (request log) and `routedConn.Read` (probe routes) |
 | `features.Android` / `cmfa` changes | `isAndroid`; the Android core builds with stock's `cmfa` tag (`android/core/build.gradle.kts`) |
 | `DefaultTestURL` settable | the core passes its own test URL |
+| Dialer-proxy loop guard | `dialerProxyLoop()` (`core/dialer_loop.go`) refuses the config on validate and apply |
 
 Dropped (VPN-only use doesn't need them):
 
-- DNS query log (`dns.QueryRecord`): the DNS page stays empty.
-- Proxy-only traffic figures: the "only proxy" statistics option counts all traffic.
+- DNS query log (`dns.QueryRecord`): the DNS page and dashboard card are hidden.
+- Proxy-only traffic figures: the figures count all traffic and the "only proxy" option is gone.
 - `use-position` in proxy groups.
-- The dialer-proxy loop guard: a profile whose `dialer-proxy` chain loops back on itself
-  can crash the core.
 - Relaxed certificates for mihomo's own downloads when certificate checks are off
   (`relaxCertVerify` is unused).
 - Live delay pushes from mihomo's own URL tests; the core's delay tests return results.
