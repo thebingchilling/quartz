@@ -3,6 +3,7 @@ package com.follow.clash
 import android.app.Application
 import android.content.Context
 import com.follow.clash.autotunnel.AutoTunnel
+import com.follow.clash.service.modules.SystemDnsWatcher
 import com.follow.clash.common.GlobalState
 
 class FlClashApplication : Application() {
@@ -13,6 +14,7 @@ class FlClashApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        SystemDnsWatcher.start(this)
         AutoTunnel.sync(this)
     }
 }

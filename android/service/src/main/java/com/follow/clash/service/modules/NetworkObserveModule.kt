@@ -1,6 +1,6 @@
 package com.follow.clash.service.modules
 
-import android.app.Service
+import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
@@ -26,11 +26,15 @@ private data class NetworkInfo(
         get() = if (losingUntilMillis > System.currentTimeMillis()) 10 else 0
 }
 
-internal class NetworkObserveModule(private val service: Service) : ServiceModule {
+/** [ownsNetwork] is the VPN's copy, which also resets sockets when the network changes. */
+internal class NetworkObserveModule(
+    private val context: Context,
+    private val ownsNetwork: Boolean = true,
+) : ServiceModule {
 
     private val networkInfos = ConcurrentHashMap<Network, NetworkInfo>()
     private val connectivity by lazy {
-        service.getSystemService<ConnectivityManager>()
+        context.getSystemService<ConnectivityManager>()
     }
     private val mainHandler = Handler(Looper.getMainLooper())
     private var currentDnsList = listOf<String>()
@@ -121,6 +125,7 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
             currentDnsList = dnsList
             Core.updateDNS(dnsList.joinToString(","))
         }
+        if (!ownsNetwork) return
         val network = preferred?.key ?: return
         // Sockets protected onto the network we left stay bound to it; closing
         // them makes apps reconnect now instead of after a TCP timeout.
@@ -135,8 +140,8 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
         try {
             connectivity?.unregisterNetworkCallback(callback)
         } finally {
+            // The DNS list stays: SystemDnsWatcher keeps it current with no VPN running.
             networkInfos.clear()
-            updateDns()
             currentNetwork = null
         }
     }

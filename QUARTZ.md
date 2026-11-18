@@ -163,6 +163,15 @@ Dropped (VPN-only use doesn't need them):
 - **Access control tabs** (Android): All, User apps, System apps and Selected. Secure Folder and
   the work profile have no tab: Android gives each profile its own VPN, so Quartz's VPN never
   carries their apps' traffic; installing Quartz inside that profile is what covers them.
+- **Proxies page:** an automatic group (url-test, fallback, load-balance) that another group
+  offers, like a subscription's Auto next to its servers, isn't shown as a group of its own; it
+  stays a choice in that group. Picking a server inside a subgroup also picks that subgroup in
+  every selector above it.
+- **System DNS with the VPN off (Android):** `SystemDnsWatcher` feeds the Core the phone's DNS
+  servers for the life of the process; the VPN service's observer only ran while connected, so
+  servers given by hostname (all of Windscribe's) failed delay tests until the first connect.
+- **No connect/disconnect toasts:** the service no longer shows "Starting VPN..." and "Stopping
+  VPN..."; toasts that report a failure stay.
 - **Per-app bypass** (Settings → Quartz → Access control, Android and Windows): a blacklist
   (listed apps go around the tunnel) or a whitelist (only listed apps use it). Android uses
   FlClash's own access control in the VPN service; Windows stores program paths in the same
