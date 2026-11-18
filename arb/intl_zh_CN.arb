@@ -910,6 +910,7 @@
   "warpGenerator": "warp 生成器",
   "warpGeneratorDesc": "免费的 Cloudflare warp 配置，有效期 90 天",
   "warpGenerate": "生成",
+  "warpRegenerateConfirm": "用新的 warp 注册替换当前注册？旧的注册会被撤销并停止工作。",
   "warpRegenerate": "重新生成",
   "warpVariant": "协议",
   "warpEndpoint": "端点",

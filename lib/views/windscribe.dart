@@ -8,6 +8,7 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/proxies/top_bar.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -351,34 +352,19 @@ class WindscribeProxiesHeader extends ConsumerWidget {
         );
       }),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: context.appBarInset),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: CommonCard(
-            radius: AppCorner.xl,
-            onPressed: () => BaseNavigator.push<void>(
-              context,
-              const WindscribeLocationsView(),
-            ),
-            child: ListItem(
-              leading: _Flag(code),
-              title: Text(country ?? l.windscribe),
-              subtitle: Text(l.windscribeChangeCountry),
-              trailing: const GlyphIcon(AppGlyphs.chevronForward),
-            ),
-          ),
+    return ProxiesTopBar(
+      bar: CommonCard(
+        radius: AppCorner.xl,
+        onPressed: () =>
+            BaseNavigator.push<void>(context, const WindscribeLocationsView()),
+        child: ListItem(
+          leading: _Flag(code),
+          title: Text(country ?? l.windscribe),
+          subtitle: Text(l.windscribeChangeCountry),
+          trailing: const GlyphIcon(AppGlyphs.chevronForward),
         ),
-        Expanded(
-          child: MediaQuery.removePadding(
-            context: context,
-            removeTop: true,
-            child: FloatingBarScope(inset: 0, child: child),
-          ),
-        ),
-      ],
+      ),
+      child: child,
     );
   }
 }

@@ -7622,6 +7622,16 @@ class AppLocalizations {
     return Intl.message('Generate', name: 'warpGenerate', desc: '', args: []);
   }
 
+  /// `Replace this warp registration with a new one? The old one is revoked and stops working.`
+  String get warpRegenerateConfirm {
+    return Intl.message(
+      'Replace this warp registration with a new one? The old one is revoked and stops working.',
+      name: 'warpRegenerateConfirm',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Regenerate`
   String get warpRegenerate {
     return Intl.message(

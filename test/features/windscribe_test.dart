@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:fl_clash/common/node_summary.dart';
+import 'package:fl_clash/common/yaml.dart';
 import 'package:fl_clash/features/windscribe/windscribe.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -119,6 +121,8 @@ void main() {
     expect(yaml, contains('dns: ["10.255.255.1"]'));
     expect(yaml, contains('  - DOMAIN-SUFFIX,whiskergalaxy.com,DIRECT'));
     expect(yaml, contains('  - GEOIP,LAN,DIRECT,no-resolve'));
+    final proxy = ((loadPlainYaml(yaml) as Map)['proxies'] as List).single;
+    expect(nodeSummary(proxy as Map), 'OpenVPN · TCP 8080');
   });
 
   test('a country no longer listed falls back to the home country', () {

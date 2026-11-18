@@ -910,6 +910,7 @@
   "warpGenerator": "Генератор warp",
   "warpGeneratorDesc": "Бесплатные профили Cloudflare warp на 90 дней",
   "warpGenerate": "Создать",
+  "warpRegenerateConfirm": "Заменить эту регистрацию warp новой? Старая будет отозвана и перестанет работать.",
   "warpRegenerate": "Пересоздать",
   "warpVariant": "Протокол",
   "warpEndpoint": "Конечная точка",

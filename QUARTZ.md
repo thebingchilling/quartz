@@ -67,7 +67,8 @@ Dropped (VPN-only use doesn't need them):
   default/random/custom, MTU, DNS, keepalive. Each one becomes a Clash profile with a
   `wireguard` proxy in a PROXY group; the list shows days left (90 days, or Cloudflare's
   TTL) with regenerate (new registration into the same profile) and delete (revokes it);
-  the profile list shows the same days left on the profile and greys it out once expired.
+  the profile list greys a WARP profile out once expired, and while one runs a bar above its
+  proxies shows the days left with a regenerate button that asks before replacing it.
 - **Proxy lists as subscriptions** (`validateProfile` in `lib/core/controller.dart`,
   `parseBareSocksList` in `lib/common/proxy_list.dart`): a link that serves share links, or bare
   `host:port` / `host:port:user:pass` lines (read as SOCKS5), becomes a profile; one whose

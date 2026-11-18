@@ -6,6 +6,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/list.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
+import 'package:fl_clash/views/warp.dart';
 import 'package:fl_clash/views/windscribe.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -144,7 +145,9 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       menuItems: _buildMenuItems(context),
       title: context.appLocalizations.proxies,
       searchState: AppBarSearchState(onSearch: _onSearch),
-      body: windscribe ? WindscribeProxiesHeader(child: body) : body,
+      body: windscribe
+          ? WindscribeProxiesHeader(child: body)
+          : WarpProxiesHeader(child: body),
     );
   }
 }

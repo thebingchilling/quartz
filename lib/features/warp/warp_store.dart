@@ -51,6 +51,17 @@ class WarpEntry {
   );
 }
 
+/// The WARP registration behind the profile that is current, if it is one.
+final currentWarpEntryProvider = Provider<WarpEntry?>((ref) {
+  final profileId = ref.watch(currentProfileIdProvider);
+  return ref.watch(
+    warpEntriesProvider.select(
+      (entries) =>
+          entries.where((entry) => entry.profileId == profileId).firstOrNull,
+    ),
+  );
+});
+
 final warpEntriesProvider = NotifierProvider<WarpEntries, List<WarpEntry>>(
   WarpEntries.new,
 );

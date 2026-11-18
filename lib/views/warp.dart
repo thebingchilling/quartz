@@ -8,6 +8,7 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/proxies/top_bar.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -288,6 +289,78 @@ class _EntryItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The current WARP registration's time left above its proxies, with a
+/// regenerate that replaces it after asking.
+class WarpProxiesHeader extends ConsumerWidget {
+  const WarpProxiesHeader({super.key, required this.child});
+
+  final Widget child;
+
+  Future<void> _regenerate(WidgetRef ref, WarpEntry entry) async {
+    final l = currentAppLocalizations;
+    final confirmed = await dialogs.showMessage(
+      title: l.warpRegenerate,
+      message: TextSpan(text: l.warpRegenerateConfirm),
+      confirmText: l.warpRegenerate,
+    );
+    if (confirmed != true) return;
+    await globalState.loadingRun(
+      () => ref.read(warpEntriesProvider.notifier).regenerate(entry),
+      title: l.warpGenerator,
+      tag: LoadingTag.profiles,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entry = ref.watch(currentWarpEntryProvider);
+    if (entry == null) return child;
+    final l = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
+    final remaining = entry.expiresAt.difference(DateTime.now());
+    final color = switch (remaining.inDays) {
+      _ when remaining.isNegative => colorScheme.error,
+      < 7 => colorScheme.tertiary,
+      _ => colorScheme.primary,
+    };
+    final left = remaining.inMinutes / WarpRegistration.lifetime.inMinutes;
+    return ProxiesTopBar(
+      bar: CommonCard(
+        radius: AppCorner.xl,
+        child: ListItem(
+          leading: const GlyphIcon(AppGlyphs.cloud),
+          title: Text(entry.name),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                remaining.isNegative
+                    ? l.warpExpired
+                    : l.warpDaysLeft(remaining.inDays),
+                style: context.textTheme.bodySmall?.copyWith(color: color),
+              ),
+              const SizedBox(height: 4),
+              LinearProgressIndicator(
+                minHeight: 4,
+                value: left.clamp(0.0, 1.0),
+                color: color,
+                backgroundColor: color.opacity15,
+              ),
+            ],
+          ),
+          trailing: FilledButton.tonal(
+            onPressed: isLoading ? null : () => _regenerate(ref, entry),
+            child: Text(l.warpRegenerate),
+          ),
+        ),
+      ),
+      child: child,
     );
   }
 }

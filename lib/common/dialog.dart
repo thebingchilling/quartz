@@ -214,7 +214,12 @@ class Dialogs {
     }
   }
 
-  Future<void> openUrl(String url) async {
+  /// [confirm] off opens a link the user tapped knowing where it goes.
+  Future<void> openUrl(String url, {bool confirm = true}) async {
+    if (!confirm) {
+      unawaited(launchUrl(Uri.parse(url)));
+      return;
+    }
     final res = await showMessage(
       message: TextSpan(text: url),
       title: currentAppLocalizations.externalLink,

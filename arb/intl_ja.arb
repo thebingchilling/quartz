@@ -910,6 +910,7 @@
   "warpGenerator": "warp ジェネレーター",
   "warpGeneratorDesc": "無料の Cloudflare warp プロファイル（90 日間有効）",
   "warpGenerate": "生成",
+  "warpRegenerateConfirm": "この warp の登録を新しいものに置き換えますか？古い登録は取り消され、使えなくなります。",
   "warpRegenerate": "再生成",
   "warpVariant": "プロトコル",
   "warpEndpoint": "エンドポイント",

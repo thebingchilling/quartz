@@ -205,7 +205,7 @@ class _DetailsList extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
               child: TextButton.icon(
-                onPressed: () => dialogs.openUrl(mapsUrl),
+                onPressed: () => dialogs.openUrl(mapsUrl, confirm: false),
                 icon: const GlyphIcon(AppGlyphs.openExternal),
                 label: Text(context.appLocalizations.openInGoogleMaps),
               ),

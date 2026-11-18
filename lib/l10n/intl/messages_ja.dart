@@ -1673,6 +1673,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "warpRandomize": MessageLookupByLibrary.simpleMessage("別のものを選ぶ"),
     "warpRegenerate": MessageLookupByLibrary.simpleMessage("再生成"),
+    "warpRegenerateConfirm": MessageLookupByLibrary.simpleMessage(
+      "この warp の登録を新しいものに置き換えますか？古い登録は取り消され、使えなくなります。",
+    ),
     "warpVariant": MessageLookupByLibrary.simpleMessage("プロトコル"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),

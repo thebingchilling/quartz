@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:fl_clash/common/node_summary.dart';
+import 'package:fl_clash/common/yaml.dart';
 import 'package:fl_clash/features/warp/warp.dart';
 import 'package:fl_clash/features/warp/x25519.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,5 +77,7 @@ void main() {
     expect(yaml, contains('amnezia-wg-option:'));
     expect(yaml, contains('i1: "<b 0x01>"'));
     expect(yaml, contains('  - MATCH,PROXY'));
+    final proxy = ((loadPlainYaml(yaml) as Map)['proxies'] as List).single;
+    expect(nodeSummary(proxy as Map), 'WireGuard · AmneziaWG');
   });
 }

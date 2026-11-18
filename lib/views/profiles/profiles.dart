@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/warp/warp.dart';
 import 'package:fl_clash/features/warp/warp_store.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -534,7 +533,7 @@ class ProfileItem extends ConsumerWidget {
           ProfileType.file => SourceKind.file,
           ProfileType.custom => SourceKind.custom,
         },
-        usage: warpExpiry == null ? usage : _warpUsed(warpExpiry),
+        usage: usage,
         tooltip: context.appLocalizations.subscriptionInfo,
         onPressed: usage == null
             ? null
@@ -544,9 +543,7 @@ class ProfileItem extends ConsumerWidget {
       title: _ProfileCardTitle(
         profile: profile,
         expire: warpExpiry ?? subscriptionInfo?.expireDate,
-        info: warpExpiry == null
-            ? _buildTraffic(context)
-            : _WarpRemaining(expiresAt: warpExpiry),
+        info: _buildTraffic(context),
       ),
     );
     return ContextMenuRegion(
@@ -560,50 +557,6 @@ class ProfileItem extends ConsumerWidget {
         },
         child: warpExpired ? Opacity(opacity: 0.4, child: item) : item,
       ),
-    );
-  }
-
-  double _warpUsed(DateTime expiresAt) {
-    final left = expiresAt.difference(DateTime.now()).inMinutes;
-    return (1 - left / WarpRegistration.lifetime.inMinutes).clamp(0.0, 1.0);
-  }
-}
-
-/// The days a WARP registration has left, beside a bar that empties with them.
-class _WarpRemaining extends StatelessWidget {
-  const _WarpRemaining({required this.expiresAt});
-
-  final DateTime expiresAt;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = context.appLocalizations;
-    final colorScheme = context.colorScheme;
-    final remaining = expiresAt.difference(DateTime.now());
-    final color = switch (remaining.inDays) {
-      _ when remaining.isNegative => colorScheme.error,
-      < 7 => colorScheme.tertiary,
-      _ => colorScheme.primary,
-    };
-    final left = remaining.inMinutes / WarpRegistration.lifetime.inMinutes;
-    return Row(
-      children: [
-        Text(
-          remaining.isNegative
-              ? l.warpExpired
-              : l.warpDaysLeft(remaining.inDays),
-          style: context.textTheme.bodySmall?.copyWith(color: color),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: LinearProgressIndicator(
-            minHeight: 4,
-            value: left.clamp(0.0, 1.0),
-            color: color,
-            backgroundColor: color.opacity15,
-          ),
-        ),
-      ],
     );
   }
 }
