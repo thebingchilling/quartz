@@ -183,6 +183,9 @@ class _WarpViewState extends ConsumerState<WarpView> {
     final entries = ref.watch(warpEntriesProvider);
     final store = ref.read(warpEntriesProvider.notifier);
     final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
+    final replaces = entries.any(
+      (entry) => entry.options.variant == _options.variant,
+    );
     return CommonScaffold(
       title: l.warpGenerator,
       isLoading: isLoading,
@@ -206,8 +209,11 @@ class _WarpViewState extends ConsumerState<WarpView> {
                   : () => _run(() async {
                       await store.generate(_options);
                     }),
-              icon: const GlyphIcon(AppGlyphs.add, fill: 1),
-              label: Text(l.warpGenerate),
+              icon: GlyphIcon(
+                replaces ? AppGlyphs.refresh : AppGlyphs.add,
+                fill: 1,
+              ),
+              label: Text(replaces ? l.warpRegenerate : l.warpGenerate),
             ),
           ),
           const SizedBox(height: 8),
@@ -293,24 +299,17 @@ class _EntryItem extends StatelessWidget {
   }
 }
 
-/// The current WARP registration's time left above its proxies, with a
-/// regenerate that replaces it after asking.
+/// The current WARP registration's time left and expiry above its proxies,
+/// with a regenerate that replaces it straight away.
 class WarpProxiesHeader extends ConsumerWidget {
   const WarpProxiesHeader({super.key, required this.child});
 
   final Widget child;
 
   Future<void> _regenerate(WidgetRef ref, WarpEntry entry) async {
-    final l = currentAppLocalizations;
-    final confirmed = await dialogs.showMessage(
-      title: l.warpRegenerate,
-      message: TextSpan(text: l.warpRegenerateConfirm),
-      confirmText: l.warpRegenerate,
-    );
-    if (confirmed != true) return;
     await globalState.loadingRun(
       () => ref.read(warpEntriesProvider.notifier).regenerate(entry),
-      title: l.warpGenerator,
+      title: currentAppLocalizations.warpGenerator,
       tag: LoadingTag.profiles,
     );
   }
@@ -340,9 +339,8 @@ class WarpProxiesHeader extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                remaining.isNegative
-                    ? l.warpExpired
-                    : l.warpDaysLeft(remaining.inDays),
+                '${remaining.isNegative ? l.warpExpired : l.warpDaysLeft(remaining.inDays)}'
+                ' · ${entry.expiresAt.show}',
                 style: context.textTheme.bodySmall?.copyWith(color: color),
               ),
               const SizedBox(height: 4),
@@ -354,9 +352,10 @@ class WarpProxiesHeader extends ConsumerWidget {
               ),
             ],
           ),
-          trailing: FilledButton.tonal(
+          trailing: FilledButton.tonalIcon(
             onPressed: isLoading ? null : () => _regenerate(ref, entry),
-            child: Text(l.warpRegenerate),
+            icon: const GlyphIcon(AppGlyphs.refresh, fill: 1),
+            label: Text(l.warpRegenerate),
           ),
         ),
       ),

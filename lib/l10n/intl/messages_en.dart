@@ -1956,9 +1956,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "warpRandomize": MessageLookupByLibrary.simpleMessage("Pick another"),
     "warpRegenerate": MessageLookupByLibrary.simpleMessage("Regenerate"),
-    "warpRegenerateConfirm": MessageLookupByLibrary.simpleMessage(
-      "Replace this warp registration with a new one? The old one is revoked and stops working.",
-    ),
     "warpVariant": MessageLookupByLibrary.simpleMessage("Protocol"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "WebDAV configuration",
@@ -1981,7 +1978,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "windscribe\'s servers as an OpenVPN profile",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "The list updates when Quartz starts if it\'s over 6 hours old.",
+      "The list updates when Quartz starts if it\'s over 24 hours old, or whenever you update it.",
     ),
     "windscribeLocations": MessageLookupByLibrary.simpleMessage("Locations"),
     "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
@@ -1997,6 +1994,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Need an active Pro plan",
     ),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("Protocol"),
+    "windscribeRefresh": MessageLookupByLibrary.simpleMessage("Refresh"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("Save"),
     "windscribeServerCount": m75,
     "windscribeStatus": m76,

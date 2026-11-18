@@ -350,35 +350,20 @@ class WindscribeProxiesHeader extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListItem(
-              leading: _Flag(code),
-              title: Text(country ?? l.windscribe),
-              subtitle: Text(l.windscribeChangeCountry),
-              trailing: const GlyphIcon(AppGlyphs.chevronForward),
-              onTap: () => BaseNavigator.push<void>(
-                context,
-                const WindscribeLocationsView(),
-              ),
-            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: Row(
                 children: [
-                  Flexible(
-                    child: TextButton.icon(
-                      onPressed: isLoading
-                          ? null
-                          : () => globalState.loadingRun(
-                              store.refresh,
-                              title: l.windscribeUpdate,
-                              tag: LoadingTag.profiles,
-                            ),
-                      icon: const GlyphIcon(AppGlyphs.sync),
-                      label: Text(
-                        l.windscribeUpdate,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                  TextButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () => globalState.loadingRun(
+                            store.refresh,
+                            title: l.windscribeUpdate,
+                            tag: LoadingTag.profiles,
+                          ),
+                    icon: const GlyphIcon(AppGlyphs.sync),
+                    label: Text(l.windscribeRefresh),
                   ),
                   const Spacer(),
                   TextButton.icon(
@@ -409,6 +394,16 @@ class WindscribeProxiesHeader extends ConsumerWidget {
                     label: Text('${settings.port}'),
                   ),
                 ],
+              ),
+            ),
+            ListItem(
+              leading: _Flag(code),
+              title: Text(country ?? l.windscribe),
+              subtitle: Text(l.windscribeChangeCountry),
+              trailing: const GlyphIcon(AppGlyphs.chevronForward),
+              onTap: () => BaseNavigator.push<void>(
+                context,
+                const WindscribeLocationsView(),
               ),
             ),
           ],

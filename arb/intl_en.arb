@@ -912,7 +912,6 @@
   "warpGenerator": "warp generator",
   "warpGeneratorDesc": "Free Cloudflare warp profiles, valid for 90 days",
   "warpGenerate": "Generate",
-  "warpRegenerateConfirm": "Replace this warp registration with a new one? The old one is revoked and stops working.",
   "warpRegenerate": "Regenerate",
   "warpVariant": "Protocol",
   "warpEndpoint": "Endpoint",
@@ -983,6 +982,7 @@
   "windscribePort": "Port",
   "windscribePro": "Pro servers",
   "windscribeProDesc": "Need an active Pro plan",
+  "windscribeRefresh": "Refresh",
   "windscribeUpdate": "Update server list",
   "windscribeStatus": "{count} servers · updated {date}",
   "@windscribeStatus": {
@@ -996,7 +996,7 @@
     }
   },
   "windscribeNotAdded": "Not added yet",
-  "windscribeListDesc": "The list updates when Quartz starts if it's over 6 hours old.",
+  "windscribeListDesc": "The list updates when Quartz starts if it's over 24 hours old, or whenever you update it.",
   "windscribeLocations": "Locations",
   "windscribeServerCount": "{count} servers",
   "@windscribeServerCount": {

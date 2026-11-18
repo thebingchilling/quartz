@@ -1675,9 +1675,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "warpRandomize": MessageLookupByLibrary.simpleMessage("別のものを選ぶ"),
     "warpRegenerate": MessageLookupByLibrary.simpleMessage("再生成"),
-    "warpRegenerateConfirm": MessageLookupByLibrary.simpleMessage(
-      "この warp の登録を新しいものに置き換えますか？古い登録は取り消され、使えなくなります。",
-    ),
     "warpVariant": MessageLookupByLibrary.simpleMessage("プロトコル"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
@@ -1694,7 +1691,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "windscribe のサーバーを OpenVPN プロファイルとして追加",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "Quartz 起動時、一覧が 6 時間以上前なら更新します。",
+      "Quartz 起動時、一覧が 24 時間以上前なら更新します。いつでも手動で更新できます。",
     ),
     "windscribeLocations": MessageLookupByLibrary.simpleMessage("ロケーション"),
     "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
@@ -1706,6 +1703,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "windscribePro": MessageLookupByLibrary.simpleMessage("Pro サーバー"),
     "windscribeProDesc": MessageLookupByLibrary.simpleMessage("有効な Pro プランが必要"),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("プロトコル"),
+    "windscribeRefresh": MessageLookupByLibrary.simpleMessage("更新"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("保存"),
     "windscribeServerCount": m75,
     "windscribeStatus": m76,

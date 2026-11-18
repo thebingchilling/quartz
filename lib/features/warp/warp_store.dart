@@ -136,19 +136,17 @@ class WarpEntries extends Notifier<List<WarpEntry>> {
         ref.read(coreHandlerProvider).validateProfile(path, key),
   );
 
-  String _nameFor(WarpVariant variant) {
-    final base = variant == WarpVariant.awg ? 'warp awg' : 'warp';
-    final taken = {for (final entry in state) entry.name};
-    if (!taken.contains(base)) return base;
-    var n = 2;
-    while (taken.contains('$base $n')) {
-      n++;
-    }
-    return '$base $n';
-  }
+  String _nameFor(WarpVariant variant) =>
+      variant == WarpVariant.awg ? 'warp awg' : 'warp';
 
-  /// Registers with Cloudflare and adds a Clash profile for it.
+  WarpEntry? entryFor(WarpVariant variant) =>
+      state.where((entry) => entry.options.variant == variant).firstOrNull;
+
+  /// Registers with Cloudflare and adds a Clash profile for it; there is one
+  /// profile per variant, so an existing one is regenerated with [options].
   Future<WarpEntry> generate(WarpOptions options) async {
+    final existing = entryFor(options.variant);
+    if (existing != null) return regenerate(existing, options: options);
     final registration = await _api.register();
     final awg = options.variant == WarpVariant.awg
         ? WarpAwg.pick(await _captured())
@@ -175,9 +173,10 @@ class WarpEntries extends Notifier<List<WarpEntry>> {
     return entry;
   }
 
-  /// A new registration (a fresh 90 days) written into the same profile; the
-  /// old one is revoked.
-  Future<void> regenerate(WarpEntry entry) async {
+  /// A new registration (a fresh 90 days) written into the same profile, and
+  /// applied if it runs; the old one is revoked.
+  Future<WarpEntry> regenerate(WarpEntry entry, {WarpOptions? options}) async {
+    final used = options ?? entry.options;
     final profile = ref.read(profilesProvider).getProfile(entry.profileId);
     if (profile == null) {
       await _save([
@@ -187,37 +186,36 @@ class WarpEntries extends Notifier<List<WarpEntry>> {
       throw const WarpException('Its profile was deleted');
     }
     final registration = await _api.register();
-    final awg = entry.options.variant == WarpVariant.awg
+    final awg = used.variant == WarpVariant.awg
         ? WarpAwg.pick(await _captured())
         : null;
-    final updated = await _write(
+    final written = await _write(
       profile,
       buildWarpProfile(
         name: entry.name,
         registration: registration,
-        options: entry.options,
+        options: used,
         awg: awg,
       ),
     );
-    ref.read(profilesProvider.notifier).put(updated);
+    ref.read(profilesActionProvider.notifier).setProfileAndAutoApply(written);
     try {
       await _api.delete(entry.registration);
     } on WarpException catch (error) {
       commonPrint.log('WARP revoke failed: $error');
     }
+    final updated = WarpEntry(
+      profileId: entry.profileId,
+      name: entry.name,
+      options: used,
+      registration: registration,
+      awg: awg,
+    );
     await _save([
       for (final e in state)
-        if (e == entry)
-          WarpEntry(
-            profileId: e.profileId,
-            name: e.name,
-            options: e.options,
-            registration: registration,
-            awg: awg,
-          )
-        else
-          e,
+        if (e == entry) updated else e,
     ]);
+    return updated;
   }
 
   /// Revokes the registration and removes its profile.

@@ -7632,16 +7632,6 @@ class AppLocalizations {
     return Intl.message('Generate', name: 'warpGenerate', desc: '', args: []);
   }
 
-  /// `Replace this warp registration with a new one? The old one is revoked and stops working.`
-  String get warpRegenerateConfirm {
-    return Intl.message(
-      'Replace this warp registration with a new one? The old one is revoked and stops working.',
-      name: 'warpRegenerateConfirm',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Regenerate`
   String get warpRegenerate {
     return Intl.message(
@@ -8139,6 +8129,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Refresh`
+  String get windscribeRefresh {
+    return Intl.message(
+      'Refresh',
+      name: 'windscribeRefresh',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Update server list`
   String get windscribeUpdate {
     return Intl.message(
@@ -8169,10 +8169,10 @@ class AppLocalizations {
     );
   }
 
-  /// `The list updates when Quartz starts if it's over 6 hours old.`
+  /// `The list updates when Quartz starts if it's over 24 hours old, or whenever you update it.`
   String get windscribeListDesc {
     return Intl.message(
-      'The list updates when Quartz starts if it\'s over 6 hours old.',
+      'The list updates when Quartz starts if it\'s over 24 hours old, or whenever you update it.',
       name: 'windscribeListDesc',
       desc: '',
       args: [],

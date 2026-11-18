@@ -2057,9 +2057,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "warpRandomize": MessageLookupByLibrary.simpleMessage("Выбрать другую"),
     "warpRegenerate": MessageLookupByLibrary.simpleMessage("Пересоздать"),
-    "warpRegenerateConfirm": MessageLookupByLibrary.simpleMessage(
-      "Заменить эту регистрацию warp новой? Старая будет отозвана и перестанет работать.",
-    ),
     "warpVariant": MessageLookupByLibrary.simpleMessage("Протокол"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "Настройка WebDAV",
@@ -2082,7 +2079,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Серверы windscribe как профиль OpenVPN",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "Список обновляется при запуске Quartz, если ему больше 6 часов.",
+      "Список обновляется при запуске Quartz, если ему больше 24 часов, или когда вы обновите его вручную.",
     ),
     "windscribeLocations": MessageLookupByLibrary.simpleMessage("Локации"),
     "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
@@ -2100,6 +2097,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Нужен активный план Pro",
     ),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("Протокол"),
+    "windscribeRefresh": MessageLookupByLibrary.simpleMessage("Обновить"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("Сохранить"),
     "windscribeServerCount": m75,
     "windscribeStatus": m76,

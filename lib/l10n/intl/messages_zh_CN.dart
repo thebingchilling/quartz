@@ -1508,9 +1508,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "warpMtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "warpRandomize": MessageLookupByLibrary.simpleMessage("换一个"),
     "warpRegenerate": MessageLookupByLibrary.simpleMessage("重新生成"),
-    "warpRegenerateConfirm": MessageLookupByLibrary.simpleMessage(
-      "用新的 warp 注册替换当前注册？旧的注册会被撤销并停止工作。",
-    ),
     "warpVariant": MessageLookupByLibrary.simpleMessage("协议"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
@@ -1525,7 +1522,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "将 windscribe 的服务器添加为 OpenVPN 配置",
     ),
     "windscribeListDesc": MessageLookupByLibrary.simpleMessage(
-      "Quartz 启动时，如果列表超过 6 小时会自动更新。",
+      "Quartz 启动时，如果列表超过 24 小时会自动更新；也可以随时手动更新。",
     ),
     "windscribeLocations": MessageLookupByLibrary.simpleMessage("位置"),
     "windscribeLocationsEmpty": MessageLookupByLibrary.simpleMessage(
@@ -1537,6 +1534,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "windscribePro": MessageLookupByLibrary.simpleMessage("Pro 服务器"),
     "windscribeProDesc": MessageLookupByLibrary.simpleMessage("需要有效的 Pro 套餐"),
     "windscribeProtocol": MessageLookupByLibrary.simpleMessage("协议"),
+    "windscribeRefresh": MessageLookupByLibrary.simpleMessage("刷新"),
     "windscribeSave": MessageLookupByLibrary.simpleMessage("保存"),
     "windscribeServerCount": m75,
     "windscribeStatus": m76,
