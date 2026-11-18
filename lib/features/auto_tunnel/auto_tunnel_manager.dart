@@ -112,6 +112,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   String? _lastFirewall;
   bool _manualOff = false;
   bool _switching = false;
+  bool _wanted = false;
 
   @override
   void initState() {
@@ -133,6 +134,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     ref.listenManual(isStartProvider, (previous, running) {
       if (running) {
         _manualOff = false;
+        _wanted = true;
       } else if (previous == true && !_switching) {
         _manualOff = true;
       }
@@ -166,7 +168,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
 
   Future<void> _pollApps() async {
     final settings = ref.read(autoTunnelProvider);
-    final watched = {for (final app in settings.apps) app.detected};
+    final watched = settings.watchedApps;
     if (!settings.enabled || watched.isEmpty) return;
     final next = stepOpenApps(
       _openApps,
@@ -226,6 +228,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     if (action == null) return;
     commonPrint.log('Auto-tunnel: $network -> ${action.key}');
     _switching = action.connect;
+    _wanted = action.connect;
     try {
       await applyAutoTunnelAction(ref, action);
     } finally {
@@ -233,26 +236,21 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     }
   }
 
-  /// The kill switch blocks every app but the Core and the TUN adapter;
-  /// a manual stop releases the tunnel kill switches.
+  /// The kill switch blocks every app but the Core and the TUN adapter while
+  /// a tunnel is wanted and isn't up; a manual stop releases it.
   Future<void> _syncFirewall() async {
     if (!mounted || !system.isWindows) return;
     final settings = ref.read(autoTunnelProvider);
     final blockAll =
-        !_manualOff &&
-        blocksAll(settings, _network, ref.read(currentProfileIdProvider));
-    final apps = [
-      for (final app in settings.apps)
-        if (app.killSwitch) app.app,
-    ];
+        !_manualOff && blocksAll(settings, tunnelWanted: _wanted);
     final tunAlias = ref.read(patchClashConfigProvider).tun.device;
-    final key = '$blockAll|${apps.join('|')}|$tunAlias';
+    final key = '$blockAll|$tunAlias';
     if (key == _lastFirewall) return;
     _lastFirewall = key;
     try {
       await helperClient.applyFirewall(
         blockAll: blockAll,
-        apps: apps,
+        apps: const [],
         tunAlias: tunAlias,
       );
     } on HelperException catch (error) {

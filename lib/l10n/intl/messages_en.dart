@@ -347,23 +347,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnel": MessageLookupByLibrary.simpleMessage("Auto-tunnel"),
     "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage("Add app"),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("Add network"),
+    "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("Add rule"),
     "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("Advanced"),
-    "autoTunnelAppKillDesc": MessageLookupByLibrary.simpleMessage(
-      "Blocks this app whenever no tunnel is running, even after you turn the tunnel off yourself.",
+    "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage(
+      "Any mobile data",
     ),
+    "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("Any network"),
+    "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("Any Wi-Fi"),
     "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage(
       "App detection",
     ),
     "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
       "An accessibility service that only sees which app is on screen, in every profile",
     ),
-    "autoTunnelApps": MessageLookupByLibrary.simpleMessage("Apps"),
-    "autoTunnelAppsDesc": MessageLookupByLibrary.simpleMessage(
-      "An app\'s tunnel holds while it\'s open: on screen, or until it\'s closed from the recent apps (on Windows, until it exits). Apps in the work profile or Secure Folder count while on screen.",
-    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Location all the time, for the background",
     ),
+    "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage("Choose apps"),
+    "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("Connect"),
     "autoTunnelCurrentProfile": MessageLookupByLibrary.simpleMessage(
       "Current profile",
     ),
@@ -377,8 +378,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Default tunnel",
     ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Starts and stops the tunnel as the network changes: it connects on untrusted Wi-Fi and on mobile data, and disconnects on a trusted network. An open app\'s tunnel wins. A manual change holds until the network or app changes.",
+      "Rules connect or disconnect the tunnel as your network and open apps change. A manual change holds until they change again.",
     ),
+    "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Type a name"),
     "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
       "Type a program, e.g. bank.exe",
@@ -389,18 +391,23 @@ class MessageLookup extends MessageLookupByLibrary {
       "Keep the selected server",
     ),
     "autoTunnelKillSwitch": MessageLookupByLibrary.simpleMessage("Kill switch"),
+    "autoTunnelKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "Blocks all traffic while a rule wants the tunnel up and it isn\'t, so nothing leaks if it drops. It never blocks when a rule disconnects or when you turn the tunnel off yourself.",
+    ),
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Location, to read Wi-Fi names",
     ),
-    "autoTunnelMobile": MessageLookupByLibrary.simpleMessage("Mobile data"),
-    "autoTunnelMobileTunnel": MessageLookupByLibrary.simpleMessage(
-      "Mobile data tunnel",
+    "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage(
+      "Other profiles",
     ),
-    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage(
-      "Tunnel on mobile data",
+    "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
+      "Apps from Secure Folder and the work profile appear here once opened with app detection on. A rule matches an app in any profile.",
     ),
-    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage(
-      "Tunnel on untrusted Wi-Fi",
+    "autoTunnelOtherwise": MessageLookupByLibrary.simpleMessage(
+      "Disconnect when no rule matches",
+    ),
+    "autoTunnelOtherwiseDesc": MessageLookupByLibrary.simpleMessage(
+      "Saves battery. Off leaves the tunnel as it is.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Type a package name",
@@ -411,13 +418,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Phone, to tell SIM cards apart",
     ),
+    "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Rule"),
+    "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Rules"),
+    "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "Rules with apps are checked first, then the others from the top; the first that matches wins.",
+    ),
     "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Server"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Picks a server in one of the profile\'s groups, e.g. a windscribe city.",
-    ),
-    "autoTunnelSimsDesc": MessageLookupByLibrary.simpleMessage(
-      "Turn a SIM off to leave the tunnel off on its data. Tap a SIM to give it its own tunnel.",
     ),
     "autoTunnelStopNoNetwork": MessageLookupByLibrary.simpleMessage(
       "Stop the tunnel with no network",
@@ -429,30 +438,26 @@ class MessageLookup extends MessageLookupByLibrary {
       "In VPN settings, turn on \"Always-on VPN\" and \"Block connections without VPN\" for Quartz. It also covers restarts and app crashes, which Quartz\'s kill switch can\'t.",
     ),
     "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("Connect to"),
-    "autoTunnelTrustedDesc": MessageLookupByLibrary.simpleMessage(
-      "The tunnel stops on these networks. * matches any characters and ? any one, e.g. Home*.",
-    ),
-    "autoTunnelTrustedNetworks": MessageLookupByLibrary.simpleMessage(
-      "Trusted networks",
-    ),
-    "autoTunnelTunnelKillDesc": MessageLookupByLibrary.simpleMessage(
-      "Blocks all traffic if one of these tunnels drops, until it\'s back or you turn it off yourself. Trusted networks are never blocked.",
-    ),
+    "autoTunnelThen": MessageLookupByLibrary.simpleMessage("Then"),
     "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
       "Usage access",
     ),
     "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
       "Tells when an app is closed from the recent apps",
     ),
+    "autoTunnelWhenOn": MessageLookupByLibrary.simpleMessage(
+      "When connected to",
+    ),
+    "autoTunnelWhenOnDesc": MessageLookupByLibrary.simpleMessage(
+      "Any of these counts. None means any network.",
+    ),
+    "autoTunnelWhileOpen": MessageLookupByLibrary.simpleMessage("While open"),
+    "autoTunnelWhileOpenDesc": MessageLookupByLibrary.simpleMessage(
+      "Any of these apps being open counts. None means no app is needed.",
+    ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
       "Android shows Wi-Fi names only to apps with location access, all the time while Quartz is in the background. Saved networks can\'t be listed: pick a nearby one or type its name.",
-    ),
-    "autoTunnelWifiTunnels": MessageLookupByLibrary.simpleMessage(
-      "Wi-Fi tunnels",
-    ),
-    "autoTunnelWifiTunnelsDesc": MessageLookupByLibrary.simpleMessage(
-      "A network listed here connects its own tunnel instead of the default one.",
     ),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "On Windows the kill switch is a firewall run by Quartz\'s helper service (one admin prompt) and keeps blocking even with Quartz closed. Use TUN so every app goes through the tunnel; in system proxy mode, apps that ignore the proxy stay blocked.",

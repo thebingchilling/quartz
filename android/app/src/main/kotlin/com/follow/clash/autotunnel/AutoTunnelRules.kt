@@ -8,17 +8,28 @@ data class TunnelTarget(
     val key: String get() = "$profileId/${group.orEmpty()}/${proxy.orEmpty()}"
 }
 
-data class WifiTunnel(val ssid: String = "", val target: TunnelTarget? = null)
+data class RuleApp(val app: String = "", val label: String = "", val detected: String = "")
 
-data class SimTunnel(val simId: Int = 0, val target: TunnelTarget? = null)
+/** A null [ssid] is any Wi-Fi and a null [simId] any SIM. */
+data class NetworkMatch(val kind: String = "wifi", val ssid: String? = null, val simId: Int? = null) {
+    fun matches(network: NetworkSnapshot): Boolean = when (kind) {
+        "wifi" -> network.kind == NetworkKind.WIFI &&
+            (ssid == null || (network.ssid != null && AutoTunnelRules.ssidMatches(ssid, network.ssid)))
+        "mobile" -> network.kind == NetworkKind.CELLULAR && (simId == null || simId == network.subscriptionId)
+        else -> false
+    }
+}
 
-data class AppSettings(
+data class AutoTunnelRule(
     val id: String = "",
-    val app: String = "",
-    val detected: String = "",
+    val enabled: Boolean = true,
+    val networks: List<NetworkMatch> = emptyList(),
+    val apps: List<RuleApp> = emptyList(),
+    val connect: Boolean = true,
     val target: TunnelTarget? = null,
-    val killSwitch: Boolean = false,
-)
+) {
+    fun matchesNetwork(network: NetworkSnapshot) = networks.isEmpty() || networks.any { it.matches(network) }
+}
 
 data class RenderedTarget(
     val profileId: Long = 0,
@@ -30,29 +41,17 @@ data class RenderedTarget(
 /** Every field has a default, so Kotlin emits the no-arg constructor Gson needs to keep them for absent keys. */
 data class AutoTunnelSettings(
     val enabled: Boolean = false,
+    val rules: List<AutoTunnelRule> = emptyList(),
     val defaultTunnel: TunnelTarget? = null,
-    val tunnelOnWifi: Boolean = true,
-    val trustedNetworks: List<String> = emptyList(),
-    val wifiTunnels: List<WifiTunnel> = emptyList(),
-    val tunnelOnMobileData: Boolean = true,
-    val mobileSims: List<Int> = emptyList(),
-    val mobileTunnel: TunnelTarget? = null,
-    val simTunnels: List<SimTunnel> = emptyList(),
-    val stopOnNoNetwork: Boolean = false,
+    val disconnectOtherwise: Boolean = true,
+    val stopOnNoNetwork: Boolean = true,
+    val killSwitch: Boolean = false,
     val debounceSeconds: Int = 2,
-    val apps: List<AppSettings> = emptyList(),
-    val killSwitchTunnels: List<Long> = emptyList(),
     val currentProfileId: Long? = null,
     val rendered: Map<String, RenderedTarget> = emptyMap(),
 ) {
     val watchedApps: Set<String>
-        get() = apps.map { it.detected }.toSet()
-
-    val killSwitchApps: List<String>
-        get() = apps.filter { it.killSwitch }.map { it.app }
-
-    val usesKillSwitch: Boolean
-        get() = killSwitchTunnels.isNotEmpty() || apps.any { it.killSwitch }
+        get() = rules.filter { it.enabled }.flatMap { rule -> rule.apps.map { it.detected } }.toSet()
 }
 
 enum class NetworkKind { WIFI, CELLULAR, NONE }
@@ -81,54 +80,30 @@ object AutoTunnelRules {
         return Regex("^$regex$").matches(ssid)
     }
 
-    fun isTrusted(settings: AutoTunnelSettings, network: NetworkSnapshot): Boolean {
-        val ssid = network.ssid ?: return false
-        return network.kind == NetworkKind.WIFI &&
-            settings.trustedNetworks.any { ssidMatches(it, ssid) }
-    }
-
     fun decide(
         settings: AutoTunnelSettings,
         network: NetworkSnapshot,
         openApps: List<String> = emptyList(),
     ): Decision? {
-        fun connect(key: String, target: TunnelTarget?) =
-            Decision(key, true, target ?: settings.defaultTunnel)
-
-        fun disconnect(key: String) = Decision(key, false)
-
+        if (network.kind == NetworkKind.NONE) {
+            return if (settings.stopOnNoNetwork) Decision("none", false) else null
+        }
+        fun act(rule: AutoTunnelRule) = Decision(
+            "rule:${rule.id}",
+            rule.connect,
+            if (rule.connect) rule.target ?: settings.defaultTunnel else null,
+        )
+        val active = settings.rules.filter { it.enabled }
         for (open in openApps) {
-            settings.apps.firstOrNull { it.detected == open }?.let { return connect(it.id, it.target) }
+            active.firstOrNull { rule -> rule.apps.any { it.detected == open } && rule.matchesNetwork(network) }
+                ?.let { return act(it) }
         }
-        return when (network.kind) {
-            NetworkKind.WIFI -> {
-                val ssid = network.ssid
-                when {
-                    isTrusted(settings, network) -> disconnect("wifi:trusted")
-                    !settings.tunnelOnWifi -> disconnect("wifi:off")
-                    else -> {
-                        val preferred = ssid?.let { name ->
-                            settings.wifiTunnels.firstOrNull { it.target != null && ssidMatches(it.ssid, name) }
-                        }
-                        if (preferred == null) connect("wifi", null)
-                        else connect("wifi:${preferred.ssid}", preferred.target)
-                    }
-                }
-            }
-            NetworkKind.CELLULAR -> {
-                val simId = network.subscriptionId
-                val counted = settings.mobileSims.isEmpty() || simId == null || simId in settings.mobileSims
-                if (!settings.tunnelOnMobileData || !counted) return disconnect("mobile:off")
-                val perSim = simId?.let { id -> settings.simTunnels.firstOrNull { it.simId == id }?.target }
-                if (perSim != null) connect("mobile:$simId", perSim)
-                else connect("mobile", settings.mobileTunnel)
-            }
-            NetworkKind.NONE -> if (settings.stopOnNoNetwork) disconnect("none") else null
-        }
+        active.firstOrNull { it.apps.isEmpty() && it.matchesNetwork(network) }?.let { return act(it) }
+        return if (settings.disconnectOtherwise) Decision("otherwise", false) else null
     }
 
-    fun blocksAll(settings: AutoTunnelSettings, network: NetworkSnapshot, tunnelId: Long?): Boolean =
-        tunnelId != null && tunnelId in settings.killSwitchTunnels && !isTrusted(settings, network)
+    fun blocksAll(settings: AutoTunnelSettings, tunnelWanted: Boolean): Boolean =
+        settings.killSwitch && tunnelWanted
 
     fun stepOpenApps(
         recent: List<String>,

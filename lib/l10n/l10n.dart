@@ -7794,86 +7794,6 @@ class AppLocalizations {
     return Intl.message('Wi-Fi', name: 'autoTunnelWifi', desc: '', args: []);
   }
 
-  /// `Tunnel on untrusted Wi-Fi`
-  String get autoTunnelOnWifi {
-    return Intl.message(
-      'Tunnel on untrusted Wi-Fi',
-      name: 'autoTunnelOnWifi',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Trusted networks`
-  String get autoTunnelTrustedNetworks {
-    return Intl.message(
-      'Trusted networks',
-      name: 'autoTunnelTrustedNetworks',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `The tunnel stops on these networks. * matches any characters and ? any one, e.g. Home*.`
-  String get autoTunnelTrustedDesc {
-    return Intl.message(
-      'The tunnel stops on these networks. * matches any characters and ? any one, e.g. Home*.',
-      name: 'autoTunnelTrustedDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Wi-Fi tunnels`
-  String get autoTunnelWifiTunnels {
-    return Intl.message(
-      'Wi-Fi tunnels',
-      name: 'autoTunnelWifiTunnels',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `A network listed here connects its own tunnel instead of the default one.`
-  String get autoTunnelWifiTunnelsDesc {
-    return Intl.message(
-      'A network listed here connects its own tunnel instead of the default one.',
-      name: 'autoTunnelWifiTunnelsDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Tunnel on mobile data`
-  String get autoTunnelOnMobile {
-    return Intl.message(
-      'Tunnel on mobile data',
-      name: 'autoTunnelOnMobile',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Mobile data tunnel`
-  String get autoTunnelMobileTunnel {
-    return Intl.message(
-      'Mobile data tunnel',
-      name: 'autoTunnelMobileTunnel',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Turn a SIM off to leave the tunnel off on its data. Tap a SIM to give it its own tunnel.`
-  String get autoTunnelSimsDesc {
-    return Intl.message(
-      'Turn a SIM off to leave the tunnel off on its data. Tap a SIM to give it its own tunnel.',
-      name: 'autoTunnelSimsDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Advanced`
   String get autoTunnelAdvanced {
     return Intl.message(
@@ -7924,15 +7844,200 @@ class AppLocalizations {
     );
   }
 
+  /// `Rules`
+  String get autoTunnelRules {
+    return Intl.message('Rules', name: 'autoTunnelRules', desc: '', args: []);
+  }
+
+  /// `Rules with apps are checked first, then the others from the top; the first that matches wins.`
+  String get autoTunnelRulesDesc {
+    return Intl.message(
+      'Rules with apps are checked first, then the others from the top; the first that matches wins.',
+      name: 'autoTunnelRulesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add rule`
+  String get autoTunnelAddRule {
+    return Intl.message(
+      'Add rule',
+      name: 'autoTunnelAddRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rule`
+  String get autoTunnelRule {
+    return Intl.message('Rule', name: 'autoTunnelRule', desc: '', args: []);
+  }
+
+  /// `Any network`
+  String get autoTunnelAnyNetwork {
+    return Intl.message(
+      'Any network',
+      name: 'autoTunnelAnyNetwork',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Any Wi-Fi`
+  String get autoTunnelAnyWifi {
+    return Intl.message(
+      'Any Wi-Fi',
+      name: 'autoTunnelAnyWifi',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Any mobile data`
+  String get autoTunnelAnyMobile {
+    return Intl.message(
+      'Any mobile data',
+      name: 'autoTunnelAnyMobile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `When connected to`
+  String get autoTunnelWhenOn {
+    return Intl.message(
+      'When connected to',
+      name: 'autoTunnelWhenOn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Any of these counts. None means any network.`
+  String get autoTunnelWhenOnDesc {
+    return Intl.message(
+      'Any of these counts. None means any network.',
+      name: 'autoTunnelWhenOnDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `While open`
+  String get autoTunnelWhileOpen {
+    return Intl.message(
+      'While open',
+      name: 'autoTunnelWhileOpen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Any of these apps being open counts. None means no app is needed.`
+  String get autoTunnelWhileOpenDesc {
+    return Intl.message(
+      'Any of these apps being open counts. None means no app is needed.',
+      name: 'autoTunnelWhileOpenDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Choose apps`
+  String get autoTunnelChooseApps {
+    return Intl.message(
+      'Choose apps',
+      name: 'autoTunnelChooseApps',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Then`
+  String get autoTunnelThen {
+    return Intl.message('Then', name: 'autoTunnelThen', desc: '', args: []);
+  }
+
+  /// `Connect`
+  String get autoTunnelConnect {
+    return Intl.message(
+      'Connect',
+      name: 'autoTunnelConnect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disconnect`
+  String get autoTunnelDisconnect {
+    return Intl.message(
+      'Disconnect',
+      name: 'autoTunnelDisconnect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disconnect when no rule matches`
+  String get autoTunnelOtherwise {
+    return Intl.message(
+      'Disconnect when no rule matches',
+      name: 'autoTunnelOtherwise',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Saves battery. Off leaves the tunnel as it is.`
+  String get autoTunnelOtherwiseDesc {
+    return Intl.message(
+      'Saves battery. Off leaves the tunnel as it is.',
+      name: 'autoTunnelOtherwiseDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blocks all traffic while a rule wants the tunnel up and it isn't, so nothing leaks if it drops. It never blocks when a rule disconnects or when you turn the tunnel off yourself.`
+  String get autoTunnelKillSwitchDesc {
+    return Intl.message(
+      'Blocks all traffic while a rule wants the tunnel up and it isn\'t, so nothing leaks if it drops. It never blocks when a rule disconnects or when you turn the tunnel off yourself.',
+      name: 'autoTunnelKillSwitchDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Other profiles`
+  String get autoTunnelOtherProfiles {
+    return Intl.message(
+      'Other profiles',
+      name: 'autoTunnelOtherProfiles',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Apps from Secure Folder and the work profile appear here once opened with app detection on. A rule matches an app in any profile.`
+  String get autoTunnelOtherProfilesDesc {
+    return Intl.message(
+      'Apps from Secure Folder and the work profile appear here once opened with app detection on. A rule matches an app in any profile.',
+      name: 'autoTunnelOtherProfilesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Auto-tunnel`
   String get autoTunnel {
     return Intl.message('Auto-tunnel', name: 'autoTunnel', desc: '', args: []);
   }
 
-  /// `Starts and stops the tunnel as the network changes: it connects on untrusted Wi-Fi and on mobile data, and disconnects on a trusted network. An open app's tunnel wins. A manual change holds until the network or app changes.`
+  /// `Rules connect or disconnect the tunnel as your network and open apps change. A manual change holds until they change again.`
   String get autoTunnelDesc {
     return Intl.message(
-      'Starts and stops the tunnel as the network changes: it connects on untrusted Wi-Fi and on mobile data, and disconnects on a trusted network. An open app\'s tunnel wins. A manual change holds until the network or app changes.',
+      'Rules connect or disconnect the tunnel as your network and open apps change. A manual change holds until they change again.',
       name: 'autoTunnelDesc',
       desc: '',
       args: [],
@@ -8324,16 +8429,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Mobile data`
-  String get autoTunnelMobile {
-    return Intl.message(
-      'Mobile data',
-      name: 'autoTunnelMobile',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Add app`
   String get autoTunnelAddApp {
     return Intl.message(
@@ -8359,16 +8454,6 @@ class AppLocalizations {
     return Intl.message(
       'Type a program, e.g. bank.exe',
       name: 'autoTunnelExeName',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `An app's tunnel holds while it's open: on screen, or until it's closed from the recent apps (on Windows, until it exits). Apps in the work profile or Secure Folder count while on screen.`
-  String get autoTunnelAppsDesc {
-    return Intl.message(
-      'An app\'s tunnel holds while it\'s open: on screen, or until it\'s closed from the recent apps (on Windows, until it exits). Apps in the work profile or Secure Folder count while on screen.',
-      name: 'autoTunnelAppsDesc',
       desc: '',
       args: [],
     );
@@ -8444,36 +8529,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Apps`
-  String get autoTunnelApps {
-    return Intl.message('Apps', name: 'autoTunnelApps', desc: '', args: []);
-  }
-
   /// `Kill switch`
   String get autoTunnelKillSwitch {
     return Intl.message(
       'Kill switch',
       name: 'autoTunnelKillSwitch',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Blocks this app whenever no tunnel is running, even after you turn the tunnel off yourself.`
-  String get autoTunnelAppKillDesc {
-    return Intl.message(
-      'Blocks this app whenever no tunnel is running, even after you turn the tunnel off yourself.',
-      name: 'autoTunnelAppKillDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Blocks all traffic if one of these tunnels drops, until it's back or you turn it off yourself. Trusted networks are never blocked.`
-  String get autoTunnelTunnelKillDesc {
-    return Intl.message(
-      'Blocks all traffic if one of these tunnels drops, until it\'s back or you turn it off yourself. Trusted networks are never blocked.',
-      name: 'autoTunnelTunnelKillDesc',
       desc: '',
       args: [],
     );

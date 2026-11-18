@@ -5,16 +5,16 @@ import com.follow.clash.ServiceState
 import com.follow.clash.common.GlobalState
 import kotlinx.coroutines.launch
 
-/** A manual stop releases the tunnel kill switches, never the per-app ones. */
+/**
+ * Blocks every app while a tunnel is wanted and isn't up, so nothing leaks if it drops. A manual
+ * stop or an auto-tunnel disconnect means no tunnel is wanted, which releases it.
+ */
 object KillSwitch {
     @Volatile
     private var manualOff = false
 
     @Volatile
-    private var network = NetworkSnapshot(NetworkKind.NONE)
-
-    @Volatile
-    var nativeProfileId: Long? = null
+    private var tunnelWanted = false
 
     @Volatile
     private var blocking: List<String>? = null
@@ -27,7 +27,10 @@ object KillSwitch {
         watching = true
         GlobalState.launch {
             ServiceState.runState.collect { state ->
-                if (state == RunState.STARTED) manualOff = false
+                if (state == RunState.STARTED) {
+                    manualOff = false
+                    tunnelWanted = true
+                }
                 evaluate()
             }
         }
@@ -37,12 +40,9 @@ object KillSwitch {
         manualOff = true
     }
 
-    fun onNetwork(snapshot: NetworkSnapshot) {
-        val changed = snapshot.kind != network.kind ||
-            snapshot.ssid != network.ssid ||
-            snapshot.subscriptionId != network.subscriptionId
-        network = snapshot
-        if (changed) manualOff = false
+    fun onDecision(connect: Boolean) {
+        tunnelWanted = connect
+        if (connect) manualOff = false
         evaluate()
     }
 
@@ -50,26 +50,22 @@ object KillSwitch {
     internal fun decide(
         settings: AutoTunnelSettings,
         state: RunState,
-        network: NetworkSnapshot,
         manualOff: Boolean,
-        profileId: Long?,
+        tunnelWanted: Boolean,
     ): List<String>? = when {
         state == RunState.STARTED || state == RunState.STARTING -> null
-        !manualOff && AutoTunnelRules.blocksAll(settings, network, profileId) -> emptyList()
-        settings.killSwitchApps.isNotEmpty() -> settings.killSwitchApps
+        !manualOff && AutoTunnelRules.blocksAll(settings, tunnelWanted) -> emptyList()
         else -> null
     }
 
     @Synchronized
     fun evaluate() {
         val context = GlobalState.application
-        val settings = AutoTunnel.settings(context)
         val next = decide(
-            settings,
+            AutoTunnel.settings(context),
             ServiceState.runState.value,
-            network,
             manualOff,
-            nativeProfileId ?: settings.currentProfileId,
+            tunnelWanted,
         )
         if (next == null) {
             if (!released) KillSwitchService.release(context)

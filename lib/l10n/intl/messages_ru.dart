@@ -364,23 +364,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage(
       "Добавить сеть",
     ),
-    "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("Дополнительно"),
-    "autoTunnelAppKillDesc": MessageLookupByLibrary.simpleMessage(
-      "Блокирует это приложение, пока туннель не работает, даже если вы выключили его сами.",
+    "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage(
+      "Добавить правило",
     ),
+    "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("Дополнительно"),
+    "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage(
+      "Любая мобильная сеть",
+    ),
+    "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("Любая сеть"),
+    "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("Любой Wi-Fi"),
     "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage(
       "Определение приложений",
     ),
     "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
       "Служба специальных возможностей, видящая только приложение на экране, во всех профилях",
     ),
-    "autoTunnelApps": MessageLookupByLibrary.simpleMessage("Приложения"),
-    "autoTunnelAppsDesc": MessageLookupByLibrary.simpleMessage(
-      "Туннель приложения действует, пока оно открыто: на экране или пока его не закроют из недавних (в Windows — пока оно не завершится). Приложения рабочего профиля и защищённой папки — только пока на экране.",
-    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение всегда, для фона",
     ),
+    "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage(
+      "Выбрать приложения",
+    ),
+    "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("Подключить"),
     "autoTunnelCurrentProfile": MessageLookupByLibrary.simpleMessage(
       "Текущий профиль",
     ),
@@ -394,8 +399,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Туннель по умолчанию",
     ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Включает и отключает туннель при смене сети: подключается в недоверенных Wi-Fi и в мобильной сети и отключается в доверенной. Туннель открытого приложения важнее. Ручное изменение действует до смены сети или приложения.",
+      "Правила подключают или отключают туннель при смене сети и открытых приложений. Ручное изменение действует до следующей смены.",
     ),
+    "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Отключить"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Ввести имя"),
     "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
       "Введите программу, например bank.exe",
@@ -406,20 +412,23 @@ class MessageLookup extends MessageLookupByLibrary {
       "Оставить выбранный сервер",
     ),
     "autoTunnelKillSwitch": MessageLookupByLibrary.simpleMessage("Kill switch"),
+    "autoTunnelKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "Блокирует весь трафик, пока правило требует туннель, а он не работает, чтобы ничего не утекло при обрыве. Не блокирует, когда правило отключает туннель или вы выключаете его сами.",
+    ),
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение, чтобы видеть имена Wi-Fi",
     ),
-    "autoTunnelMobile": MessageLookupByLibrary.simpleMessage(
-      "Мобильные данные",
+    "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage(
+      "Другие профили",
     ),
-    "autoTunnelMobileTunnel": MessageLookupByLibrary.simpleMessage(
-      "Туннель для мобильной сети",
+    "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
+      "Приложения из Защищённой папки и рабочего профиля появятся здесь, после того как их откроют при включённом определении приложений. Правило срабатывает для приложения в любом профиле.",
     ),
-    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage(
-      "Туннель в мобильной сети",
+    "autoTunnelOtherwise": MessageLookupByLibrary.simpleMessage(
+      "Отключать, если ни одно правило не подходит",
     ),
-    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage(
-      "Туннель в недоверенных сетях Wi-Fi",
+    "autoTunnelOtherwiseDesc": MessageLookupByLibrary.simpleMessage(
+      "Экономит батарею. Если выключено, туннель остаётся как есть.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Введите имя пакета",
@@ -428,13 +437,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Телефон, чтобы различать SIM",
     ),
+    "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Правило"),
+    "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Правила"),
+    "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "Сначала проверяются правила с приложениями, затем остальные сверху вниз; срабатывает первое подходящее.",
+    ),
     "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Сервер"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Выбирает сервер в группе профиля, например город windscribe.",
-    ),
-    "autoTunnelSimsDesc": MessageLookupByLibrary.simpleMessage(
-      "Выключите SIM-карту, чтобы не включать туннель на её данных. Нажмите на SIM-карту, чтобы выбрать для неё свой туннель.",
     ),
     "autoTunnelStopNoNetwork": MessageLookupByLibrary.simpleMessage(
       "Отключать туннель без сети",
@@ -446,30 +457,26 @@ class MessageLookup extends MessageLookupByLibrary {
       "В настройках VPN включите для Quartz «Постоянная VPN» и «Блокировать соединения без VPN». Это защищает и при перезагрузке, и при сбое приложения.",
     ),
     "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("Подключить"),
-    "autoTunnelTrustedDesc": MessageLookupByLibrary.simpleMessage(
-      "В этих сетях туннель отключается. * означает любые символы, ? — один символ, например Home*.",
-    ),
-    "autoTunnelTrustedNetworks": MessageLookupByLibrary.simpleMessage(
-      "Доверенные сети",
-    ),
-    "autoTunnelTunnelKillDesc": MessageLookupByLibrary.simpleMessage(
-      "Если один из этих туннелей обрывается, весь трафик блокируется, пока он не вернётся или вы не отключите его сами. Доверенные сети не блокируются.",
-    ),
+    "autoTunnelThen": MessageLookupByLibrary.simpleMessage("Тогда"),
     "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
       "Доступ к истории использования",
     ),
     "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
       "Определяет, когда приложение закрыто из недавних",
     ),
+    "autoTunnelWhenOn": MessageLookupByLibrary.simpleMessage(
+      "При подключении к",
+    ),
+    "autoTunnelWhenOnDesc": MessageLookupByLibrary.simpleMessage(
+      "Подходит любая из них. Если пусто — любая сеть.",
+    ),
+    "autoTunnelWhileOpen": MessageLookupByLibrary.simpleMessage("Пока открыто"),
+    "autoTunnelWhileOpenDesc": MessageLookupByLibrary.simpleMessage(
+      "Достаточно, чтобы было открыто любое из них. Если пусто — приложение не нужно.",
+    ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
       "Android показывает имена Wi-Fi только приложениям с доступом к местоположению, а в фоне — с доступом «всегда». Сохранённые сети получить нельзя: выберите ближайшую или введите имя.",
-    ),
-    "autoTunnelWifiTunnels": MessageLookupByLibrary.simpleMessage(
-      "Туннели для Wi-Fi",
-    ),
-    "autoTunnelWifiTunnelsDesc": MessageLookupByLibrary.simpleMessage(
-      "Сеть из этого списка подключает свой туннель вместо туннеля по умолчанию.",
     ),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "В Windows kill switch — это брандмауэр службы-помощника Quartz (один запрос прав администратора); он блокирует, даже если Quartz закрыт. Используйте TUN, чтобы через туннель шли все приложения; в режиме системного прокси приложения, игнорирующие прокси, остаются заблокированными.",

@@ -22,14 +22,19 @@ object AutoTunnel {
     private const val MAX_SEEN = 50
     private val gson = Gson()
 
-    fun settings(context: Context): AutoTunnelSettings =
+    @Volatile
+    private var cached: AutoTunnelSettings? = null
+
+    /** Read on every network callback, which Android sends often, so parsed once per update. */
+    fun settings(context: Context): AutoTunnelSettings = cached ?: (
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)?.let {
             runCatching { gson.fromJson(it, AutoTunnelSettings::class.java) }.getOrNull()
         } ?: AutoTunnelSettings()
+        ).also { cached = it }
 
     fun update(context: Context, json: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, json).commit()
-        KillSwitch.nativeProfileId = null
+        cached = null
         sync(context)
         KillSwitch.evaluate()
     }
@@ -38,7 +43,7 @@ object AutoTunnel {
         KillSwitch.watch()
         val intent = Intent(context, AutoTunnelService::class.java)
         val settings = settings(context)
-        if (settings.enabled || settings.usesKillSwitch) {
+        if (settings.enabled || settings.killSwitch) {
             runCatching { ContextCompat.startForegroundService(context, intent) }
         } else {
             context.stopService(intent)
@@ -100,7 +105,6 @@ object AutoTunnel {
             .putString(SHARED_STATE, state.toString())
             .putString(APPLIED, applied)
             .commit()
-        KillSwitch.nativeProfileId = rendered.profileId
         if (ServiceState.isRunRequested) ServiceState.handleSwitchStop()
         ServiceState.handleStartAction()
     }

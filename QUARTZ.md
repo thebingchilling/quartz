@@ -96,21 +96,24 @@ Dropped (VPN-only use doesn't need them):
   up, never an OpenVPN one; a rewrite that leaves the Windscribe profile unchanged doesn't re-apply it (an apply
   reconnects); converted OpenVPN nodes stay out of the automatic url-test group; WARP's
   registration API is only called to generate, regenerate or delete.
-- **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows),
-  modelled on WG Tunnel: a **default tunnel** (a profile with an optional server in one of its
-  groups, or whichever profile is current); **tunnel on untrusted Wi-Fi** with **trusted
-  networks** (`*` and `?` wildcards) that disconnect and **Wi-Fi tunnels** that prefer their own
-  tunnel; **tunnel on mobile data** with a **mobile data tunnel**, and on Android each SIM can be
-  left out or given its own tunnel; **stop with no network**; a **debounce delay**. An app
-  added under Apps connects its tunnel (or the default one) while open and wins over the
-  network. There is no Ethernet handling. It acts only when the network, the open apps or the
+- **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows): a
+  list of **rules**. Each has networks (any Wi-Fi, a named Wi-Fi with `*`/`?` wildcards, any
+  mobile data, a SIM; any of them counts, none means any network), optional apps (any of them
+  open counts), and an action: connect a tunnel (the default one, or a profile with an optional
+  server) or disconnect. Rules with apps are checked first for the most recently opened app, then
+  the network rules from the top; the first match wins. When nothing matches it disconnects (to
+  save battery) unless told to leave the tunnel alone, and with no network it stops by default.
+  The app picker is access control's list and tabs plus **Other profiles**: Secure Folder and
+  work-profile apps app detection has seen. It acts only when the network, the open apps or the
   settings change, so a manual change holds until then (`decideAutoTunnel`, `blocksAll`,
-  `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin; keep them the same). An app counts
-  as open while on screen or until it's closed (removed from recents on Android, exited on
-  Windows), with 4 s of grace.
-  - Kill switch: while no tunnel runs, the last tunnel's kill switch blocks every app except
-    on a trusted network, until the user turns the tunnel off themselves; an app's kill switch
-    blocks that app always while no tunnel runs.
+  `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin; keep them the same). Settings from before
+  rules are turned into rules. An app counts as open while on screen or until it's closed
+  (removed from recents on Android, exited on Windows), with 4 s of grace.
+  - Kill switch: one switch. While a rule wants a tunnel and it isn't up it blocks every app;
+    never after a rule disconnects or the user turns the tunnel off.
+  - Battery: app detection (which polls usage data) only runs while a rule has apps, the service
+    parses its settings once per change instead of on every network callback, and the defaults
+    disconnect when nothing matches and with no network.
   - Android: `AutoTunnelService` (foreground, `specialUse`, back after a reboot; running
     whenever auto-tunnel or any kill switch is on) watches the network and, through
     `AppWatcherService` (accessibility, sees which app is in front in every profile) or

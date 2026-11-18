@@ -50,6 +50,7 @@ class AutoTunnelService : Service() {
     private var appsForRules: List<String> = emptyList()
     private var linger: Job? = null
     private var applying: Job? = null
+    private var appWatch: Job? = null
 
     private val evaluate = Runnable { apply() }
 
@@ -59,13 +60,14 @@ class AutoTunnelService : Service() {
         super.onCreate()
         startForegroundCompat()
         register()
-        watchApps()
+        syncAppWatch()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForegroundCompat()
         // New rules: judge the current network again.
         lastKey = null
+        syncAppWatch()
         schedule()
         return START_STICKY
     }
@@ -120,14 +122,19 @@ class AutoTunnelService : Service() {
         }
     }
 
-    private fun watchApps() {
-        scope.launch {
+    /** App detection polls usage data, so it only runs while a rule waits for an app. */
+    private fun syncAppWatch() {
+        if (AutoTunnel.settings(this).watchedApps.isEmpty()) {
+            appWatch?.cancel()
+            appWatch = null
+            openApps = emptyList()
+            appsForRules = emptyList()
+            return
+        }
+        if (appWatch != null) return
+        appWatch = scope.launch {
             ForegroundApp.activity(this@AutoTunnelService).collect { activity ->
                 val watched = AutoTunnel.settings(this@AutoTunnelService).watchedApps
-                if (watched.isEmpty()) {
-                    openApps = emptyList()
-                    return@collect
-                }
                 val next = AutoTunnelRules.stepOpenApps(
                     openApps,
                     activity.foreground,
@@ -188,12 +195,11 @@ class AutoTunnelService : Service() {
 
     private fun apply() {
         val settings = AutoTunnel.settings(this)
-        if (!settings.enabled && !settings.usesKillSwitch) {
+        if (!settings.enabled && !settings.killSwitch) {
             stopSelf()
             return
         }
         val network = snapshot()
-        KillSwitch.onNetwork(network)
         if (!settings.enabled) return
         val decision = AutoTunnelRules.decide(settings, network, appsForRules)
         val key = "${network.kind}|${network.ssid}|${network.subscriptionId}|${decision?.key}"
@@ -201,6 +207,7 @@ class AutoTunnelService : Service() {
         lastKey = key
         decision ?: return
         GlobalState.log("Auto-tunnel: $network -> ${decision.key}")
+        KillSwitch.onDecision(decision.connect)
         applying?.cancel()
         applying = scope.launch {
             if (AutoTunnelPlugin.apply(AutoTunnel.toJson(decision))) return@launch

@@ -283,21 +283,20 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnel": MessageLookupByLibrary.simpleMessage("自动隧道"),
     "autoTunnelAddApp": MessageLookupByLibrary.simpleMessage("添加应用"),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("添加网络"),
+    "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("添加规则"),
     "autoTunnelAdvanced": MessageLookupByLibrary.simpleMessage("高级"),
-    "autoTunnelAppKillDesc": MessageLookupByLibrary.simpleMessage(
-      "没有隧道运行时阻止此应用，即使你手动关闭了隧道。",
-    ),
+    "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage("任意移动数据"),
+    "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("任意网络"),
+    "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("任意 Wi-Fi"),
     "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage("应用检测"),
     "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
       "仅查看屏幕上是哪个应用的无障碍服务，适用于所有资料",
     ),
-    "autoTunnelApps": MessageLookupByLibrary.simpleMessage("应用"),
-    "autoTunnelAppsDesc": MessageLookupByLibrary.simpleMessage(
-      "应用的隧道在其打开期间保持：在屏幕上，或直到从最近应用中关闭（Windows 上直到退出）。工作资料和安全文件夹中的应用仅在屏幕上时生效。",
-    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "始终允许位置信息，用于后台",
     ),
+    "autoTunnelChooseApps": MessageLookupByLibrary.simpleMessage("选择应用"),
+    "autoTunnelConnect": MessageLookupByLibrary.simpleMessage("连接"),
     "autoTunnelCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
     "autoTunnelDebounce": MessageLookupByLibrary.simpleMessage("防抖延迟"),
     "autoTunnelDebounceDesc": MessageLookupByLibrary.simpleMessage(
@@ -305,8 +304,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelDefaultTunnel": MessageLookupByLibrary.simpleMessage("默认隧道"),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "随网络变化自动启动和停止隧道：在不受信任的 Wi-Fi 和移动数据上连接，在受信任的网络上断开。打开的应用指定的隧道优先。手动更改会保持到网络或应用变化为止。",
+      "规则会随着网络和打开的应用变化自动连接或断开隧道。手动更改会保持到它们再次变化为止。",
     ),
+    "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("断开"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("输入名称"),
     "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
       "输入程序名，如 bank.exe",
@@ -315,25 +315,32 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelGroup": MessageLookupByLibrary.simpleMessage("分组"),
     "autoTunnelKeepServer": MessageLookupByLibrary.simpleMessage("保留已选服务器"),
     "autoTunnelKillSwitch": MessageLookupByLibrary.simpleMessage("断网保护"),
+    "autoTunnelKillSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "当规则需要隧道但隧道未运行时阻止所有流量，避免断线时泄露。规则主动断开或你手动关闭隧道时不会阻止。",
+    ),
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "位置信息，用于读取 Wi-Fi 名称",
     ),
-    "autoTunnelMobile": MessageLookupByLibrary.simpleMessage("移动数据"),
-    "autoTunnelMobileTunnel": MessageLookupByLibrary.simpleMessage("移动数据隧道"),
-    "autoTunnelOnMobile": MessageLookupByLibrary.simpleMessage("在移动数据上启用隧道"),
-    "autoTunnelOnWifi": MessageLookupByLibrary.simpleMessage(
-      "在不受信任的 Wi-Fi 上启用隧道",
+    "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("其他空间"),
+    "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
+      "开启应用检测后，安全文件夹和工作资料中的应用打开过一次就会出现在这里。规则会匹配任何空间中的该应用。",
+    ),
+    "autoTunnelOtherwise": MessageLookupByLibrary.simpleMessage("没有规则匹配时断开"),
+    "autoTunnelOtherwiseDesc": MessageLookupByLibrary.simpleMessage(
+      "更省电。关闭后隧道保持原状。",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("输入包名"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("权限"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("电话，用于区分 SIM 卡"),
+    "autoTunnelRule": MessageLookupByLibrary.simpleMessage("规则"),
+    "autoTunnelRules": MessageLookupByLibrary.simpleMessage("规则"),
+    "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
+      "先检查带应用的规则，再从上往下检查其他规则；第一条匹配的规则生效。",
+    ),
     "autoTunnelSeconds": m0,
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("服务器"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "在配置的某个分组中选择服务器，例如 windscribe 城市。",
-    ),
-    "autoTunnelSimsDesc": MessageLookupByLibrary.simpleMessage(
-      "关闭某张 SIM 卡后，使用其数据时不启用隧道。点按 SIM 卡可为其单独指定隧道。",
     ),
     "autoTunnelStopNoNetwork": MessageLookupByLibrary.simpleMessage("无网络时停止隧道"),
     "autoTunnelSystemKillSwitch": MessageLookupByLibrary.simpleMessage(
@@ -343,24 +350,22 @@ class MessageLookup extends MessageLookupByLibrary {
       "在 VPN 设置中为 Quartz 打开“始终开启的 VPN”和“屏蔽未使用 VPN 的连接”。它还能在重启和应用崩溃时保护你。",
     ),
     "autoTunnelTarget": MessageLookupByLibrary.simpleMessage("连接到"),
-    "autoTunnelTrustedDesc": MessageLookupByLibrary.simpleMessage(
-      "在这些网络上隧道会停止。* 匹配任意字符，? 匹配单个字符，例如 Home*。",
-    ),
-    "autoTunnelTrustedNetworks": MessageLookupByLibrary.simpleMessage("受信任的网络"),
-    "autoTunnelTunnelKillDesc": MessageLookupByLibrary.simpleMessage(
-      "若其中某个隧道断开，则阻止所有流量，直到它恢复或你手动关闭。受信任的网络不会被阻止。",
-    ),
+    "autoTunnelThen": MessageLookupByLibrary.simpleMessage("然后"),
     "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage("使用情况访问权限"),
     "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
       "检测应用何时从最近应用中关闭",
     ),
+    "autoTunnelWhenOn": MessageLookupByLibrary.simpleMessage("连接到以下网络时"),
+    "autoTunnelWhenOnDesc": MessageLookupByLibrary.simpleMessage(
+      "满足其中任意一项即可。未添加表示任意网络。",
+    ),
+    "autoTunnelWhileOpen": MessageLookupByLibrary.simpleMessage("以下应用打开时"),
+    "autoTunnelWhileOpenDesc": MessageLookupByLibrary.simpleMessage(
+      "其中任意应用打开即可。未添加表示不需要应用。",
+    ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWifiDesc": MessageLookupByLibrary.simpleMessage(
       "Android 只向有位置权限的应用显示 Wi-Fi 名称，Quartz 在后台时需要“始终允许”。无法读取已保存的网络：请选择附近的网络或输入名称。",
-    ),
-    "autoTunnelWifiTunnels": MessageLookupByLibrary.simpleMessage("Wi-Fi 专用隧道"),
-    "autoTunnelWifiTunnelsDesc": MessageLookupByLibrary.simpleMessage(
-      "此处列出的网络将连接各自的隧道，而不是默认隧道。",
     ),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "在 Windows 上，断网保护是由 Quartz 助手服务运行的防火墙（需一次管理员确认），即使关闭 Quartz 也会继续阻止。请使用 TUN 让所有应用走隧道；在系统代理模式下，忽略代理的应用会一直被阻止。",
