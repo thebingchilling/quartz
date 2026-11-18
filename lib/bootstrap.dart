@@ -176,16 +176,30 @@ class Bootstrap {
 
   ProviderContainer get _container => globalState.container;
 
+  /// The standalone EXE is meant to run all the time, so its first run turns
+  /// start at login on; turning it off later sticks.
+  Future<void> _startPortableAtLogin() async {
+    const key = 'quartz.portable.autostartSet';
+    if (!Platform.isWindows || !isPortable) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(key) == true) return;
+    _container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(autoLaunch: true));
+    await prefs.setBool(key, true);
+  }
+
   Future<void> _initApp() async {
     unawaited(_container.read(systemActionProvider.notifier).updateTray());
     unawaited(
       _container.read(profilesActionProvider.notifier).autoUpdateProfiles(),
     );
     unawaited(_container.read(commonActionProvider.notifier).autoCheckUpdate());
+    await _startPortableAtLogin();
     unawaited(
       autoLaunch?.updateStatus(_container.read(appSettingProvider).autoLaunch),
     );
-    if (!_container.read(appSettingProvider).silentLaunch) {
+    if (!_container.read(appSettingProvider).silentLaunch && !launchedAtLogin) {
       unawaited(window?.show());
     } else {
       unawaited(window?.hide());

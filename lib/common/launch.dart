@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
@@ -7,11 +8,21 @@ import 'constant.dart';
 import 'system.dart';
 import 'updater.dart';
 
+/// Passed by the login entry, so a start at login opens straight to the tray.
+const autostartArgument = '--autostart';
+
+bool launchedAtLogin = false;
+
 class AutoLaunch {
   static AutoLaunch? _instance;
 
   AutoLaunch._internal() {
-    launcher.setup(appName: appName, appPath: appLaunchPath);
+    launcher.setup(
+      appName: appName,
+      // The Run key splits an unquoted path at its first space.
+      appPath: Platform.isWindows ? '"$appLaunchPath"' : appLaunchPath,
+      args: const [autostartArgument],
+    );
   }
 
   factory AutoLaunch() {

@@ -32,6 +32,7 @@ fn run() -> io::Result<()> {
         }
     };
     let me = std::env::current_exe()?;
+    forget_download_origin(&me);
     Command::new(&app)
         .args(std::env::args_os().skip(1).collect::<Vec<OsString>>())
         .env(PORTABLE_ENV, &me)
@@ -100,6 +101,19 @@ fn prune(root: &Path, keep: usize) {
         let _ = fs::remove_dir_all(path);
     }
 }
+
+/// SmartScreen checks a file each time it runs for as long as it carries the
+/// mark of the web, and clicking "Run anyway" leaves the mark in place; once
+/// Windows has let the EXE start, dropping the mark stops the repeat prompts.
+#[cfg(windows)]
+fn forget_download_origin(exe: &Path) {
+    let mut stream = exe.as_os_str().to_owned();
+    stream.push(":Zone.Identifier");
+    let _ = fs::remove_file(PathBuf::from(stream));
+}
+
+#[cfg(not(windows))]
+fn forget_download_origin(_exe: &Path) {}
 
 #[cfg(windows)]
 fn show_error(message: &str) {
