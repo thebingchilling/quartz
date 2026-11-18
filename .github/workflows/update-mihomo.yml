@@ -1,6 +1,6 @@
 name: update-mihomo
 
-# A release whose API no longer fits core/ fails the checks and pushes nothing.
+# A failed check pushes nothing and leaves a report for an agent to adapt core/.
 on:
   workflow_dispatch:
     inputs:
@@ -63,6 +63,7 @@ jobs:
               echo "$name|$*" >> ../checks/failed.txt
             fi
           }
+          check stock-mihomo sh -c '! grep -E "^replace|=>" go.mod && test ! -d vendor'
           check linux-vet CGO_ENABLED=0 go vet . ./cmd/...
           check linux-test CGO_ENABLED=0 go test .
           check android-vet GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet -tags=with_gvisor,cmfa . ./mobile ./tun ./platform
@@ -85,9 +86,10 @@ jobs:
             echo
             echo "Quartz stays on mihomo $previous; nothing was pushed."
             echo
-            echo "Task for the agent: do not change \`core/\`; AGENTS.md keeps it 100% stock, so the fix can't be there."
-            echo "Using the errors below, say which mihomo API change breaks it, then find the newest mihomo release after"
-            echo "$previous that passes every check (rerun update-mihomo with that tag), or report that none does yet."
+            echo "Task for the agent: adapt FlClash's wrapper in \`core/\` to the mihomo $VERSION API so every check below"
+            echo "passes. mihomo itself must stay identical to the upstream release (AGENTS.md): no fork, \`replace\`, vendoring"
+            echo "or patch. Bump with \`cd core && go get github.com/metacubex/mihomo@$VERSION && go mod tidy\`, set"
+            echo "\`core_version: $VERSION\` in \`build_config.yaml\`, then commit to \`main\`."
             echo
             while IFS='|' read -r name command; do
               echo "## $name"

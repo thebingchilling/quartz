@@ -10,8 +10,10 @@ two commits). Here the core uses **stock `github.com/metacubex/mihomo`** as a no
 module (`core/go.mod`), so updating mihomo is a version bump plus `go mod tidy`; keep
 `core_version` in `build_config.yaml` in step. The `update-mihomo` workflow (Actions → update-mihomo
 → Run workflow, optionally with a tag) does exactly that, checks the Core still builds for every
-target, commits to `main` and starts the release build. `core/` itself is never edited (standing
-rule): fixes for what stock mihomo lacks live in the app.
+target, commits to `main` and starts the release build; when a check fails it pushes nothing and
+leaves a report on the run for an agent. Standing rule: mihomo stays identical to its upstream
+release (no fork, `replace`, vendoring or patch); FlClash's wrapper in `core/` may change when
+necessary, and what can live in the app lives there.
 
 What the patched mihomo did, and what replaces it (`core/stock.go`):
 

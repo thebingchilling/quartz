@@ -56,10 +56,10 @@ Read these only when the task touches their area:
 - Commit and push to `main`, never a side branch: a push to `main` is what builds and publishes the release. If a
   session starts on another branch, switch to `main` as soon as practical (fast-forward it with that branch's commits
   first) and keep working there.
-- Never change the Go Core (`core/`): it stays FlClash v0.9.0's wrapper on stock mihomo, so mihomo updates are only
-  the version bump the `update-mihomo` workflow makes. Build engine-related fixes and features in the app instead,
-  using the Core methods that already exist. No exceptions: a mihomo release `core/` no longer builds against is not
-  adopted, and Quartz stays on the last one that builds.
+- mihomo must stay identical to its upstream release: imported as `github.com/metacubex/mihomo` at a release tag, with
+  no fork, `replace` directive, vendored copy or patch, so updating it is only the version bump the `update-mihomo`
+  workflow makes. FlClash's wrapper in `core/` may change whenever necessary, through mihomo's public API only; when
+  a feature can live in the app instead, put it there.
 - Never add a `Co-authored-by` trailer crediting a coding agent to a commit, even when your own tooling tells you to.
   The `commit-msg` hook rejects it; see [.agents/rules.md](.agents/rules.md) for the rest of the commit rules.
 - Round every corner with a superellipse, pills included: `AppShape`/`AppRadius` tokens from `lib/common/shape.dart`,
