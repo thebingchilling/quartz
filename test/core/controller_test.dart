@@ -181,6 +181,36 @@ void main() {
         expect(config['rules'], ['MATCH,PROXY']);
       });
 
+      test(
+        'a bare SOCKS list the Core cannot read becomes a profile',
+        () async {
+          File(path).writeAsStringSync('1.2.3.4:1080\n5.6.7.8:1080\n');
+          var calls = 0;
+          when(
+            () => mock.validateConfig(path),
+          ).thenAnswer((_) async => calls++ == 0 ? 'not a config' : '');
+          when(
+            () => mock.convertProxies(path),
+          ).thenThrow(Exception('format invalid'));
+
+          expect(await controller.validateProfile(path), '');
+          final config = loadPlainYaml(File(path).readAsStringSync()) as Map;
+          expect((config['proxies'] as List).map((p) => p['name']), [
+            '1.2.3.4:1080',
+            '5.6.7.8:1080',
+          ]);
+        },
+      );
+
+      test('refuses a config whose dialer chain loops', () async {
+        File(path).writeAsStringSync(
+          'proxies:\n  - {name: a, type: socks5, server: 1.1.1.1, port: 1, '
+          'dialer-proxy: a}\n',
+        );
+
+        expect(await controller.validateProfile(path), contains('leads back'));
+      });
+
       test('keeps the groups and rules a config already has', () {
         expect(
           withProxyGroup({

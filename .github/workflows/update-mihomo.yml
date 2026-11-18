@@ -1,0 +1,76 @@
+name: update-mihomo
+
+# A release whose API no longer fits core/ fails the checks and pushes nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: mihomo release tag, e.g. v1.19.33 (empty for the latest)
+        required: false
+
+permissions:
+  contents: write
+  actions: write
+
+env:
+  GO_VERSION: '1.27.1'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+
+      - name: Pick the version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          version="$REQUESTED"
+          if [ -z "$version" ]; then
+            version=$(gh api repos/MetaCubeX/mihomo/releases/latest --jq .tag_name)
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Bump mihomo
+        working-directory: core
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          go get "github.com/metacubex/mihomo@$VERSION"
+          go mod tidy
+          sed -i "s/^core_version: .*/core_version: $VERSION/" ../build_config.yaml
+
+      - name: Check the Core still builds
+        working-directory: core
+        run: |
+          CGO_ENABLED=0 go vet . ./cmd/...
+          CGO_ENABLED=0 go test .
+          GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet -tags=with_gvisor,cmfa . ./mobile ./tun ./platform
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go vet . ./cmd/...
+
+      - name: Commit and build a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git diff --quiet; then
+            echo "Already on mihomo $VERSION"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "build(core): mihomo $VERSION" -m "Changelog: The engine is updated to mihomo $VERSION"
+          git push origin HEAD:main
+          # A push made with the workflow token starts no other workflow.
+          gh workflow run quartz-clash.yml --ref main

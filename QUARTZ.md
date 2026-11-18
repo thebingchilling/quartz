@@ -8,7 +8,10 @@ commit `03f9553`, GPL-3.0). Only v0.9.0 is used; later FlClash releases are not 
 FlClash ships a patched mihomo (`chen08209/Clash.Meta`, branch `FlClash`: v1.19.32 plus
 two commits). Here the core uses **stock `github.com/metacubex/mihomo`** as a normal Go
 module (`core/go.mod`), so updating mihomo is a version bump plus `go mod tidy`; keep
-`core_version` in `build_config.yaml` in step.
+`core_version` in `build_config.yaml` in step. The `update-mihomo` workflow (Actions → update-mihomo
+→ Run workflow, optionally with a tag) does exactly that, checks the Core still builds for every
+target, commits to `main` and starts the release build. `core/` itself is never edited (standing
+rule): fixes for what stock mihomo lacks live in the app.
 
 What the patched mihomo did, and what replaces it (`core/stock.go`):
 
@@ -24,7 +27,7 @@ What the patched mihomo did, and what replaces it (`core/stock.go`):
 | New-connection hook | `startConnectionPoll()` (request log) and `routedConn.Read` (probe routes) |
 | `features.Android` / `cmfa` changes | `isAndroid`; the Android core builds with stock's `cmfa` tag (`android/core/build.gradle.kts`) |
 | `DefaultTestURL` settable | the core passes its own test URL |
-| Dialer-proxy loop guard | `dialerProxyLoop()` (`core/dialer_loop.go`) refuses the config on validate and apply |
+| Dialer-proxy loop guard | the app: `loopingDialers()` (`lib/common/proxy_list.dart`) refuses such a profile on import and drops the looping dialers from the config it applies |
 
 Dropped (VPN-only use doesn't need them):
 
@@ -64,7 +67,7 @@ Dropped (VPN-only use doesn't need them):
   TTL) with regenerate (new registration into the same profile) and delete (revokes it);
   the profile list shows the same days left on the profile and greys it out once expired.
 - **Proxy lists as subscriptions** (`validateProfile` in `lib/core/controller.dart`,
-  `handleConvertProxies` in `core/proxy.go`): a link that serves share links, or bare
+  `parseBareSocksList` in `lib/common/proxy_list.dart`): a link that serves share links, or bare
   `host:port` / `host:port:user:pass` lines (read as SOCKS5), becomes a profile; one whose
   proxies sit in no group gets a PROXY group with an Auto pick and `MATCH,PROXY`, since
   stock mihomo leaves them only in its built-in GLOBAL, which the proxies page hides.

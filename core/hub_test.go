@@ -392,44 +392,6 @@ func TestHandleConvertProxiesRejectsAConfig(t *testing.T) {
 	}
 }
 
-func TestHandleConvertProxiesReadsABareSocksList(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "socks5.txt")
-	list := "# free list\n1.2.3.4:1080\n1.2.3.4:1080\nproxy.example:9050:me:secret\nu:p@[2001:db8::1]:1081\n"
-	if err := os.WriteFile(path, []byte(list), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := handleConvertProxies(path)
-
-	if err != nil {
-		t.Fatalf("handleConvertProxies error: %v", err)
-	}
-	if len(got) != 3 {
-		t.Fatalf("got %d proxies, want 3: %v", len(got), got)
-	}
-	first := got[0]
-	if first["type"] != "socks5" || first["server"] != "1.2.3.4" || first["port"] != 1080 {
-		t.Errorf("first = %v", first)
-	}
-	if got[1]["username"] != "me" || got[1]["password"] != "secret" || got[1]["port"] != 9050 {
-		t.Errorf("second = %v", got[1])
-	}
-	if got[2]["server"] != "2001:db8::1" || got[2]["username"] != "u" {
-		t.Errorf("third = %v", got[2])
-	}
-}
-
-func TestHandleConvertProxiesRejectsTextThatIsNotAList(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "notes.txt")
-	if err := os.WriteFile(path, []byte("1.2.3.4:1080\nnot a proxy\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := handleConvertProxies(path); err == nil {
-		t.Fatal("handleConvertProxies read prose as a proxy list")
-	}
-}
-
 type answeringDNSClient struct{}
 
 func (answeringDNSClient) Address() string  { return "answering" }

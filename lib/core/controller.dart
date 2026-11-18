@@ -112,16 +112,21 @@ class CoreController {
     }
     final message = await validateConfig(path);
     if (message.isEmpty) {
-      final grouped = await compute(_groupedYaml, await file.readAsString());
+      final checked = await compute(_checkedYaml, await file.readAsString());
+      if (checked.error != null) return checked.error!;
+      final grouped = checked.grouped;
       if (grouped == null) return message;
       await file.safeWriteAsString(grouped);
       return validateConfig(path);
     }
-    final List<Map<String, dynamic>> proxies;
+    var proxies = const <Map<String, dynamic>>[];
     try {
       proxies = await _interface.convertProxies(path);
     } on Exception {
-      return message;
+      // Not share links; maybe a bare server list.
+    }
+    if (proxies.isEmpty) {
+      proxies = parseBareSocksList(await file.readAsString()) ?? const [];
     }
     if (proxies.isEmpty) {
       return message;
@@ -344,16 +349,27 @@ class CoreController {
 
 final coreController = CoreController();
 
-String? _groupedYaml(String text) {
-  if (text.contains('proxy-groups') || !text.contains('proxies')) return null;
+/// A config whose dialer chain loops is refused; one with proxies in no
+/// group comes back with [withProxyGroup] applied.
+({String? error, String? grouped}) _checkedYaml(String text) {
+  final needsLoopCheck = text.contains('dialer-proxy');
+  final needsGroup = !text.contains('proxy-groups') && text.contains('proxies');
+  if (!needsLoopCheck && !needsGroup) return (error: null, grouped: null);
   final Object? config;
   try {
     config = loadPlainYaml(text);
   } on Exception {
-    return null;
+    return (error: null, grouped: null);
   }
-  final grouped = withProxyGroup(config);
-  return grouped == null ? null : yaml.encode(grouped);
+  final looping = loopingDialers(config);
+  if (looping.isNotEmpty) {
+    return (
+      error: 'The dialer-proxy of ${looping.join(', ')} leads back to it',
+      grouped: null,
+    );
+  }
+  final grouped = needsGroup ? withProxyGroup(config) : null;
+  return (error: null, grouped: grouped == null ? null : yaml.encode(grouped));
 }
 
 /// Proxies in no group end up only in mihomo's built-in GLOBAL, which the
