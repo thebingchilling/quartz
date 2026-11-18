@@ -170,6 +170,10 @@ Dropped (VPN-only use doesn't need them):
   offers, like a subscription's Auto next to its servers, isn't shown as a group of its own; it
   stays a choice in that group. Picking a server inside a subgroup also picks that subgroup in
   every selector above it.
+- **Battery:** the Core's connection poll (for the request log and route probes) sleeps while
+  neither is wanted; the app turns request events off while hidden (`setRequestsWanted`).
+- **Size:** `GEOIP.dat` and `ASN.mmdb` aren't bundled; mihomo downloads either the first time a
+  profile needs it (geodata mode, IP-ASN rules). `GEOIP.metadb` and `GEOSITE.dat` still are.
 - **System DNS with the VPN off (Android):** `SystemDnsWatcher` feeds the Core the phone's DNS
   servers for the life of the process; the VPN service's observer only ran while connected, so
   servers given by hostname (all of Windscribe's) failed delay tests until the first connect.

@@ -60,7 +60,9 @@ class CoreController {
 
   static Future<void> initGeo() async {
     final homePath = await appPath.homeDirPath;
-    const geoFileNameList = [MMDB, GEOIP, GEOSITE, ASN];
+    // GEOIP.dat (geodata mode) and ASN.mmdb (IP-ASN rules) are rare enough to
+    // leave out of the app; mihomo downloads either when a profile needs it.
+    const geoFileNameList = [MMDB, GEOSITE];
     try {
       for (final geoFileName in geoFileNameList) {
         final geoFile = File(join(homePath, geoFileName));
