@@ -367,6 +367,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Location all the time, for the background",
     ),
+    "autoTunnelBrowse": MessageLookupByLibrary.simpleMessage("Browse"),
     "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("Categories"),
     "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
       "Turn a group of rules on or off at once.",
@@ -391,9 +392,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Dual Messenger",
     ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Type a name"),
-    "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
-      "Type a program, e.g. bank.exe",
-    ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Allow"),
     "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("If open"),
     "autoTunnelIfDesc": MessageLookupByLibrary.simpleMessage(
@@ -440,11 +438,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Phone, to tell SIM cards apart",
     ),
+    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("Programs"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Rule"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Rules"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "Hold and drag to reorder. App rules come first, then the highest rule that matches.",
     ),
+    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("Running"),
     "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage(
       "Secure Folder",
     ),

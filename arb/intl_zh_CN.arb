@@ -994,7 +994,6 @@
   "converterDone": "已添加配置 {name}",
   "autoTunnelAddApp": "添加应用",
   "autoTunnelPackageName": "输入包名",
-  "autoTunnelExeName": "输入程序名，如 bank.exe",
   "autoTunnelServer": "服务器",
   "autoTunnelKeepServer": "保留已选服务器",
   "autoTunnelServerDesc": "可选：在配置的某个分组中选择服务器。",
@@ -1033,5 +1032,8 @@
   "autoTunnelConnectToTitle": "连接到",
   "autoTunnelSecureFolder": "安全文件夹",
   "autoTunnelWorkProfile": "工作资料",
-  "autoTunnelDualMessenger": "双开助手"
+  "autoTunnelDualMessenger": "双开助手",
+  "autoTunnelBrowse": "浏览",
+  "autoTunnelPrograms": "程序",
+  "autoTunnelRunning": "正在运行"
 }

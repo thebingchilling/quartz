@@ -1018,7 +1018,6 @@
   },
   "autoTunnelAddApp": "Add app",
   "autoTunnelPackageName": "Type a package name",
-  "autoTunnelExeName": "Type a program, e.g. bank.exe",
   "autoTunnelServer": "Server",
   "autoTunnelKeepServer": "Keep the selected server",
   "autoTunnelServerDesc": "Optional: pick a server in one of the profile's groups.",
@@ -1071,5 +1070,8 @@
   },
   "autoTunnelSecureFolder": "Secure Folder",
   "autoTunnelWorkProfile": "Work profile",
-  "autoTunnelDualMessenger": "Dual Messenger"
+  "autoTunnelDualMessenger": "Dual Messenger",
+  "autoTunnelBrowse": "Browse",
+  "autoTunnelPrograms": "Programs",
+  "autoTunnelRunning": "Running"
 }

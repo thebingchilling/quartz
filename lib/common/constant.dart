@@ -97,6 +97,7 @@ const coreConnectionWaitDuration = Duration(seconds: 10);
 /// Keep at or below the Core's delay-test concurrency (`delayTestConcurrency`
 /// in core/delay.go).
 const maxConcurrentDelayTests = 32;
+const loginStagger = Duration(seconds: 1);
 const maxConcurrentImports = 4;
 const maxConcurrentIconLoads = 8;
 const animateDuration = Duration(milliseconds: 100);

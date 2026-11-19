@@ -994,7 +994,6 @@
   "converterDone": "Профиль {name} добавлен",
   "autoTunnelAddApp": "Добавить приложение",
   "autoTunnelPackageName": "Введите имя пакета",
-  "autoTunnelExeName": "Введите программу, например bank.exe",
   "autoTunnelServer": "Сервер",
   "autoTunnelKeepServer": "Оставить выбранный сервер",
   "autoTunnelServerDesc": "Необязательно: выберите сервер в одной из групп профиля.",
@@ -1033,5 +1032,8 @@
   "autoTunnelConnectToTitle": "Подключить",
   "autoTunnelSecureFolder": "Защищённая папка",
   "autoTunnelWorkProfile": "Рабочий профиль",
-  "autoTunnelDualMessenger": "Двойной профиль приложений"
+  "autoTunnelDualMessenger": "Двойной профиль приложений",
+  "autoTunnelBrowse": "Обзор",
+  "autoTunnelPrograms": "Программы",
+  "autoTunnelRunning": "Запущенные"
 }

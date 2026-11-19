@@ -6,14 +6,18 @@ class _DelayTestTarget {
     required this.testUrl,
     required this.key,
     this.logsIn = false,
+    this.loginSlot = 0,
   });
 
   final String proxyName;
   final String testUrl;
   final String key;
 
-  /// Each test of an OpenVPN node is a full login, so a failure isn't retried.
+  /// Each test of an OpenVPN node is a full login, so a failure isn't retried
+  /// and the logins of one batch start [loginStagger] apart, which providers
+  /// such as Windscribe accept where a burst from one account is turned away.
   final bool logsIn;
+  final int loginSlot;
 }
 
 typedef _DelayTestBatch = ({List<Proxy> proxies, String? testUrl});
@@ -354,6 +358,7 @@ class ProxiesAction extends _$ProxiesAction {
     );
     final seen = <String>{};
     final targets = <_DelayTestTarget>[];
+    var logins = 0;
     final types = {
       for (final group in groups)
         for (final proxy in group.all) proxy.name: proxy.type,
@@ -374,14 +379,15 @@ class ProxiesAction extends _$ProxiesAction {
         if (!seen.add(key)) {
           continue;
         }
+        final logsIn =
+            types[state.proxyName]?.toLowerCase().contains('openvpn') ?? false;
         targets.add(
           _DelayTestTarget(
             proxyName: state.proxyName,
             testUrl: currentTestUrl,
             key: key,
-            logsIn:
-                types[state.proxyName]?.toLowerCase().contains('openvpn') ??
-                false,
+            logsIn: logsIn,
+            loginSlot: logsIn ? logins++ : 0,
           ),
         );
       }
@@ -431,6 +437,10 @@ class ProxiesAction extends _$ProxiesAction {
       _scheduleDelayFlush();
     }
     try {
+      if (target.loginSlot > 0) {
+        await Future.delayed(loginStagger * target.loginSlot);
+      }
+      if (job.cancelled) return;
       var delay = await _core.getDelay(target.testUrl, target.proxyName);
       // A tunnel set up on first use spends its first test on the handshake;
       // the retry reuses it. Not for OpenVPN, where it is another login.

@@ -92,7 +92,7 @@ Dropped (VPN-only use doesn't need them):
   protocol or port (a rewrite from the saved list, no download) above the country. The list
   refreshes at startup when it is over 24 hours old, or by hand.
 - **No excess logins (standing rule):** nothing contacts Windscribe or WARP on its own beyond
-  that daily list refresh. Delay tests run only when asked, every node of a group at once; a failed test runs once more on the tunnel the first attempt set
+  that daily list refresh. Delay tests run only when asked, every node of a group together, with OpenVPN logins started a second apart; a failed test runs once more on the tunnel the first attempt set
   up, never an OpenVPN one; a rewrite that leaves the Windscribe profile unchanged doesn't re-apply it (an apply
   reconnects); converted OpenVPN nodes stay out of the automatic url-test group; WARP's
   registration API is only called to generate, regenerate or delete.
@@ -110,7 +110,8 @@ Dropped (VPN-only use doesn't need them):
   at once (`decideAutoTunnel`, `blocksAll`, `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin;
   keep them the same). Settings from the version with one default tunnel and kill switch keep
   their rules, take that tunnel and kill switch, and lose the seeded "any Wi-Fi: disconnect".
-  The app picker opens on user apps with the chosen ones first; Other profiles lists every app of the
+  The app picker opens on user apps with the chosen ones first (on Windows: Start menu programs
+  and running ones, plus Browse for an `.exe`; Windows access control uses the same picker); Other profiles lists every app of the
   work profile, Secure Folder (Samsung users 150 and up, asked for by ID) and Dual Messenger (95)
   that `LauncherApps` reveals, apps also installed outside them included, labelled with where they
   are, plus those app detection has seen. An app counts as open while on screen or until it's closed (removed from recents on Android,

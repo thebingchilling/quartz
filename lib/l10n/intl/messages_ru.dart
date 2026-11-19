@@ -386,6 +386,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение всегда, для фона",
     ),
+    "autoTunnelBrowse": MessageLookupByLibrary.simpleMessage("Обзор"),
     "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("Категории"),
     "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
       "Включайте и выключайте группу правил разом.",
@@ -412,9 +413,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Двойной профиль приложений",
     ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Ввести имя"),
-    "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
-      "Введите программу, например bank.exe",
-    ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Разрешить"),
     "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("Если открыто"),
     "autoTunnelIfDesc": MessageLookupByLibrary.simpleMessage(
@@ -459,11 +457,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Телефон, чтобы различать SIM",
     ),
+    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("Программы"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Правило"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Правила"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "Удерживайте и перетаскивайте, чтобы изменить порядок. Сначала правила с приложениями, затем верхнее подходящее.",
     ),
+    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("Запущенные"),
     "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage(
       "Защищённая папка",
     ),

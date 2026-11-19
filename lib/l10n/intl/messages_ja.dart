@@ -310,6 +310,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "常に位置情報（バックグラウンド用）",
     ),
+    "autoTunnelBrowse": MessageLookupByLibrary.simpleMessage("参照"),
     "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("カテゴリ"),
     "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
       "ルールのグループをまとめてオン・オフします。",
@@ -330,9 +331,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "デュアルメッセンジャー",
     ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("名前を入力"),
-    "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
-      "プログラム名を入力（例：bank.exe）",
-    ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("許可"),
     "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("起動中のアプリ"),
     "autoTunnelIfDesc": MessageLookupByLibrary.simpleMessage(
@@ -365,11 +363,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("パッケージ名を入力"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("電話（SIM の識別）"),
+    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("プログラム"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "長押しでドラッグして並べ替え。アプリのルールが先、その後は一致する一番上のルールです。",
     ),
+    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("実行中"),
     "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage("セキュアフォルダ"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("サーバー"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(

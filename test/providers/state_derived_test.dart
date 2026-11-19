@@ -616,7 +616,7 @@ void main() {
       container.read(
         proxyDescProvider(const Proxy(name: 'Selector', type: 'Selector')),
       ),
-      'Selector(Leaf)',
+      'Leaf',
     );
     expect(
       container.read(

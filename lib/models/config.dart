@@ -109,11 +109,8 @@ final List<HotKeyAction> defaultHotKeyActions = system.isWindows
       ];
 
 const List<DashboardWidget> defaultDashboardWidgets = [
-  DashboardWidget.networkSpeed,
-  DashboardWidget.outboundMode,
+  DashboardWidget.runTime,
   DashboardWidget.networkDetection,
-  DashboardWidget.trafficUsage,
-  DashboardWidget.intranetIp,
 ];
 
 const _legacyOutboundModeV2 = 'outboundModeV2';

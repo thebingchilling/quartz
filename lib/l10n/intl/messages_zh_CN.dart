@@ -297,6 +297,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "始终允许位置信息，用于后台",
     ),
+    "autoTunnelBrowse": MessageLookupByLibrary.simpleMessage("浏览"),
     "autoTunnelCategories": MessageLookupByLibrary.simpleMessage("分类"),
     "autoTunnelCategoriesDesc": MessageLookupByLibrary.simpleMessage(
       "一次开启或关闭一组规则。",
@@ -315,9 +316,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("断开"),
     "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage("双开助手"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("输入名称"),
-    "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
-      "输入程序名，如 bank.exe",
-    ),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("允许"),
     "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("如果打开"),
     "autoTunnelIfDesc": MessageLookupByLibrary.simpleMessage("网络或应用留空表示不限。"),
@@ -348,11 +346,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("输入包名"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("权限"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("电话，用于区分 SIM 卡"),
+    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("程序"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("规则"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("规则"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "长按拖动可排序。带应用的规则优先，其次是最上面的匹配规则。",
     ),
+    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("正在运行"),
     "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage("安全文件夹"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("服务器"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(

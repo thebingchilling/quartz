@@ -313,7 +313,7 @@ String proxyDesc(Ref ref, Proxy proxy) {
     final index = groups.indexWhere((element) => element.name == proxy.name);
     if (index == -1) return proxy.type;
     final state = ref.watch(realSelectedProxyStateProvider(proxy.name));
-    return "${proxy.type}(${state.proxyName.isNotEmpty ? state.proxyName : '*'})";
+    return state.proxyName.isNotEmpty ? state.proxyName : proxy.type;
   }
 }
 

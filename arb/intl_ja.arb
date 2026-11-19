@@ -994,7 +994,6 @@
   "converterDone": "プロファイル {name} を追加しました",
   "autoTunnelAddApp": "アプリを追加",
   "autoTunnelPackageName": "パッケージ名を入力",
-  "autoTunnelExeName": "プログラム名を入力（例：bank.exe）",
   "autoTunnelServer": "サーバー",
   "autoTunnelKeepServer": "選択中のサーバーを維持",
   "autoTunnelServerDesc": "任意：プロファイルのグループからサーバーを選びます。",
@@ -1033,5 +1032,8 @@
   "autoTunnelConnectToTitle": "接続先",
   "autoTunnelSecureFolder": "セキュアフォルダ",
   "autoTunnelWorkProfile": "仕事用プロファイル",
-  "autoTunnelDualMessenger": "デュアルメッセンジャー"
+  "autoTunnelDualMessenger": "デュアルメッセンジャー",
+  "autoTunnelBrowse": "参照",
+  "autoTunnelPrograms": "プログラム",
+  "autoTunnelRunning": "実行中"
 }

@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/auto_tunnel/windows_apps.dart';
+import 'package:fl_clash/features/auto_tunnel/auto_tunnel.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/views/auto_tunnel.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,41 +31,21 @@ class AppBypassView extends ConsumerWidget {
   }
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {
-    final l = context.appLocalizations;
-    final running = await runningProgramPaths();
-    if (!context.mounted) return;
-    const manual = '\u0000manual';
-    final picked = await dialogs.showCommonDialog<String>(
-      child: OptionsDialog<String>(
-        title: l.autoTunnelAddApp,
-        options: [...running, manual],
-        textBuilder: (path) => path == manual
-            ? l.autoTunnelExeName
-            : path.split(RegExp(r'[\\/]')).last,
-        value: manual,
-      ),
+    final props = ref.read(vpnSettingProvider).accessControlProps;
+    final whitelist = props.mode == AccessControlMode.acceptSelected;
+    final list = whitelist ? props.acceptList : props.rejectList;
+    final picked = await pickApps(context, [
+      for (final app in list)
+        RuleApp(app: app, label: app.split(RegExp(r'[\\/]')).last),
+    ]);
+    if (picked == null) return;
+    final apps = [for (final app in picked) app.app];
+    _update(
+      ref,
+      (props) => whitelist
+          ? props.copyWith(acceptList: apps)
+          : props.copyWith(rejectList: apps),
     );
-    if (picked == null || !context.mounted) return;
-    var app = picked;
-    if (picked == manual) {
-      final typed = await dialogs.showCommonDialog<String>(
-        child: InputDialog(
-          title: l.autoTunnelAddApp,
-          value: '',
-          labelText: l.autoTunnelExeName,
-        ),
-      );
-      if (typed == null || typed.trim().isEmpty) return;
-      app = typed.trim();
-    }
-    _update(ref, (props) {
-      final whitelist = props.mode == AccessControlMode.acceptSelected;
-      final list = whitelist ? props.acceptList : props.rejectList;
-      if (list.contains(app)) return props;
-      return whitelist
-          ? props.copyWith(acceptList: [...list, app])
-          : props.copyWith(rejectList: [...list, app]);
-    });
   }
 
   @override

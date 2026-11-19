@@ -8284,16 +8284,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Type a program, e.g. bank.exe`
-  String get autoTunnelExeName {
-    return Intl.message(
-      'Type a program, e.g. bank.exe',
-      name: 'autoTunnelExeName',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Server`
   String get autoTunnelServer {
     return Intl.message('Server', name: 'autoTunnelServer', desc: '', args: []);
@@ -8654,6 +8644,31 @@ class AppLocalizations {
     return Intl.message(
       'Dual Messenger',
       name: 'autoTunnelDualMessenger',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Browse`
+  String get autoTunnelBrowse {
+    return Intl.message('Browse', name: 'autoTunnelBrowse', desc: '', args: []);
+  }
+
+  /// `Programs`
+  String get autoTunnelPrograms {
+    return Intl.message(
+      'Programs',
+      name: 'autoTunnelPrograms',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running`
+  String get autoTunnelRunning {
+    return Intl.message(
+      'Running',
+      name: 'autoTunnelRunning',
       desc: '',
       args: [],
     );

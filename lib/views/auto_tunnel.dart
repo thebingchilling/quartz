@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/desktop/helper_client.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -558,7 +559,11 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
     final picked = await _pick<String>(
       context,
       title: l.autoTunnelAddNetwork,
-      options: [named, anyWifi, anyMobile, ...sims.keys],
+      options: [
+        named,
+        anyWifi,
+        if (system.isAndroid) ...[anyMobile, ...sims.keys],
+      ],
       label: (option) => switch (option) {
         named => l.autoTunnelWifi,
         anyWifi => l.autoTunnelAnyWifi,
@@ -592,10 +597,7 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
   }
 
   Future<void> _chooseApps() async {
-    final picked = await BaseNavigator.push<List<RuleApp>>(
-      context,
-      _AppPicker(selected: _rule.apps),
-    );
+    final picked = await pickApps(context, _rule.apps);
     if (picked == null) return;
     _edit((r) => r.copyWith(apps: picked));
   }
@@ -845,10 +847,19 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
   }
 }
 
-enum _AppTab { user, system, otherProfiles }
+/// The app or program picker auto-tunnel rules use; pops the chosen apps.
+Future<List<RuleApp>?> pickApps(BuildContext context, List<RuleApp> selected) =>
+    BaseNavigator.push<List<RuleApp>>(context, _AppPicker(selected: selected));
+
+enum _AppTab { user, system, otherProfiles, programs, running }
+
+final _appTabs = Platform.isWindows
+    ? const [_AppTab.programs, _AppTab.running]
+    : const [_AppTab.user, _AppTab.system, _AppTab.otherProfiles];
 
 /// Access control's list and tabs, chosen apps first, plus the apps of the
-/// work profile and Secure Folder. Pops the chosen apps.
+/// work profile and Secure Folder; on Windows, the Start menu's programs and
+/// the running ones. Pops the chosen apps.
 class _AppPicker extends ConsumerStatefulWidget {
   const _AppPicker({required this.selected});
 
@@ -860,13 +871,14 @@ class _AppPicker extends ConsumerStatefulWidget {
 
 class _AppPickerState extends ConsumerState<_AppPicker>
     with SingleTickerProviderStateMixin {
-  late final _tabs = TabController(length: _AppTab.values.length, vsync: this)
+  late final _tabs = TabController(length: _appTabs.length, vsync: this)
     ..addListener(() => setState(() {}));
   late final Map<String, RuleApp> _chosen = {
     for (final app in widget.selected) app.app: app,
   };
   late final Set<String> _pinned = _chosen.keys.toSet();
   List<Package> _others = const [];
+  List<Package> _running = const [];
   String _query = '';
 
   @override
@@ -899,14 +911,23 @@ class _AppPickerState extends ConsumerState<_AppPicker>
   Future<void> _load() async {
     final l = currentAppLocalizations;
     if (Platform.isWindows) {
-      final running = await runningProgramPaths();
+      final (programs, running) = await (
+        installedPrograms(),
+        runningProgramPaths(),
+      ).wait;
       if (!mounted) return;
-      setState(
-        () => _others = [
-          for (final path in {...running, ..._chosen.keys})
-            _package(path, path.split(RegExp(r'[\\/]')).last),
-        ],
-      );
+      final listed = {for (final (_, path) in programs) path.toLowerCase()};
+      setState(() {
+        _others = [
+          for (final (name, path) in programs) _package(path, name),
+          for (final app in _chosen.values)
+            if (!listed.contains(app.app.toLowerCase()))
+              _package(app.app, app.label),
+        ];
+        _running = [
+          for (final path in running) _package(path, _fileName(path)),
+        ];
+      });
       return;
     }
     final profileApps = await _platform.profileApps().catchError(
@@ -932,14 +953,23 @@ class _AppPickerState extends ConsumerState<_AppPicker>
     );
   }
 
-  Future<void> _typeApp(AppLocalizations l) async {
-    final label = Platform.isWindows
-        ? l.autoTunnelExeName
-        : l.autoTunnelPackageName;
-    final app = await _typed(context, l.autoTunnelChooseApps, label);
-    if (app == null) return;
+  static String _fileName(String path) => path.split(RegExp(r'[\\/]')).last;
+
+  /// Windows browses for a program; Android takes a typed package name.
+  Future<void> _addApp(AppLocalizations l) async {
+    final app = Platform.isWindows
+        ? (await FilePicker.pickFile(
+            type: FileType.custom,
+            allowedExtensions: const ['exe'],
+          ))?.path
+        : await _typed(
+            context,
+            l.autoTunnelChooseApps,
+            l.autoTunnelPackageName,
+          );
+    if (app == null || !mounted) return;
     setState(() {
-      _chosen[app] = RuleApp(app: app, label: app.split(RegExp(r'[\\/]')).last);
+      _chosen[app] = RuleApp(app: app, label: _fileName(app));
       _pinned.add(app);
       if (!_others.any((p) => p.packageName == app)) {
         _others = [..._others, _package(app, _chosen[app]!.label)];
@@ -953,16 +983,15 @@ class _AppPickerState extends ConsumerState<_AppPicker>
     final installed = Platform.isWindows
         ? const <Package>[]
         : ref.watch(packagesProvider);
-    final tab = Platform.isWindows
-        ? _AppTab.otherProfiles
-        : _AppTab.values[_tabs.index];
+    final tab = _appTabs[_tabs.index];
     final query = SearchQuery(_query);
     final packages =
         [
               ...switch (tab) {
                 _AppTab.user => installed.where((p) => !p.system),
                 _AppTab.system => installed.where((p) => p.system),
-                _AppTab.otherProfiles => _others,
+                _AppTab.otherProfiles || _AppTab.programs => _others,
+                _AppTab.running => _running,
               },
             ]
             .whereMatches(query, (p) => [p.label, p.packageName])
@@ -975,9 +1004,13 @@ class _AppPickerState extends ConsumerState<_AppPicker>
       ),
       actions: [
         IconButton(
-          tooltip: l.autoTunnelEnterName,
-          onPressed: () => _typeApp(l),
-          icon: const GlyphIcon(AppGlyphs.edit),
+          tooltip: Platform.isWindows
+              ? l.autoTunnelBrowse
+              : l.autoTunnelEnterName,
+          onPressed: () => _addApp(l),
+          icon: GlyphIcon(
+            Platform.isWindows ? AppGlyphs.importFile : AppGlyphs.edit,
+          ),
         ),
         IconButton(
           tooltip: l.save,
@@ -988,25 +1021,26 @@ class _AppPickerState extends ConsumerState<_AppPicker>
       body: AppBarClearance(
         child: Column(
           children: [
-            if (!Platform.isWindows)
-              TabBar(
-                controller: _tabs,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                dividerColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                tabs: [
-                  for (final tab in _AppTab.values)
-                    Tab(
-                      text: switch (tab) {
-                        _AppTab.user => l.accessTabUser,
-                        _AppTab.system => l.systemApp,
-                        _AppTab.otherProfiles => l.autoTunnelOtherProfiles,
-                      },
-                    ),
-                ],
-              ),
-            if (tab == _AppTab.otherProfiles && !Platform.isWindows)
+            TabBar(
+              controller: _tabs,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              dividerColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              tabs: [
+                for (final tab in _appTabs)
+                  Tab(
+                    text: switch (tab) {
+                      _AppTab.user => l.accessTabUser,
+                      _AppTab.system => l.systemApp,
+                      _AppTab.otherProfiles => l.autoTunnelOtherProfiles,
+                      _AppTab.programs => l.autoTunnelPrograms,
+                      _AppTab.running => l.autoTunnelRunning,
+                    },
+                  ),
+              ],
+            ),
+            if (tab == _AppTab.otherProfiles)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                 child: Text(
