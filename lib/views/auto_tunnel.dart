@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/desktop/helper_client.dart';
@@ -17,6 +18,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
 const _platform = AutoTunnelNotifier.platform;
@@ -92,6 +94,9 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
   AutoTunnelPermissions? _permissions;
   List<SimCard> _sims = const [];
 
+  /// Windows 11 hides the Wi-Fi name from apps until location is on.
+  bool _wifiNameHidden = false;
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +116,16 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
   }
 
   Future<void> _refresh() async {
+    if (system.isWindows) {
+      final onWifi = (await Connectivity().checkConnectivity()).contains(
+        ConnectivityResult.wifi,
+      );
+      final ssid = onWifi
+          ? await WifiSsidManager.instance.getSsid().catchError((_) => null)
+          : '';
+      if (mounted) setState(() => _wifiNameHidden = ssid == null);
+      return;
+    }
     if (!system.isAndroid) return;
     try {
       final permissions = await _platform.permissions();
@@ -126,16 +141,19 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
   }
 
   Future<void> _request(String kind) async {
+    if (system.isWindows) {
+      await launchUrl(Uri.parse('ms-settings:privacy-location'));
+      return;
+    }
     await _platform.request(kind);
     await _refresh();
   }
 
   List<Widget> _permissionItems(AppLocalizations l, AutoTunnelSettings s) {
-    final permissions = _permissions;
-    if (permissions == null) return const [];
     final namesWifi = s.activeRules.any(
       (rule) => rule.networks.any((m) => m.ssid != null),
     );
+    final permissions = _permissions;
     final hasApps = s.watchedApps.isNotEmpty;
     Widget item(String title, Glyph glyph, String kind, {String? subtitle}) =>
         ListItem(
@@ -147,6 +165,13 @@ class _AutoTunnelViewState extends ConsumerState<AutoTunnelView>
             child: Text(l.autoTunnelGrant),
           ),
         );
+    if (system.isWindows) {
+      return [
+        if (namesWifi && _wifiNameHidden)
+          item(l.autoTunnelLocation, AppGlyphs.locate, 'location'),
+      ];
+    }
+    if (permissions == null) return const [];
     return [
       if (namesWifi && !permissions.location)
         item(l.autoTunnelLocation, AppGlyphs.locate, 'location')

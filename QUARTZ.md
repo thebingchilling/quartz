@@ -114,7 +114,8 @@ Dropped (VPN-only use doesn't need them):
   and running ones, plus Browse for an `.exe`; Windows access control uses the same picker); Other profiles lists every app of the
   work profile, Secure Folder (Samsung users 150 and up, asked for by ID) and Dual Messenger (95)
   that `LauncherApps` reveals, apps also installed outside them included, labelled with where they
-  are, plus those app detection has seen. An app counts as open while on screen or until it's closed (removed from recents on Android,
+  are, plus those app detection has seen. On Windows the page asks for location when Windows 11
+  hides the Wi-Fi name a rule needs. An app counts as open while on screen or until it's closed (removed from recents on Android,
   exited on Windows), with 4 s of grace; networks settle for 2 s before a decision.
   - Kill switch: per rule, or for every connecting rule of a category. While that rule is in
     effect and its tunnel isn't up (connecting, dropped, no network, or stopped by the user)
@@ -171,7 +172,7 @@ Dropped (VPN-only use doesn't need them):
 - **IPv6 on (standing rule):** the Core's `ipv6`, the Android VPN's IPv6 route and the DNS a
   profile without its own is given all default to on (FlClash had them off, which left IPv6 traffic
   outside Android's VPN); existing installs are switched on once at startup. Don't turn it off.
-- **Access control tabs** (Android): All, User apps, System apps and Selected. Secure Folder and
+- **Access control tabs** (Android): User apps and System apps, chosen apps first. Secure Folder and
   the work profile have no tab: Android gives each profile its own VPN, so Quartz's VPN never
   carries their apps' traffic; installing Quartz inside that profile is what covers them.
 - **Proxies page:** an automatic group (url-test, fallback, load-balance) that another group

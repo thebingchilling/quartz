@@ -83,8 +83,7 @@ Get-ChildItem $dirs -Recurse -Filter *.lnk -ErrorAction SilentlyContinue | ForEa
 }
 ''';
 
-/// Start menu programs as (name, full path), the desktop's list of
-/// installed apps.
+/// Start menu programs as (name, full path).
 Future<List<(String, String)>> installedPrograms() async {
   if (!Platform.isWindows) return const [];
   final result = await Process.run('powershell', const [
