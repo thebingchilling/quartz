@@ -145,9 +145,15 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           tag="quartz-flclash-0.9.0-${{ github.run_number }}"
-          (cd dist && sha256sum ./* > SHA256SUMS)
+          # Quartz-0.9.0-android-arm64-v8a.apk -> quartz-android-arm64-v8a.apk; the
+          # endings stay, since installed builds' updaters look for them.
+          cd dist
+          for f in Quartz-*; do mv "$f" "quartz-${f#Quartz-*-}"; done
+          rm -f quartz-windows-amd64.zip
+          sha256sum ./* > SHA256SUMS
+          cd ..
           gh release create "$tag" dist/* \
             --target "${{ github.sha }}" \
             --title "Quartz $tag" \
             --latest \
-            --notes "Quartz (FlClash v0.9.0 on stock mihomo), built from \`main\` at ${{ github.sha }}. Android APKs, the Windows installer and a standalone Windows EXE (\`-portable.exe\`), debug-signed."
+            --notes "Quartz (FlClash v0.9.0 on stock mihomo), built from \`main\` at ${{ github.sha }}. Android APKs for arm64 and armeabi-v7a, the Windows installer and a standalone Windows EXE (\`-portable.exe\`), debug-signed."

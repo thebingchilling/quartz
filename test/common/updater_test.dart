@@ -10,11 +10,10 @@ void main() {
   group('updateAssetFor', () {
     final release = {
       'assets': [
-        {'name': 'Quartz-0.9.0-android-arm64-v8a.apk'},
-        {'name': 'Quartz-0.9.0-android-armeabi-v7a.apk'},
-        {'name': 'Quartz-0.9.0-windows-amd64-setup.exe'},
-        {'name': 'Quartz-0.9.0-windows-amd64.zip'},
-        {'name': 'Quartz-0.9.0-windows-amd64-portable.exe'},
+        {'name': 'quartz-android-arm64-v8a.apk'},
+        {'name': 'quartz-android-armeabi-v7a.apk'},
+        {'name': 'quartz-windows-amd64-setup.exe'},
+        {'name': 'quartz-windows-amd64-portable.exe'},
       ],
     };
 
@@ -25,16 +24,31 @@ void main() {
     test('picks the APK for the device ABI', () {
       expect(
         pick('android', '3.13.2 on "android_arm64"'),
-        'Quartz-0.9.0-android-arm64-v8a.apk',
+        'quartz-android-arm64-v8a.apk',
       );
       expect(
         pick('android', '3.13.2 on "android_arm"'),
-        'Quartz-0.9.0-android-armeabi-v7a.apk',
+        'quartz-android-armeabi-v7a.apk',
+      );
+    });
+
+    test('still finds the files of releases named the old way', () {
+      expect(
+        updateAssetFor(
+          {
+            'assets': [
+              {'name': 'Quartz-0.9.0-android-arm64-v8a.apk'},
+            ],
+          },
+          os: 'android',
+          dartPlatform: 'android_arm64',
+        )?['name'],
+        'Quartz-0.9.0-android-arm64-v8a.apk',
       );
     });
 
     test('picks the Windows installer, nothing elsewhere', () {
-      expect(pick('windows', ''), 'Quartz-0.9.0-windows-amd64-setup.exe');
+      expect(pick('windows', ''), 'quartz-windows-amd64-setup.exe');
       expect(pick('linux', ''), isNull);
     });
 
@@ -46,7 +60,7 @@ void main() {
           dartPlatform: '',
           portable: true,
         )?['name'],
-        'Quartz-0.9.0-windows-amd64-portable.exe',
+        'quartz-windows-amd64-portable.exe',
       );
     });
   });

@@ -144,7 +144,7 @@ Dropped (VPN-only use doesn't need them):
   WireGuard/AmneziaWG `.conf` and OpenVPN `.ovpn` files (pasted or opened, several at once)
   become one Clash profile with a PROXY group (and an auto group for more than one).
 - **Windows updates** install silently and start Quartz again, like Android's.
-- **Standalone Windows EXE** (`Quartz-<version>-windows-amd64-portable.exe`,
+- **Standalone Windows EXE** (`quartz-windows-amd64-portable.exe`,
   `services/launcher`): one file that embeds the release zip, unpacks it on first run to
   `%LOCALAPPDATA%\Quartz\app\<hash>` (keeping the two newest versions), and starts
   `Quartz.exe` with `QUARTZ_PORTABLE_EXE` set to its own path; the updater then swaps that
@@ -210,5 +210,9 @@ to `main` is what builds and publishes the release.
 `.github/workflows/quartz-clash.yml` builds Android and Windows (x64) in one run on pushes
 to `main` and by hand, with FlClash's own `setup.dart` (`--env stable`, so no PRE label;
 arm and arm64 APKs only), and publishes both as the latest Quartz release
-`quartz-flclash-0.9.0-<run>`; the release needs both builds.
+`quartz-flclash-0.9.0-<run>`; the release needs both builds. Its files are
+`quartz-android-arm64-v8a.apk`, `quartz-android-armeabi-v7a.apk`,
+`quartz-windows-amd64-setup.exe` and `quartz-windows-amd64-portable.exe`; the Windows zip is only the portable EXE's input. The
+endings are what the updater matches, including in builds already installed, so keep them.
+No 32-bit Windows build: Flutter has none.
 Android builds are signed with the committed debug key `.github/signing/debug.keystore`.
