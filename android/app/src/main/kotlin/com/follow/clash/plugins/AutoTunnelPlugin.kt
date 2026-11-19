@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Process
+import android.os.UserHandle
 import android.telephony.SubscriptionManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -176,17 +177,23 @@ class AutoTunnelPlugin :
             nearby).distinct()
     }
 
-    /** Apps of the work profile, Secure Folder or private space that Android lets Quartz list. */
+    /**
+     * `package\tlabel\tuserId` for each app of another profile Android lets Quartz list, apps also
+     * installed here included. Samsung keeps Secure Folder (users 150 and up) and Dual Messenger
+     * (95) out of the profile list, so those users are asked for by ID as well.
+     */
     private fun profileApps(): List<String> {
         val launcher = GlobalState.application.getSystemService(LauncherApps::class.java)
             ?: return emptyList()
         val me = Process.myUserHandle()
-        return runCatching { launcher.profiles }.getOrNull().orEmpty()
+        val samsung = (SAMSUNG_USERS).map { UserHandle.getUserHandleForUid(it * PER_USER_RANGE) }
+        return (runCatching { launcher.profiles }.getOrNull().orEmpty() + samsung)
+            .distinct()
             .filter { it != me }
-            .flatMap { profile ->
-                runCatching { launcher.getActivityList(null, profile) }.getOrNull().orEmpty()
+            .flatMap { user ->
+                runCatching { launcher.getActivityList(null, user) }.getOrNull().orEmpty()
+                    .map { "${it.applicationInfo.packageName}\t${it.label}\t${user.hashCode()}" }
             }
-            .map { "${it.applicationInfo.packageName}\t${it.label}" }
             .distinct()
     }
 
@@ -223,6 +230,8 @@ class AutoTunnelPlugin :
 
     companion object {
         private const val REQUEST_CODE = 7461
+        private const val PER_USER_RANGE = 100_000
+        private val SAMSUNG_USERS = listOf(95) + (150..160)
         private const val APPLY_TIMEOUT_MS = 30_000L
 
         @Volatile

@@ -313,6 +313,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "根据你的网络和使用的应用自动连接或断开隧道。你手动开启隧道后，规则会等你手动关闭再接管。",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("断开"),
+    "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage("双开助手"),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("输入名称"),
     "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
       "输入程序名，如 bank.exe",
@@ -342,7 +343,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("或"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("其他空间"),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "仅存在于工作资料或安全文件夹中的应用。外面也装了的应用请在“用户应用”中选择：规则对所有副本都有效。",
+      "工作资料和安全文件夹中的应用，并标注所在位置。规则对应用所在的每个资料都有效。",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("输入包名"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("权限"),
@@ -352,6 +353,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "长按拖动可排序。带应用的规则优先，其次是最上面的匹配规则。",
     ),
+    "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage("安全文件夹"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("服务器"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "可选：在配置的某个分组中选择服务器。",
@@ -371,6 +373,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "在 Windows 上使用 Quartz 的辅助服务（需一次管理员确认），即使关闭 Quartz 也会继续阻止。",
     ),
+    "autoTunnelWorkProfile": MessageLookupByLibrary.simpleMessage("工作资料"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自动更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自动更新间隔（分钟）"),
     "back": MessageLookupByLibrary.simpleMessage("返回"),

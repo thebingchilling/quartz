@@ -889,7 +889,15 @@ class _AppPickerState extends ConsumerState<_AppPicker>
     lastUpdateTime: 0,
   );
 
+  /// Samsung gives Secure Folder users 150 and up and Dual Messenger 95.
+  static String _profileName(AppLocalizations l, int? user) => switch (user) {
+    95 => l.autoTunnelDualMessenger,
+    final id? when id >= 150 && id <= 160 => l.autoTunnelSecureFolder,
+    _ => l.autoTunnelWorkProfile,
+  };
+
   Future<void> _load() async {
+    final l = currentAppLocalizations;
     if (Platform.isWindows) {
       final running = await runningProgramPaths();
       if (!mounted) return;
@@ -906,12 +914,22 @@ class _AppPickerState extends ConsumerState<_AppPicker>
     );
     final seen = await _platform.seenApps().catchError((_) => const <String>[]);
     if (!mounted) return;
-    final others = <String, Package>{};
+    final labels = <String, String>{};
+    final profiles = <String, Set<String>>{};
     for (final entry in [...profileApps, ...seen]) {
-      final [app, ...rest] = entry.split('\t');
-      others.putIfAbsent(app, () => _package(app, rest.join('\t')));
+      final parts = entry.split('\t');
+      final app = parts.first;
+      labels.putIfAbsent(app, () => parts.length > 1 ? parts[1] : app);
+      if (parts.length > 2) {
+        (profiles[app] ??= {}).add(_profileName(l, int.tryParse(parts[2])));
+      }
     }
-    setState(() => _others = others.values.toList());
+    setState(
+      () => _others = [
+        for (final MapEntry(key: app, value: label) in labels.entries)
+          _package(app, [label, ...?profiles[app]?.sorted()].join(' · ')),
+      ],
+    );
   }
 
   Future<void> _typeApp(AppLocalizations l) async {

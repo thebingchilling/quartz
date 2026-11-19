@@ -387,6 +387,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Connects or disconnects the tunnel for you, based on your network and the apps you use. If you turn the tunnel on yourself, rules wait until you turn it off.",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
+    "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage(
+      "Dual Messenger",
+    ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Type a name"),
     "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
       "Type a program, e.g. bank.exe",
@@ -426,7 +429,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Other profiles",
     ),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "Apps that are only in the work profile or Secure Folder. For an app you also have outside them, pick it under User apps: the rule covers every copy.",
+      "Apps in the work profile or Secure Folder, labelled with where they are. A rule matches an app in every profile it\'s in.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Type a package name",
@@ -441,6 +444,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Rules"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "Hold and drag to reorder. App rules come first, then the highest rule that matches.",
+    ),
+    "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage(
+      "Secure Folder",
     ),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Server"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
@@ -462,6 +468,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "On Windows it uses Quartz\'s helper (one admin prompt) and keeps blocking when Quartz is closed.",
+    ),
+    "autoTunnelWorkProfile": MessageLookupByLibrary.simpleMessage(
+      "Work profile",
     ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Auto update"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(

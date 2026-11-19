@@ -408,6 +408,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сам подключает и отключает туннель в зависимости от сети и приложений. Если вы включили туннель сами, правила ждут, пока вы его не выключите.",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Отключить"),
+    "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage(
+      "Двойной профиль приложений",
+    ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Ввести имя"),
     "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
       "Введите программу, например bank.exe",
@@ -447,7 +450,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Другие профили",
     ),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "Приложения, которые есть только в рабочем профиле или Защищённой папке. Если приложение установлено и вне их, выберите его в «Пользовательских»: правило действует на все копии.",
+      "Приложения рабочего профиля и Защищённой папки с подписью, где они находятся. Правило действует на приложение во всех профилях.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Введите имя пакета",
@@ -460,6 +463,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Правила"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "Удерживайте и перетаскивайте, чтобы изменить порядок. Сначала правила с приложениями, затем верхнее подходящее.",
+    ),
+    "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage(
+      "Защищённая папка",
     ),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Сервер"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
@@ -481,6 +487,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "В Windows работает через помощника Quartz (один запрос администратора) и блокирует даже при закрытом Quartz.",
+    ),
+    "autoTunnelWorkProfile": MessageLookupByLibrary.simpleMessage(
+      "Рабочий профиль",
     ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Автообновление"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(

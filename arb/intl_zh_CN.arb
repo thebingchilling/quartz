@@ -941,7 +941,7 @@
   "autoTunnelDisconnect": "断开",
   "autoTunnelKillSwitchDesc": "隧道断开时阻止上网",
   "autoTunnelOtherProfiles": "其他空间",
-  "autoTunnelOtherProfilesDesc": "仅存在于工作资料或安全文件夹中的应用。外面也装了的应用请在“用户应用”中选择：规则对所有副本都有效。",
+  "autoTunnelOtherProfilesDesc": "工作资料和安全文件夹中的应用，并标注所在位置。规则对应用所在的每个资料都有效。",
   "autoTunnel": "自动隧道",
   "autoTunnelDesc": "根据你的网络和使用的应用自动连接或断开隧道。你手动开启隧道后，规则会等你手动关闭再接管。",
   "autoTunnelAddNetwork": "添加网络",
@@ -1030,5 +1030,8 @@
   "autoTunnelOnEndDesc": "当此规则不再匹配且没有其他规则匹配时执行。",
   "autoTunnelKeep": "保持不变",
   "autoTunnelConnectTo": "连接到 {name}",
-  "autoTunnelConnectToTitle": "连接到"
+  "autoTunnelConnectToTitle": "连接到",
+  "autoTunnelSecureFolder": "安全文件夹",
+  "autoTunnelWorkProfile": "工作资料",
+  "autoTunnelDualMessenger": "双开助手"
 }

@@ -110,9 +110,10 @@ Dropped (VPN-only use doesn't need them):
   at once (`decideAutoTunnel`, `blocksAll`, `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin;
   keep them the same). Settings from the version with one default tunnel and kill switch keep
   their rules, take that tunnel and kill switch, and lose the seeded "any Wi-Fi: disconnect".
-  The app picker opens on user apps with the chosen ones first; Other profiles lists the work
-  profile, Secure Folder and private space apps `LauncherApps` reveals plus those app detection
-  has seen. An app counts as open while on screen or until it's closed (removed from recents on Android,
+  The app picker opens on user apps with the chosen ones first; Other profiles lists every app of the
+  work profile, Secure Folder (Samsung users 150 and up, asked for by ID) and Dual Messenger (95)
+  that `LauncherApps` reveals, apps also installed outside them included, labelled with where they
+  are, plus those app detection has seen. An app counts as open while on screen or until it's closed (removed from recents on Android,
   exited on Windows), with 4 s of grace; networks settle for 2 s before a decision.
   - Kill switch: per rule, or for every connecting rule of a category. While that rule is in
     effect and its tunnel isn't up (connecting, dropped, no network, or stopped by the user)

@@ -326,6 +326,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "ネットワークと使っているアプリに合わせて、トンネルを自動で接続・切断します。自分でオンにしたトンネルは、オフにするまでルールが待ちます。",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("切断"),
+    "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage(
+      "デュアルメッセンジャー",
+    ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("名前を入力"),
     "autoTunnelExeName": MessageLookupByLibrary.simpleMessage(
       "プログラム名を入力（例：bank.exe）",
@@ -357,7 +360,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("または"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("他のプロファイル"),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "仕事用プロファイルやセキュアフォルダにだけあるアプリです。外にも入っているアプリは「ユーザーアプリ」から選んでください。ルールはすべてのコピーに適用されます。",
+      "仕事用プロファイルやセキュアフォルダのアプリを、場所の名前付きで表示します。ルールはアプリが入っているすべてのプロファイルに適用されます。",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("パッケージ名を入力"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),
@@ -367,6 +370,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "長押しでドラッグして並べ替え。アプリのルールが先、その後は一致する一番上のルールです。",
     ),
+    "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage("セキュアフォルダ"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("サーバー"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "任意：プロファイルのグループからサーバーを選びます。",
@@ -386,6 +390,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "Windows では Quartz のヘルパー（管理者確認 1 回）を使い、Quartz を閉じてもブロックを続けます。",
     ),
+    "autoTunnelWorkProfile": MessageLookupByLibrary.simpleMessage("仕事用プロファイル"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分）"),
     "back": MessageLookupByLibrary.simpleMessage("戻る"),

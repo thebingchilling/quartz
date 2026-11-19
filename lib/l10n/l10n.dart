@@ -7874,10 +7874,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Apps that are only in the work profile or Secure Folder. For an app you also have outside them, pick it under User apps: the rule covers every copy.`
+  /// `Apps in the work profile or Secure Folder, labelled with where they are. A rule matches an app in every profile it's in.`
   String get autoTunnelOtherProfilesDesc {
     return Intl.message(
-      'Apps that are only in the work profile or Secure Folder. For an app you also have outside them, pick it under User apps: the rule covers every copy.',
+      'Apps in the work profile or Secure Folder, labelled with where they are. A rule matches an app in every profile it\'s in.',
       name: 'autoTunnelOtherProfilesDesc',
       desc: '',
       args: [],
@@ -8624,6 +8624,36 @@ class AppLocalizations {
     return Intl.message(
       'Connect to',
       name: 'autoTunnelConnectToTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Secure Folder`
+  String get autoTunnelSecureFolder {
+    return Intl.message(
+      'Secure Folder',
+      name: 'autoTunnelSecureFolder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Work profile`
+  String get autoTunnelWorkProfile {
+    return Intl.message(
+      'Work profile',
+      name: 'autoTunnelWorkProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Dual Messenger`
+  String get autoTunnelDualMessenger {
+    return Intl.message(
+      'Dual Messenger',
+      name: 'autoTunnelDualMessenger',
       desc: '',
       args: [],
     );
