@@ -447,7 +447,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Другие профили",
     ),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "Приложения рабочего профиля и Защищённой папки. Скрытое Android приложение из Защищённой папки появится здесь, когда вы откроете его с включённым определением приложений.",
+      "Приложения, которые есть только в рабочем профиле или Защищённой папке. Если приложение установлено и вне их, выберите его в «Пользовательских»: правило действует на все копии.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Введите имя пакета",

@@ -342,7 +342,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("或"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("其他空间"),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "工作资料和安全文件夹中的应用。被 Android 隐藏的安全文件夹应用，在开启应用检测后打开一次即会出现在这里。",
+      "仅存在于工作资料或安全文件夹中的应用。外面也装了的应用请在“用户应用”中选择：规则对所有副本都有效。",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("输入包名"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("权限"),

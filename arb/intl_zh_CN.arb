@@ -941,7 +941,7 @@
   "autoTunnelDisconnect": "断开",
   "autoTunnelKillSwitchDesc": "隧道断开时阻止上网",
   "autoTunnelOtherProfiles": "其他空间",
-  "autoTunnelOtherProfilesDesc": "工作资料和安全文件夹中的应用。被 Android 隐藏的安全文件夹应用，在开启应用检测后打开一次即会出现在这里。",
+  "autoTunnelOtherProfilesDesc": "仅存在于工作资料或安全文件夹中的应用。外面也装了的应用请在“用户应用”中选择：规则对所有副本都有效。",
   "autoTunnel": "自动隧道",
   "autoTunnelDesc": "根据你的网络和使用的应用自动连接或断开隧道。你手动开启隧道后，规则会等你手动关闭再接管。",
   "autoTunnelAddNetwork": "添加网络",

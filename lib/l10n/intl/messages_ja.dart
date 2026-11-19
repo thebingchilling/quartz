@@ -357,7 +357,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("または"),
     "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("他のプロファイル"),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "仕事用プロファイルとセキュアフォルダのアプリ。Android が隠すセキュアフォルダのアプリは、アプリ検出をオンにして一度開くとここに表示されます。",
+      "仕事用プロファイルやセキュアフォルダにだけあるアプリです。外にも入っているアプリは「ユーザーアプリ」から選んでください。ルールはすべてのコピーに適用されます。",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("パッケージ名を入力"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),

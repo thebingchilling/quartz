@@ -948,7 +948,7 @@
   "autoTunnelDisconnect": "Disconnect",
   "autoTunnelKillSwitchDesc": "Block the internet while this tunnel is down",
   "autoTunnelOtherProfiles": "Other profiles",
-  "autoTunnelOtherProfilesDesc": "Work profile and Secure Folder apps. Any Secure Folder app Android hides shows up here once you open it with app detection on.",
+  "autoTunnelOtherProfilesDesc": "Apps that are only in the work profile or Secure Folder. For an app you also have outside them, pick it under User apps: the rule covers every copy.",
   "autoTunnel": "Auto-tunnel",
   "autoTunnelDesc": "Connects or disconnects the tunnel for you, based on your network and the apps you use. If you turn the tunnel on yourself, rules wait until you turn it off.",
   "autoTunnelAddNetwork": "Add network",

@@ -941,7 +941,7 @@
   "autoTunnelDisconnect": "切断",
   "autoTunnelKillSwitchDesc": "このトンネルが切れている間はインターネットをブロック",
   "autoTunnelOtherProfiles": "他のプロファイル",
-  "autoTunnelOtherProfilesDesc": "仕事用プロファイルとセキュアフォルダのアプリ。Android が隠すセキュアフォルダのアプリは、アプリ検出をオンにして一度開くとここに表示されます。",
+  "autoTunnelOtherProfilesDesc": "仕事用プロファイルやセキュアフォルダにだけあるアプリです。外にも入っているアプリは「ユーザーアプリ」から選んでください。ルールはすべてのコピーに適用されます。",
   "autoTunnel": "自動トンネル",
   "autoTunnelDesc": "ネットワークと使っているアプリに合わせて、トンネルを自動で接続・切断します。自分でオンにしたトンネルは、オフにするまでルールが待ちます。",
   "autoTunnelAddNetwork": "ネットワークを追加",

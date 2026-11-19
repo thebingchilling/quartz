@@ -426,7 +426,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Other profiles",
     ),
     "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "Work profile and Secure Folder apps. Any Secure Folder app Android hides shows up here once you open it with app detection on.",
+      "Apps that are only in the work profile or Secure Folder. For an app you also have outside them, pick it under User apps: the rule covers every copy.",
     ),
     "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
       "Type a package name",
