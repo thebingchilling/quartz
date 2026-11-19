@@ -191,11 +191,11 @@ class Bootstrap {
     await prefs.setBool(key, true);
   }
 
-  /// The standalone EXE is meant to run all the time, so its first run turns
-  /// start at login on; turning it off later sticks.
-  Future<void> _startPortableAtLogin() async {
+  /// Quartz on Windows lives in the tray, where auto-tunnel runs, so its first
+  /// run turns start at login on; turning it off later sticks.
+  Future<void> _startAtLogin() async {
     const key = 'quartz.portable.autostartSet';
-    if (!Platform.isWindows || !isPortable) return;
+    if (!Platform.isWindows) return;
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(key) == true) return;
     _container
@@ -211,7 +211,7 @@ class Bootstrap {
     );
     unawaited(_container.read(commonActionProvider.notifier).autoCheckUpdate());
     await _turnIpv6OnOnce();
-    await _startPortableAtLogin();
+    await _startAtLogin();
     unawaited(
       autoLaunch?.updateStatus(_container.read(appSettingProvider).autoLaunch),
     );

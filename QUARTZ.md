@@ -148,9 +148,10 @@ Dropped (VPN-only use doesn't need them):
   `services/launcher`): one file that embeds the release zip, unpacks it on first run to
   `%LOCALAPPDATA%\Quartz\app\<hash>` (keeping the two newest versions), and starts
   `Quartz.exe` with `QUARTZ_PORTABLE_EXE` set to its own path; the updater then swaps that
-  file for the new EXE and restarts. It is meant to run all the time: its first run turns
-  start at login on (the Run entry passes `--autostart`, which opens straight to the tray),
-  closing the window hides it to the tray as usual, and launching it again shows the window.
+  file for the new EXE and restarts. Like the installed app, it is meant to run all the time
+  in the tray, where auto-tunnel works: the first run of either turns start at login on (the
+  Run entry passes `--autostart`, which opens straight to the tray), closing the window hides
+  it to the tray, and launching it again shows the window.
   The launcher drops the EXE's mark of the web once Windows has let it start, so SmartScreen
   asks only on the first launch (an unsigned EXE can't avoid that one).
 - **Installer and standalone EXE coexist:** they share the data directory (one runs at a
