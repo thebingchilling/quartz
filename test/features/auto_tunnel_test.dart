@@ -100,6 +100,21 @@ void main() {
     expect((ended.key, ended.connect, ended.ruleId), ('ended', false, null));
   });
 
+  test('a rule that ends can leave the tunnel or connect another', () {
+    final keep = _settings.putRule(_data.copyWith(onEnd: EndAction.keep));
+    final kept = decideAutoTunnel(keep, _wifi('Elsewhere'), active: 'data')!;
+    expect((kept.connect, kept.ruleId), (null, null));
+    final hop = _settings.putRule(
+      _data.copyWith(onEnd: EndAction.connect, endTarget: () => _warp),
+    );
+    final hopped = decideAutoTunnel(hop, _wifi('Elsewhere'), active: 'data')!;
+    expect((hopped.connect, hopped.target), (true, _warp));
+    expect(
+      decideAutoTunnel(hop, _wifi('MyHome'), active: 'data')!.ruleId,
+      'home',
+    );
+  });
+
   test('with no rule in effect and none matching, nothing changes', () {
     expect(decideAutoTunnel(_settings, _wifi('Elsewhere')), isNull);
   });
@@ -210,12 +225,20 @@ void main() {
   test('settings survive a JSON round trip', () {
     final back = AutoTunnelSettings.fromJson(
       _settings
-          .putRule(_cafe.copyWith(name: 'Café', killSwitch: true))
+          .putRule(
+            _cafe.copyWith(
+              name: 'Café',
+              killSwitch: true,
+              onEnd: EndAction.connect,
+              endTarget: () => _chinaIp,
+            ),
+          )
           .toJson(),
     );
     expect(back.rules.map((r) => r.id), _settings.rules.map((r) => r.id));
     final cafe = back.rules.last;
     expect((cafe.name, cafe.killSwitch, cafe.matchAll), ('Café', true, true));
+    expect((cafe.onEnd, cafe.endTarget), (EndAction.connect, _chinaIp));
     expect(cafe.apps, [_netflix]);
     expect(back.categories.single.name, 'China');
     expect(back.rules.first.categoryId, 'china');

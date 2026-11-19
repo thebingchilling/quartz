@@ -221,7 +221,7 @@ class AutoTunnelService : Service() {
         KillSwitch.evaluate()
         applying?.cancel()
         applying = scope.launch {
-            AutoTunnelState.auto(decision.connect) {
+            AutoTunnelState.auto(decision.connect == true) {
                 if (!AutoTunnelPlugin.apply(AutoTunnel.toJson(decision))) {
                     withContext(NonCancellable) {
                         AutoTunnel.applyWithoutFlutter(this@AutoTunnelService, decision)

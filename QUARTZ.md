@@ -78,8 +78,8 @@ Dropped (VPN-only use doesn't need them):
   stock mihomo leaves them only in its built-in GLOBAL, which the proxies page hides.
 - **Node summaries** (`lib/common/node_summary.dart`, `nodeSummariesProvider`): each proxy
   card's second line reads like `VLESS · Vision · Reality`, `Shadowsocks · rc4-md5`,
-  `WireGuard · AmneziaWG · UDP 2408 · MTU 1280` or `OpenVPN · UDP 443`: every protocol names what
-  sets its nodes apart, not only the type. The app reads them from the config it applied
+  `WireGuard · AmneziaWG` or `OpenVPN · UDP`: the protocol and what sets its nodes apart, no more,
+  wrapping onto a second line rather than being cut off. The app reads them from the config it applied
   (overrides and scripts included) and each proxy provider's file, renamed the way the
   provider's `override` renames them; share-link provider files go through the Core's existing
   `convertProxies`. Nothing in `core/` is involved.
@@ -99,17 +99,20 @@ Dropped (VPN-only use doesn't need them):
 - **Auto-tunnel and kill switch** (Settings → Quartz → Auto-tunnel, Android and Windows): a
   list of **rules**, each IF networks (any Wi-Fi, a named Wi-Fi with `*`/`?` wildcards, any
   mobile data, a SIM) AND or OR apps (any of them open) THEN connect its own tunnel (a profile
-  with an optional server) or disconnect. An empty condition isn't asked; there is no default
-  tunnel and no built-in rule. Rules can sit in **categories** that turn on and off together.
+  with an optional server) or disconnect, and WHEN IT ENDS disconnect, leave the tunnel as it is
+  or connect another. An empty condition isn't asked; there is no default tunnel and no built-in
+  rule. Every choice opens a page of rows to tap, not a radio dialog. Rules can sit in **categories** that turn on and off together.
   Rules with apps are checked first for the most recently opened app, then the rest from the top
   (long press to reorder); the first match wins and becomes the rule in effect. When it stops
-  matching, the next match takes over; if none does, the tunnel disconnects, and with no rule in
+  matching, the next match takes over; if none does, its end action runs, and with no rule in
   effect nothing changes. With no network the tunnel stops, unless the rule in effect has a kill
   switch. A tunnel the user starts holds until the user stops it, and then the rules judge again
   at once (`decideAutoTunnel`, `blocksAll`, `stepOpenApps` in Dart, `AutoTunnelRules` in Kotlin;
   keep them the same). Settings from the version with one default tunnel and kill switch keep
   their rules, take that tunnel and kill switch, and lose the seeded "any Wi-Fi: disconnect".
-  An app counts as open while on screen or until it's closed (removed from recents on Android,
+  The app picker opens on user apps with the chosen ones first; Other profiles lists the work
+  profile, Secure Folder and private space apps `LauncherApps` reveals plus those app detection
+  has seen. An app counts as open while on screen or until it's closed (removed from recents on Android,
   exited on Windows), with 4 s of grace; networks settle for 2 s before a decision.
   - Kill switch: per rule, or for every connecting rule of a category. While that rule is in
     effect and its tunnel isn't up (connecting, dropped, no network, or stopped by the user)

@@ -77,9 +77,7 @@ String _actionText(
   AppLocalizations l,
   AutoTunnelRule rule,
   List<Profile> profiles,
-) => !rule.connect
-    ? l.autoTunnelDisconnect
-    : '${l.autoTunnelConnect}: ${rule.target == null ? l.autoTunnelChooseTunnel : _targetText(profiles, rule.target!)}';
+) => _outcomeText(l, (connect: rule.connect, target: rule.target), profiles);
 
 class AutoTunnelView extends ConsumerStatefulWidget {
   const AutoTunnelView({super.key});
@@ -426,6 +424,115 @@ class _CategoryEditorState extends ConsumerState<_CategoryEditor> {
   }
 }
 
+/// What a rule does, as the tunnel picker returns it: a null [connect]
+/// leaves the tunnel as it is.
+typedef _Outcome = ({bool? connect, TunnelTarget? target});
+
+String _outcomeText(
+  AppLocalizations l,
+  _Outcome outcome,
+  List<Profile> profiles,
+) => switch (outcome) {
+  (connect: null, target: _) => l.autoTunnelKeep,
+  (connect: false, target: _) => l.autoTunnelDisconnect,
+  (connect: true, target: null) => l.autoTunnelChooseTunnel,
+  (connect: true, target: final target?) => l.autoTunnelConnectTo(
+    _targetText(profiles, target),
+  ),
+};
+
+_Outcome _endOutcome(AutoTunnelRule rule) => switch (rule.onEnd) {
+  EndAction.keep => (connect: null, target: null),
+  EndAction.connect => (connect: true, target: rule.endTarget),
+  EndAction.disconnect => (connect: false, target: null),
+};
+
+/// A row that shows a check when picked; tapping picks it.
+class _ChoiceRow extends StatelessWidget {
+  const _ChoiceRow({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+    this.subtitle,
+    this.leading,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? leading;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListItem(
+    leading: leading,
+    title: Text(title),
+    subtitle: subtitle == null ? null : Text(subtitle!),
+    trailing: selected
+        ? GlyphIcon(AppGlyphs.check, color: context.colorScheme.primary)
+        : null,
+    onTap: onTap,
+  );
+}
+
+/// Pops the tapped option.
+class _ChoicePage<T> extends StatelessWidget {
+  const _ChoicePage({
+    required this.title,
+    required this.options,
+    required this.label,
+    this.selected,
+    this.footer,
+  });
+
+  final String title;
+  final List<T> options;
+  final String Function(T) label;
+  final T? selected;
+  final String? footer;
+
+  @override
+  Widget build(BuildContext context) => CommonScaffold(
+    title: title,
+    body: ListView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+      ).copyWith(top: context.contentTopPadding, bottom: 32),
+      children: [
+        generateSectionV3(
+          items: [
+            for (final option in options)
+              _ChoiceRow(
+                title: label(option),
+                selected: option == selected,
+                onTap: () => Navigator.of(context).pop(option),
+              ),
+          ],
+          footer: footer,
+        ),
+      ],
+    ),
+  );
+}
+
+Future<T?> _pick<T>(
+  BuildContext context, {
+  required String title,
+  required List<T> options,
+  required String Function(T) label,
+  T? selected,
+  String? footer,
+}) => BaseNavigator.push<T>(
+  context,
+  _ChoicePage<T>(
+    title: title,
+    options: options,
+    label: label,
+    selected: selected,
+    footer: footer,
+  ),
+);
+
 /// One rule, edited as a draft and saved with the check.
 class _RuleEditor extends ConsumerStatefulWidget {
   const _RuleEditor({required this.rule, required this.sims});
@@ -444,39 +551,41 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
       setState(() => _rule = change(_rule));
 
   Future<void> _addNetwork(AppLocalizations l) async {
+    const named = '\u0000named';
     const anyWifi = '\u0000wifi';
     const anyMobile = '\u0000mobile';
-    const namedWifi = '\u0000named';
-    final picked = await dialogs.showCommonDialog<(String, String)>(
-      child: OptionsDialog<(String, String)>(
-        title: l.autoTunnelAddNetwork,
-        options: [
-          (namedWifi, l.autoTunnelWifi),
-          (anyWifi, l.autoTunnelAnyWifi),
-          (anyMobile, l.autoTunnelAnyMobile),
-          for (final sim in widget.sims) ('${sim.id}', sim.title),
-        ],
-        textBuilder: (option) => option.$2,
-        value: (namedWifi, l.autoTunnelWifi),
-      ),
+    final sims = {for (final sim in widget.sims) '${sim.id}': sim.title};
+    final picked = await _pick<String>(
+      context,
+      title: l.autoTunnelAddNetwork,
+      options: [named, anyWifi, anyMobile, ...sims.keys],
+      label: (option) => switch (option) {
+        named => l.autoTunnelWifi,
+        anyWifi => l.autoTunnelAnyWifi,
+        anyMobile => l.autoTunnelAnyMobile,
+        _ => sims[option]!,
+      },
     );
     if (picked == null || !mounted) return;
     final NetworkMatch match;
-    switch (picked.$1) {
+    switch (picked) {
       case anyWifi:
         match = const NetworkMatch.wifi();
       case anyMobile:
         match = const NetworkMatch.mobile();
-      case namedWifi:
+      case named:
         final nearby = await _nearbyNetworks();
         if (!mounted) return;
-        final ssid = await _choose(context, l.autoTunnelAddNetwork, [
-          for (final ssid in nearby) (ssid, ssid),
-        ], l.autoTunnelEnterName);
+        final ssid = await _choose(
+          context,
+          l.autoTunnelWifi,
+          nearby,
+          l.autoTunnelEnterName,
+        );
         if (ssid == null) return;
         match = NetworkMatch.wifi(ssid);
       default:
-        match = NetworkMatch.mobile(int.parse(picked.$1));
+        match = NetworkMatch.mobile(int.parse(picked));
     }
     if (_rule.networks.contains(match)) return;
     _edit((r) => r.copyWith(networks: [...r.networks, match]));
@@ -491,18 +600,66 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
     _edit((r) => r.copyWith(apps: picked));
   }
 
-  Future<void> _chooseTunnel() async {
-    final picked = await BaseNavigator.push<TunnelTarget>(
+  Future<void> _chooseThen(AppLocalizations l) async {
+    final picked = await BaseNavigator.push<_Outcome>(
       context,
-      _TunnelPicker(initial: _rule.target),
+      _TunnelPicker(
+        title: l.autoTunnelThen,
+        initial: (connect: _rule.connect, target: _rule.target),
+        allowKeep: false,
+      ),
     );
     if (picked == null) return;
-    _edit((r) => r.copyWith(target: () => picked));
+    _edit(
+      (r) => r.copyWith(
+        connect: picked.connect ?? false,
+        target: () => picked.target,
+      ),
+    );
   }
 
-  void _save() {
+  Future<void> _chooseEnd(AppLocalizations l) async {
+    final picked = await BaseNavigator.push<_Outcome>(
+      context,
+      _TunnelPicker(
+        title: l.autoTunnelOnEnd,
+        initial: _endOutcome(_rule),
+        allowKeep: true,
+      ),
+    );
+    if (picked == null) return;
+    _edit(
+      (r) => r.copyWith(
+        onEnd: switch (picked.connect) {
+          null => EndAction.keep,
+          false => EndAction.disconnect,
+          true => EndAction.connect,
+        },
+        endTarget: () => picked.target,
+      ),
+    );
+  }
+
+  Future<void> _chooseCategory(
+    AppLocalizations l,
+    List<RuleCategory> categories,
+  ) async {
+    final picked = await _pick<String>(
+      context,
+      title: l.autoTunnelCategory,
+      options: ['', ...categories.map((c) => c.id)],
+      label: (id) => id.isEmpty
+          ? l.autoTunnelNoCategory
+          : categories.firstWhere((c) => c.id == id).name,
+      selected: _rule.categoryId ?? '',
+    );
+    if (picked == null) return;
+    _edit((r) => r.copyWith(categoryId: () => picked.isEmpty ? null : picked));
+  }
+
+  void _save(AppLocalizations l) {
     if (_rule.connect && _rule.target == null) {
-      unawaited(_chooseTunnel());
+      unawaited(_chooseThen(l));
       return;
     }
     unawaited(_update(ref, (s) => s.putRule(_rule)));
@@ -520,6 +677,7 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
     final category = categories.firstWhereOrNull(
       (c) => c.id == rule.categoryId,
     );
+    final fromCategory = category?.killSwitch ?? false;
     return CommonScaffold(
       title: l.autoTunnelRule,
       actions: [
@@ -533,7 +691,7 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
         ),
         IconButton(
           tooltip: l.save,
-          onPressed: _save,
+          onPressed: () => _save(l),
           icon: const GlyphIcon(AppGlyphs.check),
         ),
       ],
@@ -558,21 +716,12 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
                     _edit((r) => r.copyWith(name: value?.trim() ?? '')),
               ),
               if (categories.isNotEmpty)
-                ListItem<String>.options(
+                ListItem(
                   leading: const GlyphIcon(AppGlyphs.layers),
                   title: Text(l.autoTunnelCategory),
                   subtitle: Text(category?.name ?? l.autoTunnelNoCategory),
-                  dialogTitle: l.autoTunnelCategory,
-                  options: ['', ...categories.map((c) => c.id)],
-                  value: category?.id ?? '',
-                  textBuilder: (id) => id.isEmpty
-                      ? l.autoTunnelNoCategory
-                      : categories.firstWhere((c) => c.id == id).name,
-                  onChanged: (id) => _edit(
-                    (r) => r.copyWith(
-                      categoryId: () => id == null || id.isEmpty ? null : id,
-                    ),
-                  ),
+                  trailing: const DisclosureIndicator(),
+                  onTap: () => _chooseCategory(l, categories),
                 ),
             ],
           ),
@@ -606,26 +755,21 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
                 onTap: () => _addNetwork(l),
               ),
             ],
-            footer: l.autoTunnelWhenOnDesc,
           ),
           if (rule.networks.isNotEmpty && rule.apps.isNotEmpty)
-            RadioGroup<bool>(
-              groupValue: rule.matchAll,
-              onChanged: (value) {
-                if (value != null) _edit((r) => r.copyWith(matchAll: value));
-              },
-              child: generateSectionV3(
-                items: [
-                  ListItem<bool>.radio(
-                    title: Text(l.autoTunnelMatchAll),
-                    value: true,
-                  ),
-                  ListItem<bool>.radio(
-                    title: Text(l.autoTunnelMatchAny),
-                    value: false,
-                  ),
-                ],
-              ),
+            generateSectionV3(
+              items: [
+                _ChoiceRow(
+                  title: l.autoTunnelMatchAll,
+                  selected: rule.matchAll,
+                  onTap: () => _edit((r) => r.copyWith(matchAll: true)),
+                ),
+                _ChoiceRow(
+                  title: l.autoTunnelMatchAny,
+                  selected: !rule.matchAll,
+                  onTap: () => _edit((r) => r.copyWith(matchAll: false)),
+                ),
+              ],
             ),
           generateSectionV3(
             title: l.autoTunnelIfApps,
@@ -655,69 +799,56 @@ class _RuleEditorState extends ConsumerState<_RuleEditor> {
                 onTap: _chooseApps,
               ),
             ],
-            footer: l.autoTunnelWhileOpenDesc,
+            footer: l.autoTunnelIfDesc,
           ),
-          RadioGroup<bool>(
-            groupValue: rule.connect,
-            onChanged: (value) {
-              if (value != null) _edit((r) => r.copyWith(connect: value));
-            },
-            child: generateSectionV3(
-              title: l.autoTunnelThen,
-              items: [
-                ListItem<bool>.radio(
-                  title: Text(l.autoTunnelConnect),
-                  value: true,
+          generateSectionV3(
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.target),
+                title: Text(l.autoTunnelThen),
+                subtitle: Text(
+                  _outcomeText(l, (
+                    connect: rule.connect,
+                    target: rule.target,
+                  ), profiles),
                 ),
-                if (rule.connect)
-                  ListItem(
-                    leading: const GlyphIcon(AppGlyphs.target),
-                    title: Text(l.autoTunnelTarget),
-                    subtitle: Text(
-                      rule.target == null
-                          ? l.autoTunnelChooseTunnel
-                          : _targetText(profiles, rule.target!),
-                    ),
-                    trailing: const DisclosureIndicator(),
-                    onTap: _chooseTunnel,
-                  ),
-                ListItem<bool>.radio(
-                  title: Text(l.autoTunnelDisconnect),
-                  value: false,
-                ),
-              ],
-              footer: l.autoTunnelThenDesc,
-            ),
-          ),
-          if (rule.connect)
-            generateSectionV3(
-              items: [
+                trailing: const DisclosureIndicator(),
+                onTap: () => _chooseThen(l),
+              ),
+              if (rule.connect)
                 ListItem.toggle(
                   leading: const GlyphIcon(AppGlyphs.lock),
                   title: Text(l.autoTunnelKillSwitch),
-                  subtitle: category?.killSwitch ?? false
-                      ? Text(l.autoTunnelKillSwitchFromCategory(category!.name))
-                      : null,
-                  value: rule.killSwitch || (category?.killSwitch ?? false),
-                  onChanged: category?.killSwitch ?? false
+                  subtitle: Text(
+                    fromCategory
+                        ? l.autoTunnelKillSwitchFromCategory(category!.name)
+                        : l.autoTunnelKillSwitchDesc,
+                  ),
+                  value: rule.killSwitch || fromCategory,
+                  onChanged: fromCategory
                       ? null
                       : (value) => _edit((r) => r.copyWith(killSwitch: value)),
                 ),
-              ],
-              footer: system.isWindows
-                  ? '${l.autoTunnelKillSwitchDesc} ${l.autoTunnelWindowsKillDesc}'
-                  : l.autoTunnelKillSwitchDesc,
-            ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.undo),
+                title: Text(l.autoTunnelOnEnd),
+                subtitle: Text(_outcomeText(l, _endOutcome(rule), profiles)),
+                trailing: const DisclosureIndicator(),
+                onTap: () => _chooseEnd(l),
+              ),
+            ],
+            footer: l.autoTunnelOnEndDesc,
+          ),
         ],
       ),
     );
   }
 }
 
-enum _AppTab { all, user, system, otherProfiles, selected }
+enum _AppTab { user, system, otherProfiles }
 
-/// The same list and tabs as access control, plus the apps of Secure Folder
-/// and the work profile that app detection has seen. Pops the chosen apps.
+/// Access control's list and tabs, chosen apps first, plus the apps of the
+/// work profile and Secure Folder. Pops the chosen apps.
 class _AppPicker extends ConsumerStatefulWidget {
   const _AppPicker({required this.selected});
 
@@ -734,6 +865,7 @@ class _AppPickerState extends ConsumerState<_AppPicker>
   late final Map<String, RuleApp> _chosen = {
     for (final app in widget.selected) app.app: app,
   };
+  late final Set<String> _pinned = _chosen.keys.toSet();
   List<Package> _others = const [];
   String _query = '';
 
@@ -749,44 +881,37 @@ class _AppPickerState extends ConsumerState<_AppPicker>
     super.dispose();
   }
 
+  static Package _package(String app, String label) => Package(
+    packageName: app,
+    label: label,
+    system: false,
+    internet: true,
+    lastUpdateTime: 0,
+  );
+
   Future<void> _load() async {
     if (Platform.isWindows) {
       final running = await runningProgramPaths();
       if (!mounted) return;
       setState(
         () => _others = [
-          for (final path in running)
-            Package(
-              packageName: path,
-              label: path.split(RegExp(r'[\\/]')).last,
-              system: false,
-              internet: true,
-              lastUpdateTime: 0,
-            ),
+          for (final path in {...running, ..._chosen.keys})
+            _package(path, path.split(RegExp(r'[\\/]')).last),
         ],
       );
       return;
     }
-    final installed = await ref
-        .read(systemActionProvider.notifier)
-        .getPackages()
-        .catchError((_) => const <Package>[]);
-    final seen = await _platform.seenApps().catchError((_) => const <String>[]);
-    final known = {for (final package in installed) package.packageName};
-    if (!mounted) return;
-    setState(
-      () => _others = [
-        for (final entry in seen)
-          if (!known.contains(entry.split('\t').first))
-            Package(
-              packageName: entry.split('\t').first,
-              label: entry.split('\t').last,
-              system: false,
-              internet: true,
-              lastUpdateTime: 0,
-            ),
-      ],
+    final profileApps = await _platform.profileApps().catchError(
+      (_) => const <String>[],
     );
+    final seen = await _platform.seenApps().catchError((_) => const <String>[]);
+    if (!mounted) return;
+    final others = <String, Package>{};
+    for (final entry in [...profileApps, ...seen]) {
+      final [app, ...rest] = entry.split('\t');
+      others.putIfAbsent(app, () => _package(app, rest.join('\t')));
+    }
+    setState(() => _others = others.values.toList());
   }
 
   Future<void> _typeApp(AppLocalizations l) async {
@@ -795,12 +920,13 @@ class _AppPickerState extends ConsumerState<_AppPicker>
         : l.autoTunnelPackageName;
     final app = await _typed(context, l.autoTunnelChooseApps, label);
     if (app == null) return;
-    setState(
-      () => _chosen[app] = RuleApp(
-        app: app,
-        label: app.split(RegExp(r'[\\/]')).last,
-      ),
-    );
+    setState(() {
+      _chosen[app] = RuleApp(app: app, label: app.split(RegExp(r'[\\/]')).last);
+      _pinned.add(app);
+      if (!_others.any((p) => p.packageName == app)) {
+        _others = [..._others, _package(app, _chosen[app]!.label)];
+      }
+    });
   }
 
   @override
@@ -809,23 +935,21 @@ class _AppPickerState extends ConsumerState<_AppPicker>
     final installed = Platform.isWindows
         ? const <Package>[]
         : ref.watch(packagesProvider);
-    final tab = _AppTab.values[_tabs.index];
+    final tab = Platform.isWindows
+        ? _AppTab.otherProfiles
+        : _AppTab.values[_tabs.index];
     final query = SearchQuery(_query);
     final packages =
         [
               ...switch (tab) {
-                _AppTab.all => [...installed, ..._others],
                 _AppTab.user => installed.where((p) => !p.system),
                 _AppTab.system => installed.where((p) => p.system),
                 _AppTab.otherProfiles => _others,
-                _AppTab.selected => [
-                  ...installed,
-                  ..._others,
-                ].where((p) => _chosen.containsKey(p.packageName)),
               },
             ]
             .whereMatches(query, (p) => [p.label, p.packageName])
-            .sortedBy((p) => p.label.toLowerCase());
+            .sortedBy((p) => p.label.toLowerCase())
+            .sortedBy<num>((p) => _pinned.contains(p.packageName) ? 0 : 1);
     return CommonScaffold(
       title: l.autoTunnelChooseApps,
       searchState: AppBarSearchState(
@@ -857,16 +981,14 @@ class _AppPickerState extends ConsumerState<_AppPicker>
                   for (final tab in _AppTab.values)
                     Tab(
                       text: switch (tab) {
-                        _AppTab.all => l.accessTabAll,
                         _AppTab.user => l.accessTabUser,
                         _AppTab.system => l.systemApp,
                         _AppTab.otherProfiles => l.autoTunnelOtherProfiles,
-                        _AppTab.selected => l.selected,
                       },
                     ),
                 ],
               ),
-            if (tab == _AppTab.otherProfiles)
+            if (tab == _AppTab.otherProfiles && !Platform.isWindows)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                 child: Text(
@@ -928,24 +1050,23 @@ Future<String?> _typed(BuildContext context, String title, String label) async {
   return value == null || value.isEmpty ? null : value;
 }
 
+/// One of [choices], or a typed name.
 Future<String?> _choose(
   BuildContext context,
   String title,
-  List<(String, String)> choices,
+  List<String> choices,
   String manualLabel,
 ) async {
   var picked = _manual;
   if (choices.isNotEmpty) {
-    final selected = await dialogs.showCommonDialog<(String, String)>(
-      child: OptionsDialog<(String, String)>(
-        title: title,
-        options: [...choices, (_manual, manualLabel)],
-        textBuilder: (option) => option.$2,
-        value: (_manual, manualLabel),
-      ),
+    final selected = await _pick<String>(
+      context,
+      title: title,
+      options: [...choices, _manual],
+      label: (option) => option == _manual ? manualLabel : option,
     );
     if (selected == null) return null;
-    picked = selected.$1;
+    picked = selected;
   }
   if (picked != _manual) return picked;
   if (!context.mounted) return null;
@@ -973,18 +1094,27 @@ Future<_Groups> _groupsOf(int profileId) async {
   }
 }
 
-/// Pops the chosen tunnel.
+/// Disconnect, leave the tunnel as it is when [allowKeep], or a profile with
+/// an optional server. Pops the [_Outcome].
 class _TunnelPicker extends ConsumerStatefulWidget {
-  const _TunnelPicker({required this.initial});
+  const _TunnelPicker({
+    required this.title,
+    required this.initial,
+    required this.allowKeep,
+  });
 
-  final TunnelTarget? initial;
+  final String title;
+  final _Outcome initial;
+  final bool allowKeep;
 
   @override
   ConsumerState<_TunnelPicker> createState() => _TunnelPickerState();
 }
 
 class _TunnelPickerState extends ConsumerState<_TunnelPicker> {
-  late TunnelTarget? _target = widget.initial;
+  late TunnelTarget? _target = widget.initial.connect == true
+      ? widget.initial.target
+      : null;
   _Groups _groups = const {};
 
   @override
@@ -1001,28 +1131,49 @@ class _TunnelPickerState extends ConsumerState<_TunnelPicker> {
     if (mounted) setState(() => _groups = groups);
   }
 
-  void _pick(int profileId) {
+  void _pickProfile(int profileId) {
+    if (_target?.profileId == profileId) return;
     setState(() => _target = TunnelTarget(profileId: profileId));
     unawaited(_loadGroups());
   }
+
+  Future<void> _pickServer(AppLocalizations l, String group) async {
+    final target = _target;
+    final servers = _groups[group] ?? const [];
+    if (target == null || servers.isEmpty) return;
+    final proxy = await _pick<String>(
+      context,
+      title: group,
+      options: servers,
+      label: (p) => p,
+      selected: target.group == group ? target.proxy : null,
+    );
+    if (proxy == null || !mounted) return;
+    setState(
+      () => _target = TunnelTarget(
+        profileId: target.profileId,
+        group: group,
+        proxy: proxy,
+      ),
+    );
+  }
+
+  void _done(_Outcome outcome) => Navigator.of(context).pop(outcome);
 
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     final profiles = ref.watch(profilesProvider);
     final target = _target;
-    final group = target?.group;
-    final groupProxies = group == null
-        ? const <String>[]
-        : _groups[group] ?? [];
+    final initial = widget.initial.connect;
     return CommonScaffold(
-      title: l.autoTunnelTarget,
+      title: widget.title,
       actions: [
         IconButton(
           tooltip: l.save,
           onPressed: target == null
               ? null
-              : () => Navigator.of(context).pop(target),
+              : () => _done((connect: true, target: target)),
           icon: const GlyphIcon(AppGlyphs.check),
         ),
       ],
@@ -1031,55 +1182,54 @@ class _TunnelPickerState extends ConsumerState<_TunnelPicker> {
           horizontal: 16,
         ).copyWith(top: context.contentTopPadding, bottom: 32),
         children: [
-          RadioGroup<int>(
-            groupValue: target?.profileId,
-            onChanged: (choice) {
-              if (choice != null) _pick(choice);
-            },
-            child: generateSectionV3(
-              items: [
-                for (final profile in profiles)
-                  ListItem<int>.radio(
-                    title: Text(profile.realLabel),
-                    value: profile.id,
-                  ),
-              ],
-            ),
+          generateSectionV3(
+            items: [
+              _ChoiceRow(
+                leading: const GlyphIcon(AppGlyphs.close),
+                title: l.autoTunnelDisconnect,
+                selected: target == null && initial == false,
+                onTap: () => _done((connect: false, target: null)),
+              ),
+              if (widget.allowKeep)
+                _ChoiceRow(
+                  leading: const GlyphIcon(AppGlyphs.pin),
+                  title: l.autoTunnelKeep,
+                  selected: target == null && initial == null,
+                  onTap: () => _done((connect: null, target: null)),
+                ),
+            ],
+          ),
+          generateSectionV3(
+            title: l.autoTunnelConnectToTitle,
+            items: [
+              for (final profile in profiles)
+                _ChoiceRow(
+                  leading: const GlyphIcon(AppGlyphs.vpn),
+                  title: profile.realLabel,
+                  selected: target?.profileId == profile.id,
+                  onTap: () => _pickProfile(profile.id),
+                ),
+            ],
           ),
           if (target != null && _groups.isNotEmpty)
             generateSectionV3(
               title: l.autoTunnelServer,
               items: [
-                ListItem<String>.options(
-                  title: Text(l.autoTunnelGroup),
-                  subtitle: Text(group ?? l.autoTunnelKeepServer),
-                  dialogTitle: l.autoTunnelGroup,
-                  options: ['', ..._groups.keys],
-                  value: group ?? '',
-                  textBuilder: (g) => g.isEmpty ? l.autoTunnelKeepServer : g,
-                  onChanged: (g) => setState(
-                    () => _target = TunnelTarget(
-                      profileId: target.profileId,
-                      group: g == null || g.isEmpty ? null : g,
-                    ),
+                _ChoiceRow(
+                  title: l.autoTunnelKeepServer,
+                  selected: target.group == null,
+                  onTap: () => setState(
+                    () => _target = TunnelTarget(profileId: target.profileId),
                   ),
                 ),
-                if (group != null && groupProxies.isNotEmpty)
-                  ListItem<String>.options(
-                    title: Text(l.autoTunnelServer),
-                    subtitle: Text(target.proxy ?? l.autoTunnelKeepServer),
-                    dialogTitle: l.autoTunnelServer,
-                    options: groupProxies,
-                    value: target.proxy ?? groupProxies.first,
-                    textBuilder: (p) => p,
-                    onChanged: (p) => setState(
-                      () => _target = TunnelTarget(
-                        profileId: target.profileId,
-                        group: group,
-                        proxy: p,
-                      ),
+                for (final group in _groups.keys)
+                  if (_groups[group]!.isNotEmpty)
+                    _ChoiceRow(
+                      title: group,
+                      subtitle: target.group == group ? target.proxy : null,
+                      selected: target.group == group,
+                      onTap: () => _pickServer(l, group),
                     ),
-                  ),
               ],
               footer: l.autoTunnelServerDesc,
             ),

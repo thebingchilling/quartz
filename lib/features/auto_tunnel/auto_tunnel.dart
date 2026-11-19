@@ -133,6 +133,8 @@ class NetworkMatch {
   int get hashCode => Object.hash(kind, ssid, simId);
 }
 
+enum EndAction { disconnect, keep, connect }
+
 /// A condition left empty is not asked; a rule with neither matches every
 /// network.
 class AutoTunnelRule {
@@ -147,6 +149,8 @@ class AutoTunnelRule {
     this.connect = true,
     this.target,
     this.killSwitch = false,
+    this.onEnd = EndAction.disconnect,
+    this.endTarget,
   });
 
   final String id;
@@ -164,6 +168,8 @@ class AutoTunnelRule {
   final TunnelTarget? target;
 
   final bool killSwitch;
+  final EndAction onEnd;
+  final TunnelTarget? endTarget;
 
   bool matchesNetwork(NetworkSnapshot network) =>
       networks.isNotEmpty && networks.any((match) => match.matches(network));
@@ -188,6 +194,8 @@ class AutoTunnelRule {
     bool? connect,
     TunnelTarget? Function()? target,
     bool? killSwitch,
+    EndAction? onEnd,
+    TunnelTarget? Function()? endTarget,
   }) => AutoTunnelRule(
     id: id,
     name: name ?? this.name,
@@ -199,6 +207,8 @@ class AutoTunnelRule {
     connect: connect ?? this.connect,
     target: target == null ? this.target : target(),
     killSwitch: killSwitch ?? this.killSwitch,
+    onEnd: onEnd ?? this.onEnd,
+    endTarget: endTarget == null ? this.endTarget : endTarget(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -212,6 +222,8 @@ class AutoTunnelRule {
     'connect': connect,
     'target': target?.toJson(),
     'killSwitch': killSwitch,
+    'onEnd': onEnd.name,
+    'endTarget': endTarget?.toJson(),
   };
 
   static AutoTunnelRule? fromJson(Object? json) {
@@ -233,6 +245,9 @@ class AutoTunnelRule {
       connect: json['connect'] as bool? ?? true,
       target: TunnelTarget.fromJson(json['target']),
       killSwitch: json['killSwitch'] as bool? ?? false,
+      onEnd:
+          EndAction.values.asNameMap()[json['onEnd']] ?? EndAction.disconnect,
+      endTarget: TunnelTarget.fromJson(json['endTarget']),
     );
   }
 
@@ -312,7 +327,7 @@ class AutoTunnelSettings {
   };
 
   Iterable<TunnelTarget> get targets => {
-    for (final rule in rules) ?rule.target,
+    for (final rule in rules) ...[?rule.target, ?rule.endTarget],
   };
 
   AutoTunnelSettings copyWith({
@@ -403,9 +418,10 @@ enum NetworkKind { wifi, mobile, none }
 /// [ssid] is null when the system hides it.
 typedef NetworkSnapshot = ({NetworkKind kind, String? ssid, int? simId});
 
+/// A null [connect] leaves the tunnel as it is.
 typedef AutoTunnelAction = ({
   String key,
-  bool connect,
+  bool? connect,
   TunnelTarget? target,
   String? ruleId,
 });
@@ -460,9 +476,18 @@ AutoTunnelAction? decideAutoTunnel(
   for (final rule in rules) {
     if (rule.matches(network, null)) return act(rule);
   }
-  return active == null
-      ? null
-      : (key: 'ended', connect: false, target: null, ruleId: null);
+  if (active == null) return null;
+  final ended = settings.rules.firstWhereOrNull((rule) => rule.id == active);
+  return switch (ended?.onEnd) {
+    EndAction.keep => (key: 'ended', connect: null, target: null, ruleId: null),
+    EndAction.connect when ended?.endTarget != null => (
+      key: 'ended',
+      connect: true,
+      target: ended!.endTarget,
+      ruleId: null,
+    ),
+    _ => (key: 'ended', connect: false, target: null, ruleId: null),
+  };
 }
 
 bool blocksAll(
@@ -537,6 +562,9 @@ class AutoTunnelPlatform {
 
   Future<List<String>> wifiNetworks() async =>
       await channel.invokeListMethod<String>('wifiNetworks') ?? const [];
+
+  Future<List<String>> profileApps() async =>
+      await channel.invokeListMethod<String>('profileApps') ?? const [];
 
   /// Includes work-profile and Secure Folder apps the app list can't show.
   Future<List<String>> seenApps() async =>

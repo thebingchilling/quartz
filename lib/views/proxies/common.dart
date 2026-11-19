@@ -5,6 +5,9 @@ import 'package:flutter/widgets.dart';
 
 const proxyGridSpacing = 8.0;
 
+/// A node's summary wraps onto a second line rather than being cut off.
+const proxyDescLines = 2;
+
 double get listHeaderHeight {
   final measure = globalState.measure;
   return 20 + measure.titleSmallHeight + 2 + measure.labelSmallHeight + 2;
@@ -13,7 +16,11 @@ double get listHeaderHeight {
 double getItemHeight(ProxyCardType proxyCardType) {
   final measure = globalState.measure;
   final baseHeight =
-      16 + measure.bodyMediumHeight * 2 + measure.bodySmallHeight + 8 + 4;
+      16 +
+      measure.bodyMediumHeight * 2 +
+      measure.bodySmallHeight * proxyDescLines +
+      8 +
+      4;
   return switch (proxyCardType) {
     ProxyCardType.expand => baseHeight + measure.labelSmallHeight + 6,
     ProxyCardType.shrink => baseHeight,

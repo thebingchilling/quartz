@@ -122,7 +122,7 @@ void main() {
     expect(yaml, contains('  - DOMAIN-SUFFIX,whiskergalaxy.com,DIRECT'));
     expect(yaml, contains('  - GEOIP,LAN,DIRECT,no-resolve'));
     final proxy = ((loadPlainYaml(yaml) as Map)['proxies'] as List).single;
-    expect(nodeSummary(proxy as Map), 'OpenVPN · TCP 8080');
+    expect(nodeSummary(proxy as Map), 'OpenVPN · TCP');
   });
 
   test('a country no longer listed falls back to the home country', () {

@@ -21,7 +21,7 @@ AutoTunnelAction? actionFromJson(Object? json) {
   if (map is! Map) return null;
   return (
     key: map['key'] as String? ?? '',
-    connect: map['connect'] == true,
+    connect: map['connect'] as bool?,
     target: TunnelTarget.fromJson(map['target']),
     ruleId: map['ruleId'] as String?,
   );
@@ -34,7 +34,8 @@ Future<void> applyAutoTunnelAction(
   bool connect = true,
 }) async {
   final setup = ref.read(setupActionProvider.notifier);
-  if (!action.connect) {
+  if (action.connect == null) return;
+  if (action.connect == false) {
     if (connect && ref.read(isStartProvider)) await setup.setRunning(false);
     return;
   }

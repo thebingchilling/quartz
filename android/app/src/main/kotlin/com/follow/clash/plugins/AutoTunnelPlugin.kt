@@ -6,9 +6,11 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Process
 import android.telephony.SubscriptionManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -81,6 +83,7 @@ class AutoTunnelPlugin :
             "wifiNetworks" -> result.success(wifiNetworks())
             "simCards" -> result.success(simCards())
             "seenApps" -> result.success(AutoTunnel.seenApps(context))
+            "profileApps" -> result.success(profileApps())
             else -> result.notImplemented()
         }
     }
@@ -171,6 +174,20 @@ class AutoTunnelPlugin :
         }
         return (listOfNotNull(current?.takeIf { it.isNotBlank() && it != "<unknown ssid>" }) +
             nearby).distinct()
+    }
+
+    /** Apps of the work profile, Secure Folder or private space that Android lets Quartz list. */
+    private fun profileApps(): List<String> {
+        val launcher = GlobalState.application.getSystemService(LauncherApps::class.java)
+            ?: return emptyList()
+        val me = Process.myUserHandle()
+        return runCatching { launcher.profiles }.getOrNull().orEmpty()
+            .filter { it != me }
+            .flatMap { profile ->
+                runCatching { launcher.getActivityList(null, profile) }.getOrNull().orEmpty()
+            }
+            .map { "${it.applicationInfo.packageName}\t${it.label}" }
+            .distinct()
     }
 
     @SuppressLint("MissingPermission")

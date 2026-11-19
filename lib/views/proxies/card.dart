@@ -8,6 +8,8 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'common.dart';
+
 void selectGroupProxy(
   WidgetRef ref, {
   required String groupName,
@@ -113,14 +115,14 @@ class ProxyCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 if (type == ProxyCardType.expand) ...[
                   SizedBox(
-                    height: measure.bodySmallHeight,
+                    height: measure.bodySmallHeight * proxyDescLines,
                     child: _ProxyDesc(proxy: proxy),
                   ),
                   const SizedBox(height: 6),
                   delayText,
                 ] else
                   SizedBox(
-                    height: measure.bodySmallHeight,
+                    height: measure.bodySmallHeight * proxyDescLines,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -130,7 +132,7 @@ class ProxyCard extends ConsumerWidget {
                           child: TooltipText(
                             text: Text(
                               ref.watch(proxyDescProvider(proxy)),
-                              maxLines: 1,
+                              maxLines: proxyDescLines,
                               style: context.textTheme.bodySmall?.copyWith(
                                 overflow: TextOverflow.ellipsis,
                                 color: context
@@ -322,6 +324,7 @@ class _ProxyDesc extends ConsumerWidget {
     final desc = ref.watch(proxyDescProvider(proxy));
     return EmojiText(
       desc,
+      maxLines: proxyDescLines,
       overflow: TextOverflow.ellipsis,
       style: context.textTheme.bodySmall?.copyWith(
         color: context.textTheme.bodySmall?.color?.opacity80,

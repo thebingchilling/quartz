@@ -31,6 +31,8 @@ data class AutoTunnelRule(
     val connect: Boolean = true,
     val target: TunnelTarget? = null,
     val killSwitch: Boolean = false,
+    val onEnd: String = "disconnect",
+    val endTarget: TunnelTarget? = null,
 ) {
     fun matchesNetwork(network: NetworkSnapshot) = networks.isNotEmpty() && networks.any { it.matches(network) }
 
@@ -89,10 +91,10 @@ data class NetworkSnapshot(
     val subscriptionId: Int? = null,
 )
 
-/** [ruleId] is the rule now in effect, null when none is. */
+/** [ruleId] is the rule now in effect, null when none is; a null [connect] leaves the tunnel as it is. */
 data class Decision(
     val key: String,
-    val connect: Boolean,
+    val connect: Boolean?,
     val target: TunnelTarget? = null,
     val ruleId: String? = null,
 )
@@ -134,7 +136,13 @@ object AutoTunnelRules {
                 ?.let { return act(it) }
         }
         rules.firstOrNull { it.matches(network, null) }?.let { return act(it) }
-        return if (active == null) null else Decision("ended", false)
+        if (active == null) return null
+        val ended = settings.rules.firstOrNull { it.id == active }
+        return when {
+            ended?.onEnd == "keep" -> Decision("ended", null)
+            ended?.onEnd == "connect" && ended.endTarget != null -> Decision("ended", true, ended.endTarget)
+            else -> Decision("ended", false)
+        }
     }
 
     fun blocksAll(settings: AutoTunnelSettings, active: String?, running: Boolean): Boolean {

@@ -20,20 +20,9 @@ String? nodeSummary(Map proxy) {
     case 'ss':
       parts.addAll(['Shadowsocks', text('cipher'), text('plugin')]);
     case 'ssr':
-      parts.addAll([
-        'ShadowsocksR',
-        text('cipher'),
-        text('protocol'),
-        text('obfs'),
-      ]);
+      parts.addAll(['ShadowsocksR', text('cipher')]);
     case 'vmess':
-      final cipher = text('cipher');
-      parts.addAll([
-        'VMess',
-        if (cipher != null && cipher != 'auto') cipher,
-        _security(proxy),
-        _network(proxy),
-      ]);
+      parts.addAll(['VMess', _security(proxy), _network(proxy)]);
     case 'vless':
       final flow = text('flow');
       parts.addAll([
@@ -50,37 +39,18 @@ String? nodeSummary(Map proxy) {
       ]);
     case 'wireguard':
       final awg = proxy['amnezia-wg-option'];
-      final port = _wireGuardPort(proxy);
-      final mtu = proxy['mtu'];
       parts.addAll([
         'WireGuard',
         if (awg is Map && awg.isNotEmpty) 'AmneziaWG',
-        if (port != null) 'UDP $port',
-        if (mtu != null) 'MTU $mtu',
       ]);
     case 'openvpn':
-      parts.addAll([
-        'OpenVPN',
-        _transport(text('proto')?.toUpperCase(), proxy['port']),
-      ]);
+      parts.addAll(['OpenVPN', text('proto')?.toUpperCase()]);
     case 'hysteria2':
-      parts.addAll([
-        'Hysteria2',
-        _capitalized(text('obfs')),
-        if (text('ports') != null) 'Port hopping',
-      ]);
+      parts.addAll(['Hysteria2', _capitalized(text('obfs'))]);
     case 'hysteria':
-      parts.addAll([
-        'Hysteria',
-        text('protocol')?.toUpperCase(),
-        if (text('obfs') != null) 'Obfs',
-      ]);
+      parts.addAll(['Hysteria', text('protocol')?.toUpperCase()]);
     case 'tuic':
-      parts.addAll([
-        'TUIC',
-        proxy['token'] != null ? 'v4' : 'v5',
-        text('congestion-controller')?.toUpperCase(),
-      ]);
+      parts.addAll(['TUIC', proxy['token'] != null ? 'v4' : 'v5']);
     case 'socks5':
       parts.addAll([
         'SOCKS5',
@@ -95,23 +65,11 @@ String? nodeSummary(Map proxy) {
       ]);
     case 'snell':
       final version = proxy['version'];
-      final obfs = proxy['obfs-opts'];
-      parts.addAll([
-        'Snell',
-        if (version != null) 'v$version',
-        if (obfs is Map && obfs['mode'] is String)
-          (obfs['mode'] as String).toUpperCase(),
-      ]);
+      parts.addAll(['Snell', if (version != null) 'v$version']);
     case 'anytls':
       parts.add('AnyTLS');
     case 'ssh':
-      parts.addAll([
-        'SSH',
-        if (text('private-key') != null)
-          'key'
-        else if (text('password') != null)
-          'password',
-      ]);
+      parts.add('SSH');
     case 'mieru':
       parts.addAll(['Mieru', text('transport')?.toUpperCase()]);
     default:
@@ -128,17 +86,6 @@ String? _security(Map proxy, {bool tlsByDefault = false}) {
   }
   return null;
 }
-
-Object? _wireGuardPort(Map proxy) {
-  if (proxy['port'] != null) return proxy['port'];
-  final peers = proxy['peers'];
-  return peers is List && peers.isNotEmpty && peers.first is Map
-      ? (peers.first as Map)['port']
-      : null;
-}
-
-String _transport(String? proto, Object? port) =>
-    [?proto, if (port != null) '$port'].join(' ');
 
 String? _network(Map proxy) => switch (proxy['network']) {
   'ws' => 'WS',

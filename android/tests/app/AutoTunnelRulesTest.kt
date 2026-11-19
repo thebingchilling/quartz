@@ -79,6 +79,17 @@ class AutoTunnelRulesTest {
     }
 
     @Test
+    fun `a rule that ends can leave the tunnel or connect another`() {
+        val kept = AutoTunnelRules.decide(with(data.copy(onEnd = "keep")), wifi("x"), active = "data")!!
+        assertNull(kept.connect)
+        val hop = with(data.copy(onEnd = "connect", endTarget = warp))
+        val hopped = AutoTunnelRules.decide(hop, wifi("x"), active = "data")!!
+        assertEquals(true, hopped.connect)
+        assertEquals(warp, hopped.target)
+        assertEquals("home", AutoTunnelRules.decide(hop, wifi("MyHome"), active = "data")!!.ruleId)
+    }
+
+    @Test
     fun `AND needs both and OR either`() {
         assertEquals("cafe", AutoTunnelRules.decide(settings, wifi("Cafe"), listOf("com.netflix"))!!.ruleId)
         assertNull(AutoTunnelRules.decide(settings, wifi("Cafe")))
@@ -127,7 +138,8 @@ class AutoTunnelRulesTest {
         val json = """{"enabled":true,"rules":[{"id":"r1","name":"Bank","enabled":true,
             |"categoryId":"c","networks":[{"kind":"mobile","ssid":null,"simId":2}],
             |"apps":[{"app":"nz.co.bnz","label":"BNZ","detected":"nz.co.bnz"}],"matchAll":false,
-            |"connect":true,"target":{"profileId":6,"group":"G","proxy":"P"},"killSwitch":false}],
+            |"connect":true,"target":{"profileId":6,"group":"G","proxy":"P"},"killSwitch":false,
+            |"onEnd":"connect","endTarget":{"profileId":7}}],
             |"categories":[{"id":"c","name":"Trip","enabled":true,"killSwitch":true}],
             |"currentProfileId":5,
             |"rendered":{"6/G/P":{"profileId":6,"path":"/x.yaml","label":"L","selectedMap":{"G":"P"}}}}"""
@@ -137,6 +149,7 @@ class AutoTunnelRulesTest {
         assertEquals(2, rule.networks.single().simId)
         assertEquals("6/G/P", rule.target?.key)
         assertEquals(false, rule.matchAll)
+        assertEquals("connect" to 7L, rule.onEnd to rule.endTarget?.profileId)
         assertTrue(parsed.killSwitchOf(rule))
         assertEquals(setOf("nz.co.bnz"), parsed.watchedApps)
         assertEquals(mapOf("G" to "P"), parsed.rendered["6/G/P"]?.selectedMap)

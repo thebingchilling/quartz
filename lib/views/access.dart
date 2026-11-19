@@ -19,7 +19,7 @@ class AccessView extends ConsumerStatefulWidget {
   ConsumerState<AccessView> createState() => _AccessViewState();
 }
 
-enum _AccessTab { all, user, system, selected }
+enum _AccessTab { user, system }
 
 class _AccessViewState extends ConsumerState<AccessView>
     with RouteSettledMixin<AccessView>, SingleTickerProviderStateMixin {
@@ -455,10 +455,8 @@ class _AccessViewState extends ConsumerState<AccessView>
         )
         .where(
           (package) => switch (tab) {
-            _AccessTab.all => true,
             _AccessTab.user => !package.system,
             _AccessTab.system => package.system,
-            _AccessTab.selected => currentList.contains(package.packageName),
           },
         )
         .whereMatches(query, (package) => [package.label, package.packageName])
@@ -531,12 +529,9 @@ class _AccessViewState extends ConsumerState<AccessView>
                   for (final tab in _AccessTab.values)
                     Tab(
                       text: switch (tab) {
-                        _AccessTab.all => context.appLocalizations.accessTabAll,
                         _AccessTab.user =>
                           context.appLocalizations.accessTabUser,
                         _AccessTab.system => context.appLocalizations.systemApp,
-                        _AccessTab.selected =>
-                          context.appLocalizations.selected,
                       },
                     ),
                 ],

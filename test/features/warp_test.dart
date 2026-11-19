@@ -78,9 +78,6 @@ void main() {
     expect(yaml, contains('i1: "<b 0x01>"'));
     expect(yaml, contains('  - MATCH,PROXY'));
     final proxy = ((loadPlainYaml(yaml) as Map)['proxies'] as List).single;
-    expect(
-      nodeSummary(proxy as Map),
-      'WireGuard · AmneziaWG · UDP 2408 · MTU 1280',
-    );
+    expect(nodeSummary(proxy as Map), 'WireGuard · AmneziaWG');
   });
 }

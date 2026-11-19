@@ -69,7 +69,8 @@ object AutoTunnel {
 
     /** Points the service at the decision's rendered config and restarts it if it was running. */
     suspend fun applyWithoutFlutter(context: Context, decision: Decision) {
-        if (!decision.connect) {
+        if (decision.connect == null) return
+        if (decision.connect == false) {
             if (ServiceState.isRunRequested) ServiceState.handleSwitchStop()
             return
         }
