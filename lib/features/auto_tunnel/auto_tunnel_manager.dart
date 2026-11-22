@@ -5,7 +5,6 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/desktop/helper_client.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -13,7 +12,6 @@ import 'package:wifi_ssid/wifi_ssid.dart';
 
 import 'auto_tunnel.dart';
 import 'auto_tunnel_apply.dart';
-import 'windows_apps.dart';
 
 /// Android's service watches networks and apps; this answers its switches
 /// while the app runs and keeps the configs it switches to when closed.
@@ -97,18 +95,12 @@ class DesktopAutoTunnel extends ConsumerStatefulWidget {
 }
 
 class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
-  static const _appPoll = Duration(seconds: 2);
-  static const _linger = Duration(seconds: 4);
   static const _settle = Duration(seconds: 2);
   static const _rejudge = Duration(milliseconds: 500);
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   List<ConnectivityResult> _results = const [];
   Timer? _timer;
-  Timer? _appTimer;
-  Timer? _lingerTimer;
-  List<String> _openApps = const [];
-  List<String> _appsForRules = const [];
   String? _lastKey;
   String? _lastFirewall;
   String? _active;
@@ -158,7 +150,6 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
             .applyProfileDebounce(silence: true, force: true);
       },
     );
-    _appTimer = Timer.periodic(_appPoll, (_) => unawaited(_pollApps()));
     if (system.isWindows) runAfterFrame(_forceTun);
   }
 
@@ -169,29 +160,6 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     ref
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith.tun(enable: true));
-  }
-
-  Future<void> _pollApps() async {
-    final settings = ref.read(autoTunnelProvider);
-    final watched = settings.watchedApps;
-    if (!settings.enabled || watched.isEmpty) return;
-    final next = stepOpenApps(
-      _openApps,
-      foreground: foregroundExecutable(),
-      open: _openApps.isEmpty ? const {} : await runningExecutables(),
-      ruleApps: watched,
-    );
-    if (listEquals(next, _openApps)) return;
-    _openApps = next;
-    _lingerTimer?.cancel();
-    if (next.firstOrNull == _appsForRules.firstOrNull) {
-      _appsForRules = next;
-      return;
-    }
-    _lingerTimer = Timer(next.isEmpty ? _linger : Duration.zero, () {
-      _appsForRules = _openApps;
-      _schedule();
-    });
   }
 
   void _schedule([Duration delay = _settle]) {
@@ -222,12 +190,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     if (!settings.enabled) _active = null;
     await _syncFirewall();
     if (!settings.enabled || _manual || !mounted) return;
-    final action = decideAutoTunnel(
-      settings,
-      network,
-      openApps: _appsForRules,
-      active: _active,
-    );
+    final action = decideAutoTunnel(settings, network, active: _active);
     final key = '${network.kind}|${network.ssid}|${action?.key}';
     if (!mounted || key == _lastKey) return;
     _lastKey = key;
@@ -273,8 +236,6 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   @override
   void dispose() {
     _timer?.cancel();
-    _appTimer?.cancel();
-    _lingerTimer?.cancel();
     unawaited(_subscription?.cancel());
     super.dispose();
   }

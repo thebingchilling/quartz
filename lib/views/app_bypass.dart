@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/auto_tunnel/auto_tunnel.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/views/auto_tunnel.dart';
+import 'package:fl_clash/views/program_picker.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -34,12 +33,8 @@ class AppBypassView extends ConsumerWidget {
     final props = ref.read(vpnSettingProvider).accessControlProps;
     final whitelist = props.mode == AccessControlMode.acceptSelected;
     final list = whitelist ? props.acceptList : props.rejectList;
-    final picked = await pickApps(context, [
-      for (final app in list)
-        RuleApp(app: app, label: app.split(RegExp(r'[\\/]')).last),
-    ]);
-    if (picked == null) return;
-    final apps = [for (final app in picked) app.app];
+    final apps = await pickPrograms(context, list);
+    if (apps == null) return;
     _update(
       ref,
       (props) => whitelist
@@ -90,6 +85,7 @@ class AppBypassView extends ConsumerWidget {
             footer: l.appBypassDesc,
           ),
           generateSectionV3(
+            spaced: true,
             items: [
               for (final app in list)
                 ListItem(

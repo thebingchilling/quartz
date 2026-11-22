@@ -7774,10 +7774,10 @@ class AppLocalizations {
     return Intl.message('Rules', name: 'autoTunnelRules', desc: '', args: []);
   }
 
-  /// `Hold and drag to reorder. App rules come first, then the highest rule that matches.`
+  /// `Hold and drag to reorder. The highest rule that matches wins.`
   String get autoTunnelRulesDesc {
     return Intl.message(
-      'Hold and drag to reorder. App rules come first, then the highest rule that matches.',
+      'Hold and drag to reorder. The highest rule that matches wins.',
       name: 'autoTunnelRulesDesc',
       desc: '',
       args: [],
@@ -7864,35 +7864,15 @@ class AppLocalizations {
     );
   }
 
-  /// `Other profiles`
-  String get autoTunnelOtherProfiles {
-    return Intl.message(
-      'Other profiles',
-      name: 'autoTunnelOtherProfiles',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Apps in the work profile or Secure Folder, labelled with where they are. A rule matches an app in every profile it's in.`
-  String get autoTunnelOtherProfilesDesc {
-    return Intl.message(
-      'Apps in the work profile or Secure Folder, labelled with where they are. A rule matches an app in every profile it\'s in.',
-      name: 'autoTunnelOtherProfilesDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Auto-tunnel`
   String get autoTunnel {
     return Intl.message('Auto-tunnel', name: 'autoTunnel', desc: '', args: []);
   }
 
-  /// `Connects or disconnects the tunnel for you, based on your network and the apps you use. If you turn the tunnel on yourself, rules wait until you turn it off.`
+  /// `Connects or disconnects the tunnel for you, based on your network. If you turn the tunnel on yourself, rules wait until you turn it off.`
   String get autoTunnelDesc {
     return Intl.message(
-      'Connects or disconnects the tunnel for you, based on your network and the apps you use. If you turn the tunnel on yourself, rules wait until you turn it off.',
+      'Connects or disconnects the tunnel for you, based on your network. If you turn the tunnel on yourself, rules wait until you turn it off.',
       name: 'autoTunnelDesc',
       desc: '',
       args: [],
@@ -8274,16 +8254,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Type a package name`
-  String get autoTunnelPackageName {
-    return Intl.message(
-      'Type a package name',
-      name: 'autoTunnelPackageName',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Server`
   String get autoTunnelServer {
     return Intl.message('Server', name: 'autoTunnelServer', desc: '', args: []);
@@ -8304,46 +8274,6 @@ class AppLocalizations {
     return Intl.message(
       'Optional: pick a server in one of the profile\'s groups.',
       name: 'autoTunnelServerDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `App detection`
-  String get autoTunnelAppWatcher {
-    return Intl.message(
-      'App detection',
-      name: 'autoTunnelAppWatcher',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Only sees which app is on screen`
-  String get autoTunnelAppWatcherDesc {
-    return Intl.message(
-      'Only sees which app is on screen',
-      name: 'autoTunnelAppWatcherDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Usage access`
-  String get autoTunnelUsageAccess {
-    return Intl.message(
-      'Usage access',
-      name: 'autoTunnelUsageAccess',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Tells when you close an app`
-  String get autoTunnelUsageAccessDesc {
-    return Intl.message(
-      'Tells when you close an app',
-      name: 'autoTunnelUsageAccessDesc',
       desc: '',
       args: [],
     );
@@ -8489,46 +8419,6 @@ class AppLocalizations {
     );
   }
 
-  /// `If open`
-  String get autoTunnelIfApps {
-    return Intl.message(
-      'If open',
-      name: 'autoTunnelIfApps',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Network and app`
-  String get autoTunnelMatchAll {
-    return Intl.message(
-      'Network and app',
-      name: 'autoTunnelMatchAll',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Network or app`
-  String get autoTunnelMatchAny {
-    return Intl.message(
-      'Network or app',
-      name: 'autoTunnelMatchAny',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `and`
-  String get autoTunnelAndWord {
-    return Intl.message('and', name: 'autoTunnelAndWord', desc: '', args: []);
-  }
-
-  /// `or`
-  String get autoTunnelOrWord {
-    return Intl.message('or', name: 'autoTunnelOrWord', desc: '', args: []);
-  }
-
   /// `Choose a tunnel`
   String get autoTunnelChooseTunnel {
     return Intl.message(
@@ -8559,10 +8449,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Leave networks or apps empty to ignore them.`
+  /// `Leave empty to match every network.`
   String get autoTunnelIfDesc {
     return Intl.message(
-      'Leave networks or apps empty to ignore them.',
+      'Leave empty to match every network.',
       name: 'autoTunnelIfDesc',
       desc: '',
       args: [],
@@ -8619,36 +8509,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Secure Folder`
-  String get autoTunnelSecureFolder {
-    return Intl.message(
-      'Secure Folder',
-      name: 'autoTunnelSecureFolder',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Work profile`
-  String get autoTunnelWorkProfile {
-    return Intl.message(
-      'Work profile',
-      name: 'autoTunnelWorkProfile',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Dual Messenger`
-  String get autoTunnelDualMessenger {
-    return Intl.message(
-      'Dual Messenger',
-      name: 'autoTunnelDualMessenger',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Browse`
   String get autoTunnelBrowse {
     return Intl.message('Browse', name: 'autoTunnelBrowse', desc: '', args: []);
@@ -8669,6 +8529,26 @@ class AppLocalizations {
     return Intl.message(
       'Running',
       name: 'autoTunnelRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No Wi-Fi networks found`
+  String get autoTunnelNoWifi {
+    return Intl.message(
+      'No Wi-Fi networks found',
+      name: 'autoTunnelNoWifi',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allow location so Quartz can see nearby networks, or type a name above.`
+  String get autoTunnelNoWifiDesc {
+    return Intl.message(
+      'Allow location so Quartz can see nearby networks, or type a name above.',
+      name: 'autoTunnelNoWifiDesc',
       desc: '',
       args: [],
     );

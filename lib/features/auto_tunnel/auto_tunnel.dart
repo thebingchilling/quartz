@@ -47,39 +47,6 @@ class TunnelTarget {
   int get hashCode => Object.hash(profileId, group, proxy);
 }
 
-/// [app] is an Android package or a Windows program's full path.
-class RuleApp {
-  const RuleApp({required this.app, required this.label});
-
-  final String app;
-  final String label;
-
-  /// What app detection reports: the package, or the program's file name.
-  String get detected =>
-      app.contains(_separator) ? app.split(_separator).last.toLowerCase() : app;
-
-  static final _separator = RegExp(r'[\\/]');
-
-  Map<String, dynamic> toJson() => {
-    'app': app,
-    'label': label,
-    'detected': detected,
-  };
-
-  static RuleApp? fromJson(Object? json) => json is Map && json['app'] is String
-      ? RuleApp(
-          app: json['app'] as String,
-          label: json['label'] as String? ?? json['app'] as String,
-        )
-      : null;
-
-  @override
-  bool operator ==(Object other) => other is RuleApp && other.app == app;
-
-  @override
-  int get hashCode => app.hashCode;
-}
-
 enum NetworkMatchKind { wifi, mobile }
 
 /// A null [ssid] is any Wi-Fi and a null [simId] any SIM. An [ssid] may use
@@ -135,8 +102,6 @@ class NetworkMatch {
 
 enum EndAction { disconnect, keep, connect }
 
-/// A condition left empty is not asked; a rule with neither matches every
-/// network.
 class AutoTunnelRule {
   const AutoTunnelRule({
     required this.id,
@@ -144,8 +109,6 @@ class AutoTunnelRule {
     this.enabled = true,
     this.categoryId,
     this.networks = const [],
-    this.apps = const [],
-    this.matchAll = true,
     this.connect = true,
     this.target,
     this.killSwitch = false,
@@ -158,9 +121,6 @@ class AutoTunnelRule {
   final bool enabled;
   final String? categoryId;
   final List<NetworkMatch> networks;
-  final List<RuleApp> apps;
-
-  final bool matchAll;
   final bool connect;
 
   /// Null only in rules saved before every rule named its tunnel: whichever
@@ -172,25 +132,13 @@ class AutoTunnelRule {
   final TunnelTarget? endTarget;
 
   bool matchesNetwork(NetworkSnapshot network) =>
-      networks.isNotEmpty && networks.any((match) => match.matches(network));
-
-  /// A null [app] is no rule app open.
-  bool matches(NetworkSnapshot network, String? app) {
-    final appOpen = app != null && apps.any((a) => a.detected == app);
-    if (apps.isEmpty) return networks.isEmpty || matchesNetwork(network);
-    if (networks.isEmpty) return appOpen;
-    return matchAll
-        ? appOpen && matchesNetwork(network)
-        : appOpen || matchesNetwork(network);
-  }
+      networks.isEmpty || networks.any((match) => match.matches(network));
 
   AutoTunnelRule copyWith({
     String? name,
     bool? enabled,
     String? Function()? categoryId,
     List<NetworkMatch>? networks,
-    List<RuleApp>? apps,
-    bool? matchAll,
     bool? connect,
     TunnelTarget? Function()? target,
     bool? killSwitch,
@@ -202,8 +150,6 @@ class AutoTunnelRule {
     enabled: enabled ?? this.enabled,
     categoryId: categoryId == null ? this.categoryId : categoryId(),
     networks: networks ?? this.networks,
-    apps: apps ?? this.apps,
-    matchAll: matchAll ?? this.matchAll,
     connect: connect ?? this.connect,
     target: target == null ? this.target : target(),
     killSwitch: killSwitch ?? this.killSwitch,
@@ -217,8 +163,6 @@ class AutoTunnelRule {
     'enabled': enabled,
     'categoryId': categoryId,
     'networks': [for (final match in networks) match.toJson()],
-    'apps': [for (final app in apps) app.toJson()],
-    'matchAll': matchAll,
     'connect': connect,
     'target': target?.toJson(),
     'killSwitch': killSwitch,
@@ -237,11 +181,6 @@ class AutoTunnelRule {
         for (final match in (json['networks'] as List?) ?? const [])
           ?NetworkMatch.fromJson(match),
       ],
-      apps: [
-        for (final app in (json['apps'] as List?) ?? const [])
-          ?RuleApp.fromJson(app),
-      ],
-      matchAll: json['matchAll'] as bool? ?? true,
       connect: json['connect'] as bool? ?? true,
       target: TunnelTarget.fromJson(json['target']),
       killSwitch: json['killSwitch'] as bool? ?? false,
@@ -322,10 +261,6 @@ class AutoTunnelSettings {
   bool get anyKillSwitch => rules.any(killSwitchOf);
 
   /// Every app a rule waits for, by what detection reports.
-  Set<String> get watchedApps => {
-    for (final rule in activeRules) ...rule.apps.map((app) => app.detected),
-  };
-
   Iterable<TunnelTarget> get targets => {
     for (final rule in rules) ...[?rule.target, ?rule.endTarget],
   };
@@ -408,7 +343,6 @@ class AutoTunnelSettings {
 
   static bool _isSeededCatchAll(AutoTunnelRule rule) =>
       !rule.connect &&
-      rule.apps.isEmpty &&
       rule.networks.length == 1 &&
       rule.networks.single == const NetworkMatch.wifi();
 }
@@ -450,7 +384,6 @@ AutoTunnelRule? _activeRule(AutoTunnelSettings settings, String? id) =>
 AutoTunnelAction? decideAutoTunnel(
   AutoTunnelSettings settings,
   NetworkSnapshot network, {
-  List<String> openApps = const [],
   String? active,
 }) {
   if (network.kind == NetworkKind.none) {
@@ -464,17 +397,8 @@ AutoTunnelAction? decideAutoTunnel(
     target: rule.connect ? rule.target : null,
     ruleId: rule.id,
   );
-  final rules = settings.activeRules.toList();
-  for (final open in openApps) {
-    for (final rule in rules) {
-      if (rule.apps.any((app) => app.detected == open) &&
-          rule.matches(network, open)) {
-        return act(rule);
-      }
-    }
-  }
-  for (final rule in rules) {
-    if (rule.matches(network, null)) return act(rule);
+  for (final rule in settings.activeRules) {
+    if (rule.matchesNetwork(network)) return act(rule);
   }
   if (active == null) return null;
   final ended = settings.rules.firstWhereOrNull((rule) => rule.id == active);
@@ -500,25 +424,6 @@ bool blocksAll(
   return rule != null && settings.killSwitchOf(rule);
 }
 
-/// A null [open] means only the foreground app is known to be open.
-List<String> stepOpenApps(
-  List<String> recent, {
-  required String? foreground,
-  required Set<String>? open,
-  required Set<String> ruleApps,
-}) {
-  var next = recent;
-  if (foreground != null && ruleApps.contains(foreground)) {
-    next = [foreground, ...recent.where((app) => app != foreground)];
-  }
-  return [
-    for (final app in next)
-      if (ruleApps.contains(app) &&
-          (app == foreground || (open != null && open.contains(app))))
-        app,
-  ];
-}
-
 class SimCard {
   const SimCard({required this.id, required this.name, required this.slot});
 
@@ -533,8 +438,6 @@ typedef AutoTunnelPermissions = ({
   bool location,
   bool backgroundLocation,
   bool phone,
-  bool appWatcher,
-  bool usageAccess,
 });
 
 class AutoTunnelPlatform {
@@ -552,8 +455,6 @@ class AutoTunnelPlatform {
       location: map['location'] ?? false,
       backgroundLocation: map['backgroundLocation'] ?? false,
       phone: map['phone'] ?? false,
-      appWatcher: map['appWatcher'] ?? false,
-      usageAccess: map['usageAccess'] ?? false,
     );
   }
 
@@ -562,13 +463,6 @@ class AutoTunnelPlatform {
 
   Future<List<String>> wifiNetworks() async =>
       await channel.invokeListMethod<String>('wifiNetworks') ?? const [];
-
-  Future<List<String>> profileApps() async =>
-      await channel.invokeListMethod<String>('profileApps') ?? const [];
-
-  /// Includes work-profile and Secure Folder apps the app list can't show.
-  Future<List<String>> seenApps() async =>
-      await channel.invokeListMethod<String>('seenApps') ?? const [];
 
   Future<List<SimCard>> simCards() async {
     final list = await channel.invokeListMethod<Map>('simCards') ?? const [];
@@ -583,13 +477,23 @@ class AutoTunnelPlatform {
   }
 }
 
+/// Drops rules that waited for apps rather than widen them to every network.
+Map<String, dynamic> withoutAppRules(Map<String, dynamic> json) => {
+  ...json,
+  'rules': [
+    for (final rule in (json['rules'] as List?) ?? const [])
+      if (rule is! Map || ((rule['apps'] as List?) ?? const []).isEmpty) rule,
+  ],
+};
+
 final autoTunnelProvider =
     NotifierProvider<AutoTunnelNotifier, AutoTunnelSettings>(
       AutoTunnelNotifier.new,
     );
 
 class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
-  static const key = 'quartz.autoTunnel.v6';
+  static const key = 'quartz.autoTunnel.v7';
+  static const _withAppsKey = 'quartz.autoTunnel.v6';
   static const _previousKey = 'quartz.autoTunnel.v5';
   static const platform = AutoTunnelPlatform();
 
@@ -609,10 +513,17 @@ class AutoTunnelNotifier extends Notifier<AutoTunnelSettings> {
         );
         return;
       }
+      final withApps = prefs.getString(_withAppsKey);
+      if (withApps != null) {
+        state = AutoTunnelSettings.fromJson(
+          withoutAppRules((jsonDecode(withApps) as Map).cast()),
+        );
+        return;
+      }
       final previous = prefs.getString(_previousKey);
       if (previous == null) return;
       state = AutoTunnelSettings.fromPrevious(
-        (jsonDecode(previous) as Map).cast<String, dynamic>(),
+        withoutAppRules((jsonDecode(previous) as Map).cast()),
       );
     } on Object catch (error) {
       commonPrint.log('Auto-tunnel settings unreadable: $error');

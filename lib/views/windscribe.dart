@@ -135,6 +135,7 @@ class _WindscribeViewState extends ConsumerState<WindscribeView> {
               items: _locationItems(l, settings),
             ),
             generateSectionV3(
+              spaced: true,
               items: [
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.key),

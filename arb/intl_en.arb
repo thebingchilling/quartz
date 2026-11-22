@@ -937,7 +937,7 @@
   "warpAwgDesc": "AmneziaWG hides the WireGuard handshake from networks that block it",
   "autoTunnelWifi": "Wi-Fi",
   "autoTunnelRules": "Rules",
-  "autoTunnelRulesDesc": "Hold and drag to reorder. App rules come first, then the highest rule that matches.",
+  "autoTunnelRulesDesc": "Hold and drag to reorder. The highest rule that matches wins.",
   "autoTunnelAddRule": "Add rule",
   "autoTunnelRule": "Rule",
   "autoTunnelAnyNetwork": "Any network",
@@ -947,10 +947,8 @@
   "autoTunnelThen": "Then",
   "autoTunnelDisconnect": "Disconnect",
   "autoTunnelKillSwitchDesc": "Block the internet while this tunnel is down",
-  "autoTunnelOtherProfiles": "Other profiles",
-  "autoTunnelOtherProfilesDesc": "Apps in the work profile or Secure Folder, labelled with where they are. A rule matches an app in every profile it's in.",
   "autoTunnel": "Auto-tunnel",
-  "autoTunnelDesc": "Connects or disconnects the tunnel for you, based on your network and the apps you use. If you turn the tunnel on yourself, rules wait until you turn it off.",
+  "autoTunnelDesc": "Connects or disconnects the tunnel for you, based on your network. If you turn the tunnel on yourself, rules wait until you turn it off.",
   "autoTunnelAddNetwork": "Add network",
   "autoTunnelEnterName": "Type a name",
   "autoTunnelPermissions": "Permissions",
@@ -1017,14 +1015,9 @@
     }
   },
   "autoTunnelAddApp": "Add app",
-  "autoTunnelPackageName": "Type a package name",
   "autoTunnelServer": "Server",
   "autoTunnelKeepServer": "Keep the selected server",
   "autoTunnelServerDesc": "Optional: pick a server in one of the profile's groups.",
-  "autoTunnelAppWatcher": "App detection",
-  "autoTunnelAppWatcherDesc": "Only sees which app is on screen",
-  "autoTunnelUsageAccess": "Usage access",
-  "autoTunnelUsageAccessDesc": "Tells when you close an app",
   "autoTunnelKillSwitch": "Kill switch",
   "autoTunnelWindowsKillDesc": "On Windows it uses Quartz's helper (one admin prompt) and keeps blocking when Quartz is closed.",
   "autoTunnelSystemKillSwitch": "Android's own kill switch",
@@ -1040,11 +1033,6 @@
   "autoTunnelNoCategory": "None",
   "autoTunnelName": "Name",
   "autoTunnelIfNetwork": "If on",
-  "autoTunnelIfApps": "If open",
-  "autoTunnelMatchAll": "Network and app",
-  "autoTunnelMatchAny": "Network or app",
-  "autoTunnelAndWord": "and",
-  "autoTunnelOrWord": "or",
   "autoTunnelChooseTunnel": "Choose a tunnel",
   "autoTunnelCategoryKillSwitchDesc": "Block the internet while a rule here is connecting or its tunnel is down.",
   "autoTunnelKillSwitchFromCategory": "On for all rules in {name}",
@@ -1055,7 +1043,7 @@
       }
     }
   },
-  "autoTunnelIfDesc": "Leave networks or apps empty to ignore them.",
+  "autoTunnelIfDesc": "Leave empty to match every network.",
   "autoTunnelOnEnd": "When it ends",
   "autoTunnelOnEndDesc": "Used when this rule stops matching and no other rule does.",
   "autoTunnelKeep": "Leave as is",
@@ -1068,10 +1056,9 @@
       }
     }
   },
-  "autoTunnelSecureFolder": "Secure Folder",
-  "autoTunnelWorkProfile": "Work profile",
-  "autoTunnelDualMessenger": "Dual Messenger",
   "autoTunnelBrowse": "Browse",
   "autoTunnelPrograms": "Programs",
-  "autoTunnelRunning": "Running"
+  "autoTunnelRunning": "Running",
+  "autoTunnelNoWifi": "No Wi-Fi networks found",
+  "autoTunnelNoWifiDesc": "Allow location so Quartz can see nearby networks, or type a name above."
 }

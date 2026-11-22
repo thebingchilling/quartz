@@ -4,19 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
-import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.os.Process
-import android.os.UserHandle
 import android.telephony.SubscriptionManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.follow.clash.autotunnel.AutoTunnel
-import com.follow.clash.autotunnel.ForegroundApp
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -83,8 +78,6 @@ class AutoTunnelPlugin :
             "request" -> request(call.arguments as? String, result)
             "wifiNetworks" -> result.success(wifiNetworks())
             "simCards" -> result.success(simCards())
-            "seenApps" -> result.success(AutoTunnel.seenApps(context))
-            "profileApps" -> result.success(profileApps())
             else -> result.notImplemented()
         }
     }
@@ -99,27 +92,16 @@ class AutoTunnelPlugin :
             (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
                 granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)),
         "phone" to granted(Manifest.permission.READ_PHONE_STATE),
-        "appWatcher" to ForegroundApp.watcherEnabled(GlobalState.application),
-        "usageAccess" to ForegroundApp.hasUsageAccess(GlobalState.application),
     )
 
     private fun request(kind: String?, result: MethodChannel.Result) {
         val settings = when (kind) {
-            "appWatcher" -> Settings.ACTION_ACCESSIBILITY_SETTINGS
-            "usageAccess" -> Settings.ACTION_USAGE_ACCESS_SETTINGS
             "systemKillSwitch" -> Settings.ACTION_VPN_SETTINGS
             else -> null
         }
         if (settings != null) {
             val intent = Intent(settings).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            if (kind == "usageAccess") {
-                intent.data = Uri.parse("package:${GlobalState.application.packageName}")
-            }
-            val opened = runCatching { GlobalState.application.startActivity(intent) }.isSuccess ||
-                runCatching {
-                    GlobalState.application.startActivity(intent.setData(null))
-                }.isSuccess
-            result.success(opened)
+            result.success(runCatching { GlobalState.application.startActivity(intent) }.isSuccess)
             return
         }
         val permissions = when (kind) {
@@ -177,26 +159,6 @@ class AutoTunnelPlugin :
             nearby).distinct()
     }
 
-    /**
-     * `package\tlabel\tuserId` for each app of another profile Android lets Quartz list, apps also
-     * installed here included. Samsung keeps Secure Folder (users 150 and up) and Dual Messenger
-     * (95) out of the profile list, so those users are asked for by ID as well.
-     */
-    private fun profileApps(): List<String> {
-        val launcher = GlobalState.application.getSystemService(LauncherApps::class.java)
-            ?: return emptyList()
-        val me = Process.myUserHandle()
-        val samsung = (SAMSUNG_USERS).map { UserHandle.getUserHandleForUid(it * PER_USER_RANGE) }
-        return (runCatching { launcher.profiles }.getOrNull().orEmpty() + samsung)
-            .distinct()
-            .filter { it != me }
-            .flatMap { user ->
-                runCatching { launcher.getActivityList(null, user) }.getOrNull().orEmpty()
-                    .map { "${it.applicationInfo.packageName}\t${it.label}\t${user.hashCode()}" }
-            }
-            .distinct()
-    }
-
     @SuppressLint("MissingPermission")
     private fun simCards(): List<Map<String, Any?>> {
         if (!granted(Manifest.permission.READ_PHONE_STATE)) return emptyList()
@@ -230,8 +192,6 @@ class AutoTunnelPlugin :
 
     companion object {
         private const val REQUEST_CODE = 7461
-        private const val PER_USER_RANGE = 100_000
-        private val SAMSUNG_USERS = listOf(95) + (150..160)
         private const val APPLY_TIMEOUT_MS = 30_000L
 
         @Volatile

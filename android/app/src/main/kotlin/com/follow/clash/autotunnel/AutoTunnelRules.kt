@@ -8,8 +8,6 @@ data class TunnelTarget(
     val key: String get() = "$profileId/${group.orEmpty()}/${proxy.orEmpty()}"
 }
 
-data class RuleApp(val app: String = "", val label: String = "", val detected: String = "")
-
 /** A null [ssid] is any Wi-Fi and a null [simId] any SIM. */
 data class NetworkMatch(val kind: String = "wifi", val ssid: String? = null, val simId: Int? = null) {
     fun matches(network: NetworkSnapshot): Boolean = when (kind) {
@@ -26,23 +24,13 @@ data class AutoTunnelRule(
     val enabled: Boolean = true,
     val categoryId: String? = null,
     val networks: List<NetworkMatch> = emptyList(),
-    val apps: List<RuleApp> = emptyList(),
-    val matchAll: Boolean = true,
     val connect: Boolean = true,
     val target: TunnelTarget? = null,
     val killSwitch: Boolean = false,
     val onEnd: String = "disconnect",
     val endTarget: TunnelTarget? = null,
 ) {
-    fun matchesNetwork(network: NetworkSnapshot) = networks.isNotEmpty() && networks.any { it.matches(network) }
-
-    /** Whether this rule holds with [app] open, or with no rule app open when [app] is null. */
-    fun matches(network: NetworkSnapshot, app: String?): Boolean {
-        val appOpen = app != null && apps.any { it.detected == app }
-        if (apps.isEmpty()) return networks.isEmpty() || matchesNetwork(network)
-        if (networks.isEmpty()) return appOpen
-        return if (matchAll) appOpen && matchesNetwork(network) else appOpen || matchesNetwork(network)
-    }
+    fun matchesNetwork(network: NetworkSnapshot) = networks.isEmpty() || networks.any { it.matches(network) }
 }
 
 data class RuleCategory(
@@ -77,9 +65,6 @@ data class AutoTunnelSettings(
     val activeRules: List<AutoTunnelRule> get() = rules.filter(::isActive)
 
     fun activeRule(id: String?): AutoTunnelRule? = id?.let { activeRules.firstOrNull { rule -> rule.id == it } }
-
-    val watchedApps: Set<String>
-        get() = activeRules.flatMap { rule -> rule.apps.map { it.detected } }.toSet()
 }
 
 enum class NetworkKind { WIFI, CELLULAR, NONE }
@@ -99,7 +84,7 @@ data class Decision(
     val ruleId: String? = null,
 )
 
-/** Mirrors `decideAutoTunnel`, `blocksAll` and `stepOpenApps` in Dart; keep both in step. */
+/** Mirrors `decideAutoTunnel` and `blocksAll` in Dart; keep both in step. */
 object AutoTunnelRules {
     fun ssidMatches(pattern: String, ssid: String): Boolean {
         if ('*' !in pattern && '?' !in pattern) return pattern == ssid
@@ -116,7 +101,6 @@ object AutoTunnelRules {
     fun decide(
         settings: AutoTunnelSettings,
         network: NetworkSnapshot,
-        openApps: List<String> = emptyList(),
         active: String? = null,
     ): Decision? {
         if (network.kind == NetworkKind.NONE) {
@@ -130,12 +114,7 @@ object AutoTunnelRules {
             if (rule.connect) rule.target else null,
             rule.id,
         )
-        val rules = settings.activeRules
-        for (open in openApps) {
-            rules.firstOrNull { rule -> rule.apps.any { it.detected == open } && rule.matches(network, open) }
-                ?.let { return act(it) }
-        }
-        rules.firstOrNull { it.matches(network, null) }?.let { return act(it) }
+        settings.activeRules.firstOrNull { it.matchesNetwork(network) }?.let { return act(it) }
         if (active == null) return null
         val ended = settings.rules.firstOrNull { it.id == active }
         return when {
@@ -149,19 +128,5 @@ object AutoTunnelRules {
         if (running || !settings.enabled) return false
         val rule = settings.activeRule(active) ?: return false
         return settings.killSwitchOf(rule)
-    }
-
-    fun stepOpenApps(
-        recent: List<String>,
-        foreground: String?,
-        open: Set<String>?,
-        watched: Set<String>,
-    ): List<String> {
-        val next =
-            if (foreground != null && foreground in watched) listOf(foreground) + (recent - foreground)
-            else recent
-        return next.filter { app ->
-            app in watched && (app == foreground || (open != null && app in open))
-        }
     }
 }

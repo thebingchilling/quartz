@@ -613,11 +613,14 @@ Iterable<Widget> _separatedRows(Iterable<Widget> items) {
   );
 }
 
+/// [spaced] keeps an untitled section off whatever sits above it, the gap a
+/// title would leave.
 Widget generateSectionV3({
   String? title,
   required Iterable<Widget> items,
   List<Widget>? actions,
   String? footer,
+  bool spaced = false,
 }) {
   final genItems = items.mapIndexed<Widget>(
     (index, item) => ItemPositionProvider(
@@ -628,7 +631,9 @@ Widget generateSectionV3({
   return Column(
     children: [
       if (items.isNotEmpty && title != null)
-        ListHeader(title: title, actions: actions),
+        ListHeader(title: title, actions: actions)
+      else if (items.isNotEmpty && spaced)
+        SizedBox(height: listHeaderPadding.top),
       Column(children: [...genItems]),
       if (items.isNotEmpty && footer != null) ListFooter(text: footer),
     ],

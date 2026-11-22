@@ -371,18 +371,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage(
       "Добавить правило",
     ),
-    "autoTunnelAndWord": MessageLookupByLibrary.simpleMessage("и"),
     "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage(
       "Любая мобильная сеть",
     ),
     "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("Любая сеть"),
     "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("Любой Wi-Fi"),
-    "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage(
-      "Определение приложений",
-    ),
-    "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
-      "Видит только, какое приложение на экране",
-    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение всегда, для фона",
     ),
@@ -406,17 +399,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Подключить",
     ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Сам подключает и отключает туннель в зависимости от сети и приложений. Если вы включили туннель сами, правила ждут, пока вы его не выключите.",
+      "Сам подключает и отключает туннель в зависимости от сети. Если вы включили туннель сами, правила ждут, пока вы его не выключите.",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Отключить"),
-    "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage(
-      "Двойной профиль приложений",
-    ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Ввести имя"),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Разрешить"),
-    "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("Если открыто"),
     "autoTunnelIfDesc": MessageLookupByLibrary.simpleMessage(
-      "Оставьте сети или приложения пустыми, чтобы не учитывать их.",
+      "Оставьте пустым, чтобы правило подходило для любой сети.",
     ),
     "autoTunnelIfNetwork": MessageLookupByLibrary.simpleMessage("Если в сети"),
     "autoTunnelKeep": MessageLookupByLibrary.simpleMessage("Оставить как есть"),
@@ -431,27 +420,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Местоположение, чтобы видеть имена Wi-Fi",
     ),
-    "autoTunnelMatchAll": MessageLookupByLibrary.simpleMessage(
-      "Сеть и приложение",
-    ),
-    "autoTunnelMatchAny": MessageLookupByLibrary.simpleMessage(
-      "Сеть или приложение",
-    ),
     "autoTunnelName": MessageLookupByLibrary.simpleMessage("Название"),
     "autoTunnelNoCategory": MessageLookupByLibrary.simpleMessage("Нет"),
+    "autoTunnelNoWifi": MessageLookupByLibrary.simpleMessage(
+      "Сети Wi-Fi не найдены",
+    ),
+    "autoTunnelNoWifiDesc": MessageLookupByLibrary.simpleMessage(
+      "Разрешите доступ к местоположению, чтобы Quartz видел сети рядом, или введите название выше.",
+    ),
     "autoTunnelOnEnd": MessageLookupByLibrary.simpleMessage("Когда закончится"),
     "autoTunnelOnEndDesc": MessageLookupByLibrary.simpleMessage(
       "Срабатывает, когда это правило перестаёт подходить и других подходящих нет.",
-    ),
-    "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("или"),
-    "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage(
-      "Другие профили",
-    ),
-    "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "Приложения рабочего профиля и Защищённой папки с подписью, где они находятся. Правило действует на приложение во всех профилях.",
-    ),
-    "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
-      "Введите имя пакета",
     ),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("Разрешения"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
@@ -461,12 +440,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Правило"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Правила"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
-      "Удерживайте и перетаскивайте, чтобы изменить порядок. Сначала правила с приложениями, затем верхнее подходящее.",
+      "Удерживайте и перетаскивайте, чтобы изменить порядок. Срабатывает верхнее подходящее правило.",
     ),
     "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("Запущенные"),
-    "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage(
-      "Защищённая папка",
-    ),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Сервер"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Необязательно: выберите сервер в одной из групп профиля.",
@@ -478,18 +454,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Включите для Quartz «Постоянная VPN» и «Блокировать подключения без VPN». Это защищает и при перезапусках и сбоях.",
     ),
     "autoTunnelThen": MessageLookupByLibrary.simpleMessage("Тогда"),
-    "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
-      "Доступ к истории использования",
-    ),
-    "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
-      "Сообщает, когда вы закрываете приложение",
-    ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "В Windows работает через помощника Quartz (один запрос администратора) и блокирует даже при закрытом Quartz.",
-    ),
-    "autoTunnelWorkProfile": MessageLookupByLibrary.simpleMessage(
-      "Рабочий профиль",
     ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Автообновление"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(

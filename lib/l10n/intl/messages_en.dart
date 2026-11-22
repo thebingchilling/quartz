@@ -352,18 +352,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("Add network"),
     "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("Add rule"),
-    "autoTunnelAndWord": MessageLookupByLibrary.simpleMessage("and"),
     "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage(
       "Any mobile data",
     ),
     "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("Any network"),
     "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("Any Wi-Fi"),
-    "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage(
-      "App detection",
-    ),
-    "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
-      "Only sees which app is on screen",
-    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "Location all the time, for the background",
     ),
@@ -385,17 +378,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Connect to",
     ),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "Connects or disconnects the tunnel for you, based on your network and the apps you use. If you turn the tunnel on yourself, rules wait until you turn it off.",
+      "Connects or disconnects the tunnel for you, based on your network. If you turn the tunnel on yourself, rules wait until you turn it off.",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
-    "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage(
-      "Dual Messenger",
-    ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("Type a name"),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("Allow"),
-    "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("If open"),
     "autoTunnelIfDesc": MessageLookupByLibrary.simpleMessage(
-      "Leave networks or apps empty to ignore them.",
+      "Leave empty to match every network.",
     ),
     "autoTunnelIfNetwork": MessageLookupByLibrary.simpleMessage("If on"),
     "autoTunnelKeep": MessageLookupByLibrary.simpleMessage("Leave as is"),
@@ -410,27 +399,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "Location, to read Wi-Fi names",
     ),
-    "autoTunnelMatchAll": MessageLookupByLibrary.simpleMessage(
-      "Network and app",
-    ),
-    "autoTunnelMatchAny": MessageLookupByLibrary.simpleMessage(
-      "Network or app",
-    ),
     "autoTunnelName": MessageLookupByLibrary.simpleMessage("Name"),
     "autoTunnelNoCategory": MessageLookupByLibrary.simpleMessage("None"),
+    "autoTunnelNoWifi": MessageLookupByLibrary.simpleMessage(
+      "No Wi-Fi networks found",
+    ),
+    "autoTunnelNoWifiDesc": MessageLookupByLibrary.simpleMessage(
+      "Allow location so Quartz can see nearby networks, or type a name above.",
+    ),
     "autoTunnelOnEnd": MessageLookupByLibrary.simpleMessage("When it ends"),
     "autoTunnelOnEndDesc": MessageLookupByLibrary.simpleMessage(
       "Used when this rule stops matching and no other rule does.",
-    ),
-    "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("or"),
-    "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage(
-      "Other profiles",
-    ),
-    "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "Apps in the work profile or Secure Folder, labelled with where they are. A rule matches an app in every profile it\'s in.",
-    ),
-    "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage(
-      "Type a package name",
     ),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage(
       "Permissions",
@@ -442,12 +421,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Rule"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Rules"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
-      "Hold and drag to reorder. App rules come first, then the highest rule that matches.",
+      "Hold and drag to reorder. The highest rule that matches wins.",
     ),
     "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("Running"),
-    "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage(
-      "Secure Folder",
-    ),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Server"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Optional: pick a server in one of the profile\'s groups.",
@@ -459,18 +435,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Turn on \"Always-on VPN\" and \"Block connections without VPN\" for Quartz. It also covers restarts and crashes.",
     ),
     "autoTunnelThen": MessageLookupByLibrary.simpleMessage("Then"),
-    "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage(
-      "Usage access",
-    ),
-    "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
-      "Tells when you close an app",
-    ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "On Windows it uses Quartz\'s helper (one admin prompt) and keeps blocking when Quartz is closed.",
-    ),
-    "autoTunnelWorkProfile": MessageLookupByLibrary.simpleMessage(
-      "Work profile",
     ),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("Auto update"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(

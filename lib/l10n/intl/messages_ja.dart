@@ -299,14 +299,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelAddCategory": MessageLookupByLibrary.simpleMessage("カテゴリを追加"),
     "autoTunnelAddNetwork": MessageLookupByLibrary.simpleMessage("ネットワークを追加"),
     "autoTunnelAddRule": MessageLookupByLibrary.simpleMessage("ルールを追加"),
-    "autoTunnelAndWord": MessageLookupByLibrary.simpleMessage("かつ"),
     "autoTunnelAnyMobile": MessageLookupByLibrary.simpleMessage("すべてのモバイルデータ"),
     "autoTunnelAnyNetwork": MessageLookupByLibrary.simpleMessage("すべてのネットワーク"),
     "autoTunnelAnyWifi": MessageLookupByLibrary.simpleMessage("すべての Wi-Fi"),
-    "autoTunnelAppWatcher": MessageLookupByLibrary.simpleMessage("アプリ検出"),
-    "autoTunnelAppWatcherDesc": MessageLookupByLibrary.simpleMessage(
-      "画面に表示中のアプリだけを確認します",
-    ),
     "autoTunnelBackgroundLocation": MessageLookupByLibrary.simpleMessage(
       "常に位置情報（バックグラウンド用）",
     ),
@@ -324,17 +319,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelConnectTo": m0,
     "autoTunnelConnectToTitle": MessageLookupByLibrary.simpleMessage("接続先"),
     "autoTunnelDesc": MessageLookupByLibrary.simpleMessage(
-      "ネットワークと使っているアプリに合わせて、トンネルを自動で接続・切断します。自分でオンにしたトンネルは、オフにするまでルールが待ちます。",
+      "ネットワークに合わせて、トンネルを自動で接続・切断します。自分でオンにしたトンネルは、オフにするまでルールが待ちます。",
     ),
     "autoTunnelDisconnect": MessageLookupByLibrary.simpleMessage("切断"),
-    "autoTunnelDualMessenger": MessageLookupByLibrary.simpleMessage(
-      "デュアルメッセンジャー",
-    ),
     "autoTunnelEnterName": MessageLookupByLibrary.simpleMessage("名前を入力"),
     "autoTunnelGrant": MessageLookupByLibrary.simpleMessage("許可"),
-    "autoTunnelIfApps": MessageLookupByLibrary.simpleMessage("起動中のアプリ"),
     "autoTunnelIfDesc": MessageLookupByLibrary.simpleMessage(
-      "ネットワークやアプリを空にすると、その条件は無視されます。",
+      "空にするとすべてのネットワークに一致します。",
     ),
     "autoTunnelIfNetwork": MessageLookupByLibrary.simpleMessage("接続中のネットワーク"),
     "autoTunnelKeep": MessageLookupByLibrary.simpleMessage("そのままにする"),
@@ -347,30 +338,27 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelLocation": MessageLookupByLibrary.simpleMessage(
       "位置情報（Wi-Fi 名の取得）",
     ),
-    "autoTunnelMatchAll": MessageLookupByLibrary.simpleMessage("ネットワークとアプリ"),
-    "autoTunnelMatchAny": MessageLookupByLibrary.simpleMessage("ネットワークまたはアプリ"),
     "autoTunnelName": MessageLookupByLibrary.simpleMessage("名前"),
     "autoTunnelNoCategory": MessageLookupByLibrary.simpleMessage("なし"),
+    "autoTunnelNoWifi": MessageLookupByLibrary.simpleMessage(
+      "Wi-Fi ネットワークが見つかりません",
+    ),
+    "autoTunnelNoWifiDesc": MessageLookupByLibrary.simpleMessage(
+      "近くのネットワークを表示するには位置情報を許可するか、上で名前を入力してください。",
+    ),
     "autoTunnelOnEnd": MessageLookupByLibrary.simpleMessage("終了したとき"),
     "autoTunnelOnEndDesc": MessageLookupByLibrary.simpleMessage(
       "このルールが一致しなくなり、ほかのルールも一致しないときに使われます。",
     ),
-    "autoTunnelOrWord": MessageLookupByLibrary.simpleMessage("または"),
-    "autoTunnelOtherProfiles": MessageLookupByLibrary.simpleMessage("他のプロファイル"),
-    "autoTunnelOtherProfilesDesc": MessageLookupByLibrary.simpleMessage(
-      "仕事用プロファイルやセキュアフォルダのアプリを、場所の名前付きで表示します。ルールはアプリが入っているすべてのプロファイルに適用されます。",
-    ),
-    "autoTunnelPackageName": MessageLookupByLibrary.simpleMessage("パッケージ名を入力"),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("電話（SIM の識別）"),
     "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("プログラム"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
-      "長押しでドラッグして並べ替え。アプリのルールが先、その後は一致する一番上のルールです。",
+      "長押しでドラッグして並べ替え。一致する一番上のルールが使われます。",
     ),
     "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("実行中"),
-    "autoTunnelSecureFolder": MessageLookupByLibrary.simpleMessage("セキュアフォルダ"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("サーバー"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "任意：プロファイルのグループからサーバーを選びます。",
@@ -382,15 +370,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Quartz の「常時接続 VPN」と「VPN なしの接続をブロック」をオンにします。再起動やクラッシュ時も守られます。",
     ),
     "autoTunnelThen": MessageLookupByLibrary.simpleMessage("動作"),
-    "autoTunnelUsageAccess": MessageLookupByLibrary.simpleMessage("使用状況へのアクセス"),
-    "autoTunnelUsageAccessDesc": MessageLookupByLibrary.simpleMessage(
-      "アプリを閉じたことを検知します",
-    ),
     "autoTunnelWifi": MessageLookupByLibrary.simpleMessage("Wi-Fi"),
     "autoTunnelWindowsKillDesc": MessageLookupByLibrary.simpleMessage(
       "Windows では Quartz のヘルパー（管理者確認 1 回）を使い、Quartz を閉じてもブロックを続けます。",
     ),
-    "autoTunnelWorkProfile": MessageLookupByLibrary.simpleMessage("仕事用プロファイル"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分）"),
     "back": MessageLookupByLibrary.simpleMessage("戻る"),

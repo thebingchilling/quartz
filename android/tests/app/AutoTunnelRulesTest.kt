@@ -6,7 +6,6 @@ import com.follow.clash.autotunnel.AutoTunnelSettings
 import com.follow.clash.autotunnel.NetworkKind
 import com.follow.clash.autotunnel.NetworkMatch
 import com.follow.clash.autotunnel.NetworkSnapshot
-import com.follow.clash.autotunnel.RuleApp
 import com.follow.clash.autotunnel.RuleCategory
 import com.follow.clash.autotunnel.TunnelTarget
 import com.google.gson.Gson
@@ -20,15 +19,7 @@ class AutoTunnelRulesTest {
     private val vless = TunnelTarget(profileId = 1)
     private val warp = TunnelTarget(profileId = 2)
     private val chinaIp = TunnelTarget(profileId = 3, group = "PROXY", proxy = "CN")
-    private val discord = RuleApp("com.discord", "Discord", "com.discord")
-    private val netflix = RuleApp("com.netflix", "Netflix", "com.netflix")
     private val data = AutoTunnelRule("data", networks = listOf(NetworkMatch("mobile")), target = vless)
-    private val cafe = AutoTunnelRule(
-        "cafe",
-        networks = listOf(NetworkMatch("wifi", ssid = "Cafe")),
-        apps = listOf(netflix),
-        target = warp,
-    )
     private val china = RuleCategory("china", "China", enabled = false)
     private val settings = AutoTunnelSettings(
         enabled = true,
@@ -42,8 +33,6 @@ class AutoTunnelRulesTest {
             ),
             AutoTunnelRule("home", networks = listOf(NetworkMatch("wifi", ssid = "MyHome")), connect = false),
             data,
-            AutoTunnelRule("discord", apps = listOf(discord), target = warp),
-            cafe,
         ),
     )
 
@@ -61,13 +50,6 @@ class AutoTunnelRulesTest {
         val onData = AutoTunnelRules.decide(settings, sim(1), active = "home")!!
         assertEquals(vless, onData.target)
         assertEquals("data", onData.ruleId)
-    }
-
-    @Test
-    fun `an app rule takes over and the network rule comes back after`() {
-        val app = AutoTunnelRules.decide(settings, sim(1), listOf("com.discord"), "data")!!
-        assertEquals(warp, app.target)
-        assertEquals("data", AutoTunnelRules.decide(settings, sim(1), active = "discord")!!.ruleId)
     }
 
     @Test
@@ -90,12 +72,9 @@ class AutoTunnelRulesTest {
     }
 
     @Test
-    fun `AND needs both and OR either`() {
-        assertEquals("cafe", AutoTunnelRules.decide(settings, wifi("Cafe"), listOf("com.netflix"))!!.ruleId)
-        assertNull(AutoTunnelRules.decide(settings, wifi("Cafe")))
-        val either = with(cafe.copy(matchAll = false))
-        assertEquals("cafe", AutoTunnelRules.decide(either, wifi("Cafe"))!!.ruleId)
-        assertEquals("cafe", AutoTunnelRules.decide(either, wifi("x"), listOf("com.netflix"))!!.ruleId)
+    fun `a rule without networks matches every network`() {
+        val everywhere = settings.copy(rules = listOf(AutoTunnelRule("all", target = warp)))
+        assertEquals("all", AutoTunnelRules.decide(everywhere, wifi("Cafe"))!!.ruleId)
     }
 
     @Test
@@ -123,21 +102,9 @@ class AutoTunnelRulesTest {
     }
 
     @Test
-    fun `an app stays open until closed from recents`() {
-        val apps = setOf("nz.co.bnz")
-        var recent = AutoTunnelRules.stepOpenApps(emptyList(), "nz.co.bnz", emptySet(), apps)
-        assertEquals(listOf("nz.co.bnz"), recent)
-        recent = AutoTunnelRules.stepOpenApps(recent, "launcher", setOf("nz.co.bnz"), apps)
-        assertEquals(listOf("nz.co.bnz"), recent)
-        recent = AutoTunnelRules.stepOpenApps(recent, "launcher", emptySet(), apps)
-        assertEquals(emptyList<String>(), recent)
-    }
-
-    @Test
     fun `settings read the JSON Flutter writes`() {
         val json = """{"enabled":true,"rules":[{"id":"r1","name":"Bank","enabled":true,
             |"categoryId":"c","networks":[{"kind":"mobile","ssid":null,"simId":2}],
-            |"apps":[{"app":"nz.co.bnz","label":"BNZ","detected":"nz.co.bnz"}],"matchAll":false,
             |"connect":true,"target":{"profileId":6,"group":"G","proxy":"P"},"killSwitch":false,
             |"onEnd":"connect","endTarget":{"profileId":7}}],
             |"categories":[{"id":"c","name":"Trip","enabled":true,"killSwitch":true}],
@@ -148,10 +115,8 @@ class AutoTunnelRulesTest {
         val rule = parsed.rules.single()
         assertEquals(2, rule.networks.single().simId)
         assertEquals("6/G/P", rule.target?.key)
-        assertEquals(false, rule.matchAll)
         assertEquals("connect" to 7L, rule.onEnd to rule.endTarget?.profileId)
         assertTrue(parsed.killSwitchOf(rule))
-        assertEquals(setOf("nz.co.bnz"), parsed.watchedApps)
         assertEquals(mapOf("G" to "P"), parsed.rendered["6/G/P"]?.selectedMap)
         val empty = Gson().fromJson("{}", AutoTunnelSettings::class.java)
         assertEquals(false, empty.enabled)

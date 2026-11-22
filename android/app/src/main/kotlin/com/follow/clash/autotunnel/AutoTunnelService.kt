@@ -33,12 +33,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Acts only when the network, the open rule apps or the rules change, or the user stops a tunnel.
+ * Acts only when the network or the rules change, or the user stops a tunnel.
  */
 class AutoTunnelService : Service() {
     private val connectivity by lazy { getSystemService(ConnectivityManager::class.java) }
@@ -47,11 +46,7 @@ class AutoTunnelService : Service() {
     private var lastKey: String? = null
     private var callback: ConnectivityManager.NetworkCallback? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private var openApps: List<String> = emptyList()
-    private var appsForRules: List<String> = emptyList()
-    private var linger: Job? = null
     private var applying: Job? = null
-    private var appWatch: Job? = null
 
     private val evaluate = Runnable { apply() }
 
@@ -61,7 +56,6 @@ class AutoTunnelService : Service() {
         super.onCreate()
         startForegroundCompat()
         register()
-        syncAppWatch()
         AutoTunnelState.rejudge = {
             handler.post {
                 lastKey = null
@@ -74,7 +68,6 @@ class AutoTunnelService : Service() {
         startForegroundCompat()
         // New rules: judge the current network again.
         lastKey = null
-        syncAppWatch()
         schedule()
         return START_STICKY
     }
@@ -130,46 +123,6 @@ class AutoTunnelService : Service() {
         }
     }
 
-    /** App detection polls usage data, so it only runs while a rule waits for an app. */
-    private fun syncAppWatch() {
-        if (AutoTunnel.settings(this).watchedApps.isEmpty()) {
-            appWatch?.cancel()
-            appWatch = null
-            openApps = emptyList()
-            appsForRules = emptyList()
-            return
-        }
-        if (appWatch != null) return
-        appWatch = scope.launch {
-            ForegroundApp.activity(this@AutoTunnelService).collect { activity ->
-                val watched = AutoTunnel.settings(this@AutoTunnelService).watchedApps
-                val next = AutoTunnelRules.stepOpenApps(
-                    openApps,
-                    activity.foreground,
-                    activity.open,
-                    watched,
-                )
-                if (next == openApps) return@collect
-                openApps = next
-                onAppsChanged()
-            }
-        }
-    }
-
-    // Losing an app waits a little, so a quick switch away and back doesn't flap the tunnel.
-    private fun onAppsChanged() {
-        linger?.cancel()
-        if (openApps.firstOrNull() == appsForRules.firstOrNull()) {
-            appsForRules = openApps
-            return
-        }
-        linger = scope.launch {
-            if (openApps.isEmpty()) delay(LINGER_MS)
-            appsForRules = openApps
-            schedule()
-        }
-    }
-
     private fun snapshot(): NetworkSnapshot {
         val validated = networks.values.filter {
             it.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
@@ -211,7 +164,7 @@ class AutoTunnelService : Service() {
         }
         if (AutoTunnelState.manual) return
         val network = snapshot()
-        val decision = AutoTunnelRules.decide(settings, network, appsForRules, AutoTunnelState.active)
+        val decision = AutoTunnelRules.decide(settings, network, AutoTunnelState.active)
         val key = "${network.kind}|${network.ssid}|${network.subscriptionId}|${decision?.key}"
         if (key == lastKey) return
         lastKey = key
@@ -273,7 +226,6 @@ class AutoTunnelService : Service() {
     private companion object {
         const val CHANNEL = "auto_tunnel"
         const val NOTIFICATION_ID = 7
-        const val LINGER_MS = 4_000L
         const val SETTLE_MS = 2_000L
         const val REJUDGE_MS = 500L
         const val UNKNOWN_SSID = "<unknown ssid>"

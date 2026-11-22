@@ -13,13 +13,11 @@ import java.io.File
 object AutoTunnel {
     private const val PREFS = "quartz_auto_tunnel"
     private const val KEY = "settings"
-    private const val SEEN = "seenApps"
     private const val FLUTTER_PREFS = "FlutterSharedPreferences"
     private const val SHARED_STATE = "flutter.sharedState"
 
     /** Read by Flutter on its next start, to adopt the switch made while it was closed. */
     const val APPLIED = "flutter.quartz.autoTunnel.applied"
-    private const val MAX_SEEN = 50
     private val gson = Gson()
 
     @Volatile
@@ -48,21 +46,6 @@ object AutoTunnel {
         } else {
             context.stopService(intent)
         }
-    }
-
-    fun seenApps(context: Context): List<String> =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(SEEN, null)
-            ?.split('\n')
-            ?.filter { it.isNotBlank() }
-            .orEmpty()
-
-    fun rememberApp(context: Context, packageName: String, label: String) {
-        val seen = seenApps(context)
-        if (seen.any { it.substringBefore('\t') == packageName }) return
-        val next = (listOf("$packageName\t$label") + seen).take(MAX_SEEN)
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(SEEN, next.joinToString("\n"))
-            .apply()
     }
 
     fun toJson(decision: Decision): String = gson.toJson(decision)
