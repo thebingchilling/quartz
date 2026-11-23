@@ -352,6 +352,14 @@ void main() {
     });
   });
 
+  test('a saved language the app no longer ships falls back to the system', () {
+    expect(appLocaleForString('zh_CN'), const Locale('zh', 'CN'));
+    expect(appLocaleForString('en'), const Locale('en'));
+    expect(appLocaleForString('ja'), isNull);
+    expect(appLocaleForString('ru'), isNull);
+    expect(appLocaleForString(null), isNull);
+  });
+
   group('getFileNameForDisposition', () {
     test('returns null for null input', () {
       expect(getFileNameForDisposition(null), isNull);

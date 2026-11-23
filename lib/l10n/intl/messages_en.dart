@@ -1136,7 +1136,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ipv6Timeout": MessageLookupByLibrary.simpleMessage("IPv6 timeout (ms)"),
     "itemsCount": m41,
-    "ja": MessageLookupByLibrary.simpleMessage("Japanese"),
     "justNow": MessageLookupByLibrary.simpleMessage("Just now"),
     "keepAliveIdle": MessageLookupByLibrary.simpleMessage(
       "TCP keep-alive idle",
@@ -1528,7 +1527,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Route exclude addresses",
     ),
     "routingMark": MessageLookupByLibrary.simpleMessage("Routing mark"),
-    "ru": MessageLookupByLibrary.simpleMessage("Russian"),
     "rule": MessageLookupByLibrary.simpleMessage("Rule"),
     "ruleActionAndDesc": MessageLookupByLibrary.simpleMessage(
       "Logical rule AND",

@@ -46,6 +46,14 @@ String delayFailureText(int delay, AppLocalizations appLocalizations) {
       : appLocalizations.delayFailed;
 }
 
+/// A saved language the app no longer ships follows the system language.
+Locale? appLocaleForString(String? value) {
+  final locale = getLocaleForString(value);
+  return AppLocalizations.delegate.supportedLocales.contains(locale)
+      ? locale
+      : null;
+}
+
 Locale? getLocaleForString(String? localString) {
   if (localString == null) return null;
   final localSplit = localString.split('_');

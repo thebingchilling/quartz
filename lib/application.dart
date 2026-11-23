@@ -180,7 +180,7 @@ class ApplicationState extends ConsumerState<Application> {
         final fontFamilyFallback = appFontFamilyFallback(
           platform: defaultTargetPlatform,
           locales: [
-            ?getLocaleForString(locale),
+            ?appLocaleForString(locale),
             ...WidgetsBinding.instance.platformDispatcher.locales,
           ],
           fontFamily: fontFamily,
@@ -203,7 +203,7 @@ class ApplicationState extends ConsumerState<Application> {
           },
           scrollBehavior: const BaseScrollBehavior(),
           title: appName,
-          locale: getLocaleForString(locale),
+          locale: appLocaleForString(locale),
           supportedLocales: AppLocalizations.delegate.supportedLocales,
           themeMode: themeProps.themeMode,
           theme: ThemeData(

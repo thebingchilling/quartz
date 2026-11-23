@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/l10n/intl/messages_en.dart' as messages_en;
-import 'package:fl_clash/l10n/intl/messages_ja.dart' as messages_ja;
-import 'package:fl_clash/l10n/intl/messages_ru.dart' as messages_ru;
 import 'package:fl_clash/l10n/intl/messages_zh_CN.dart' as messages_zh_cn;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/message_lookup_by_library.dart';
@@ -11,8 +9,6 @@ import 'package:intl/message_lookup_by_library.dart';
 void main() {
   final lookups = <String, MessageLookupByLibrary>{
     'en': messages_en.messages,
-    'ja': messages_ja.messages,
-    'ru': messages_ru.messages,
     'zh_CN': messages_zh_cn.messages,
   };
 

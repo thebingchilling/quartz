@@ -117,8 +117,6 @@ extension LocaleL10n on Locale {
     final appLocalizations = currentAppLocalizations;
     return switch (toString()) {
       'en' => appLocalizations.en,
-      'ja' => appLocalizations.ja,
-      'ru' => appLocalizations.ru,
       'zh_CN' => appLocalizations.zhCN,
       final code => code,
     };

@@ -1318,12 +1318,7 @@ void main() {
           ),
       ],
     );
-    for (final locale in [
-      const Locale('en'),
-      const Locale('zh', 'CN'),
-      const Locale('ja'),
-      const Locale('ru'),
-    ]) {
+    for (final locale in [const Locale('en'), const Locale('zh', 'CN')]) {
       for (final size in [const Size(288, 84), const Size(552, 120)]) {
         await tester.pumpWidget(
           app(
