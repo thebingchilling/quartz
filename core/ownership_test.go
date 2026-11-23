@@ -192,6 +192,9 @@ func TestReclaimEntryVerifiesTheInodeItChowns(t *testing.T) {
 	if err := os.WriteFile(plain, []byte("proxies: []\n"), 0o600); err != nil {
 		t.Fatalf("write error: %v", err)
 	}
+	if os.Geteuid() == 0 {
+		return
+	}
 	if _, err := reclaimEntry(reclaimTargetFor(t, plain), foreign, gid); err == nil {
 		t.Error("a foreign-owned regular file must reach fchown, which only root may complete")
 	}
