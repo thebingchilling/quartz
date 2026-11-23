@@ -7,7 +7,6 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/desktop/helper_client.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/auto_tunnel/auto_tunnel.dart';
-import 'package:fl_clash/features/auto_tunnel/windows_wifi.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
@@ -357,7 +356,7 @@ Future<List<String>> _wifiNetworks() async {
   final current = await WifiSsidManager.instance.getSsid().catchError(
     (_) => null,
   );
-  return {?current, ...await windowsWifiNetworks()}.toList();
+  return [?current];
 }
 
 /// The networks the device can name, searchable, with a row to type one.

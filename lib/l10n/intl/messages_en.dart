@@ -417,13 +417,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Phone, to tell SIM cards apart",
     ),
-    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("Programs"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Rule"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Rules"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "Hold and drag to reorder. The highest rule that matches wins.",
     ),
-    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("Running"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Server"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Optional: pick a server in one of the profile\'s groups.",

@@ -1019,8 +1019,6 @@
   "autoTunnelConnectTo": "{name} に接続",
   "autoTunnelConnectToTitle": "接続先",
   "autoTunnelBrowse": "参照",
-  "autoTunnelPrograms": "プログラム",
-  "autoTunnelRunning": "実行中",
   "autoTunnelNoWifi": "Wi-Fi ネットワークが見つかりません",
   "autoTunnelNoWifiDesc": "近くのネットワークを表示するには位置情報を許可するか、上で名前を入力してください。"
 }

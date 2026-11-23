@@ -436,13 +436,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage(
       "Телефон, чтобы различать SIM",
     ),
-    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("Программы"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("Правило"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("Правила"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "Удерживайте и перетаскивайте, чтобы изменить порядок. Срабатывает верхнее подходящее правило.",
     ),
-    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("Запущенные"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("Сервер"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "Необязательно: выберите сервер в одной из групп профиля.",

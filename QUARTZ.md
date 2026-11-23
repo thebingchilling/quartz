@@ -113,8 +113,8 @@ Dropped (VPN-only use doesn't need them):
   disconnect". Networks settle for 2 s before a decision. While auto-tunnel is on, permissions not
   yet granted (location for Wi-Fi names, phone for SIMs; on Windows, location when Windows 11
   hides the Wi-Fi name) are listed first on the page; while it's off nothing is asked for. Wi-Fi
-  names come from a picker of the networks the device can name (saved ones too on Windows,
-  `windows_wifi.dart`), or are typed.
+  names come from a picker of the networks nearby (Android) or the one connected (Windows), or
+  are typed.
   - Kill switch: per rule, or for every connecting rule of a category. While that rule is in
     effect and its tunnel isn't up (connecting, dropped, no network, or stopped by the user)
     every app is blocked, until the tunnel is back or a rule without one takes over.
@@ -134,8 +134,8 @@ Dropped (VPN-only use doesn't need them):
     session it permits loopback, the Core, the TUN adapter (by alias) and DHCP, and blocks
     everything else. They persist while the Helper runs, even with Quartz closed; enabling the
     first kill switch installs the Helper if needed.
-- **Windows access control picker** (`lib/views/program_picker.dart`): Start menu programs and
-  running ones (`lib/features/app_bypass/windows_programs.dart`), chosen ones first, plus Browse
+- **Windows access control picker** (`lib/views/program_picker.dart`): running programs
+  (`lib/features/app_bypass/windows_programs.dart`) and chosen ones, chosen first, plus Browse
   for an `.exe`.
 - **Config converter** (Settings → Quartz → Config converter, `lib/features/converter`):
   WireGuard/AmneziaWG `.conf` and OpenVPN `.ovpn` files (pasted or opened, several at once)
@@ -193,11 +193,15 @@ Dropped (VPN-only use doesn't need them):
   (`lib/features/app_bypass/app_bypass.dart`): `PROCESS-NAME,<exe>,DIRECT` per blacklisted
   program, or one `NOT,((OR,(...))),DIRECT` for a whitelist.
 
-- **No PowerShell or netsh (standing rule):** Windows code reads Win32 and files directly
-  (`windows_programs.dart`: `EnumProcesses`, Start menu `.lnk` files parsed in Dart;
-  `windows_wifi.dart`: the WLAN API) and the portable update restarts through the launcher's
-  `--after-update`, never a hidden PowerShell. Antivirus heuristics took the old
-  `netsh wlan show profiles` and PowerShell calls for a Wi-Fi password stealer and a dropper.
+- **Nothing that looks like a stealer or dropper (standing rule):** Windows Defender
+  quarantined the portable EXE as a trojan once the app listed saved Wi-Fi profiles (first with
+  `netsh wlan show profiles`, then with the WLAN API's `WlanGetProfileList`) and scanned the Start
+  menu, beside hidden PowerShell. So on Windows: no PowerShell or netsh, no Wi-Fi profile or
+  network listing (the Wi-Fi picker offers only the connected network, from the `wifi_ssid`
+  plugin), no scanning the user's folders; running programs come from `EnumProcesses`
+  (`windows_programs.dart`), and the portable update restarts through the launcher's
+  `--after-update`. Before adding Windows code that enumerates something of the user's, weigh
+  how it reads to antivirus.
 
 ## Android and Windows ship together (standing rule)
 

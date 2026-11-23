@@ -1019,8 +1019,6 @@
   "autoTunnelConnectTo": "连接到 {name}",
   "autoTunnelConnectToTitle": "连接到",
   "autoTunnelBrowse": "浏览",
-  "autoTunnelPrograms": "程序",
-  "autoTunnelRunning": "正在运行",
   "autoTunnelNoWifi": "未找到 Wi-Fi 网络",
   "autoTunnelNoWifiDesc": "允许位置权限以便 Quartz 查看附近的网络，或在上方输入名称。"
 }

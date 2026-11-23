@@ -22,10 +22,8 @@ Future<List<String>?> pickPrograms(
 
 String _fileName(String path) => path.split(RegExp(r'[\\/]')).last;
 
-enum _Tab { programs, running }
-
-/// The Start menu's programs and the running ones, chosen ones first, plus
-/// Browse for any `.exe`.
+/// The running programs and the chosen ones, chosen first, plus Browse for
+/// any `.exe`.
 class _ProgramPicker extends ConsumerStatefulWidget {
   const _ProgramPicker({required this.selected});
 
@@ -35,14 +33,10 @@ class _ProgramPicker extends ConsumerStatefulWidget {
   ConsumerState<_ProgramPicker> createState() => _ProgramPickerState();
 }
 
-class _ProgramPickerState extends ConsumerState<_ProgramPicker>
-    with SingleTickerProviderStateMixin {
-  late final _tabs = TabController(length: _Tab.values.length, vsync: this)
-    ..addListener(() => setState(() {}));
+class _ProgramPickerState extends ConsumerState<_ProgramPicker> {
   late final Set<String> _chosen = {...widget.selected};
   late final Set<String> _pinned = {...widget.selected};
-  List<Package> _programs = const [];
-  List<Package> _running = const [];
+  List<String> _running = const [];
   String _query = '';
 
   @override
@@ -51,36 +45,9 @@ class _ProgramPickerState extends ConsumerState<_ProgramPicker>
     unawaited(_load());
   }
 
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
-
-  static Package _package(String path, String label) => Package(
-    packageName: path,
-    label: label,
-    system: false,
-    internet: true,
-    lastUpdateTime: 0,
-  );
-
   Future<void> _load() async {
-    final (programs, running) = await (
-      installedPrograms(),
-      runningProgramPaths(),
-    ).wait;
-    if (!mounted) return;
-    final listed = {for (final (_, path) in programs) path.toLowerCase()};
-    setState(() {
-      _programs = [
-        for (final (name, path) in programs) _package(path, name),
-        for (final path in _chosen)
-          if (!listed.contains(path.toLowerCase()))
-            _package(path, _fileName(path)),
-      ];
-      _running = [for (final path in running) _package(path, _fileName(path))];
-    });
+    final running = await runningProgramPaths();
+    if (mounted) setState(() => _running = running);
   }
 
   Future<void> _browse() async {
@@ -92,20 +59,26 @@ class _ProgramPickerState extends ConsumerState<_ProgramPicker>
     setState(() {
       _chosen.add(path);
       _pinned.add(path);
-      if (!_programs.any((p) => p.packageName == path)) {
-        _programs = [..._programs, _package(path, _fileName(path))];
-      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
-    final tab = _Tab.values[_tabs.index];
-    final packages = (tab == _Tab.programs ? _programs : _running)
-        .whereMatches(SearchQuery(_query), (p) => [p.label, p.packageName])
-        .sortedBy((p) => p.label.toLowerCase())
-        .sortedBy<num>((p) => _pinned.contains(p.packageName) ? 0 : 1);
+    final packages =
+        [
+              for (final path in {..._pinned, ..._running})
+                Package(
+                  packageName: path,
+                  label: _fileName(path),
+                  system: false,
+                  internet: true,
+                  lastUpdateTime: 0,
+                ),
+            ]
+            .whereMatches(SearchQuery(_query), (p) => [p.label, p.packageName])
+            .sortedBy((p) => p.label.toLowerCase())
+            .sortedBy<num>((p) => _pinned.contains(p.packageName) ? 0 : 1);
     return CommonScaffold(
       title: l.autoTunnelChooseApps,
       searchState: AppBarSearchState(
@@ -123,51 +96,27 @@ class _ProgramPickerState extends ConsumerState<_ProgramPicker>
           icon: const GlyphIcon(AppGlyphs.check),
         ),
       ],
-      body: AppBarClearance(
-        child: Column(
-          children: [
-            TabBar(
-              controller: _tabs,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              dividerColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              tabs: [
-                for (final tab in _Tab.values)
-                  Tab(
-                    text: switch (tab) {
-                      _Tab.programs => l.autoTunnelPrograms,
-                      _Tab.running => l.autoTunnelRunning,
-                    },
-                  ),
-              ],
-            ),
-            Expanded(
-              child: Builder(
-                builder: (context) => ListView.builder(
-                  padding: EdgeInsets.only(
-                    top: 8,
-                    bottom: 16 + BottomInsetScope.of(context),
-                  ),
-                  itemCount: packages.length,
-                  itemExtent: 72,
-                  itemBuilder: (_, index) {
-                    final package = packages[index];
-                    return PackageListItem(
-                      key: Key(package.packageName),
-                      package: package,
-                      value: _chosen.contains(package.packageName),
-                      onChanged: (value) => setState(
-                        () => value == true
-                            ? _chosen.add(package.packageName)
-                            : _chosen.remove(package.packageName),
-                      ),
-                    );
-                  },
-                ),
+      body: Builder(
+        builder: (context) => ListView.builder(
+          padding: EdgeInsets.only(
+            top: context.contentTopPadding,
+            bottom: 16 + BottomInsetScope.of(context),
+          ),
+          itemCount: packages.length,
+          itemExtent: 72,
+          itemBuilder: (_, index) {
+            final package = packages[index];
+            return PackageListItem(
+              key: Key(package.packageName),
+              package: package,
+              value: _chosen.contains(package.packageName),
+              onChanged: (value) => setState(
+                () => value == true
+                    ? _chosen.add(package.packageName)
+                    : _chosen.remove(package.packageName),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

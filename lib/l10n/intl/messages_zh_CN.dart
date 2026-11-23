@@ -335,13 +335,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("权限"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("电话，用于区分 SIM 卡"),
-    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("程序"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("规则"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("规则"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "长按拖动可排序。最上面的匹配规则生效。",
     ),
-    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("正在运行"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("服务器"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "可选：在配置的某个分组中选择服务器。",

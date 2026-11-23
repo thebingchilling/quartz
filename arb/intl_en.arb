@@ -1057,8 +1057,6 @@
     }
   },
   "autoTunnelBrowse": "Browse",
-  "autoTunnelPrograms": "Programs",
-  "autoTunnelRunning": "Running",
   "autoTunnelNoWifi": "No Wi-Fi networks found",
   "autoTunnelNoWifiDesc": "Allow location so Quartz can see nearby networks, or type a name above."
 }

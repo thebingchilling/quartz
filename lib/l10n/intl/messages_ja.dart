@@ -352,13 +352,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "autoTunnelPermissions": MessageLookupByLibrary.simpleMessage("権限"),
     "autoTunnelPhone": MessageLookupByLibrary.simpleMessage("電話（SIM の識別）"),
-    "autoTunnelPrograms": MessageLookupByLibrary.simpleMessage("プログラム"),
     "autoTunnelRule": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRules": MessageLookupByLibrary.simpleMessage("ルール"),
     "autoTunnelRulesDesc": MessageLookupByLibrary.simpleMessage(
       "長押しでドラッグして並べ替え。一致する一番上のルールが使われます。",
     ),
-    "autoTunnelRunning": MessageLookupByLibrary.simpleMessage("実行中"),
     "autoTunnelServer": MessageLookupByLibrary.simpleMessage("サーバー"),
     "autoTunnelServerDesc": MessageLookupByLibrary.simpleMessage(
       "任意：プロファイルのグループからサーバーを選びます。",

@@ -8514,26 +8514,6 @@ class AppLocalizations {
     return Intl.message('Browse', name: 'autoTunnelBrowse', desc: '', args: []);
   }
 
-  /// `Programs`
-  String get autoTunnelPrograms {
-    return Intl.message(
-      'Programs',
-      name: 'autoTunnelPrograms',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Running`
-  String get autoTunnelRunning {
-    return Intl.message(
-      'Running',
-      name: 'autoTunnelRunning',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `No Wi-Fi networks found`
   String get autoTunnelNoWifi {
     return Intl.message(

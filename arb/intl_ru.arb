@@ -1019,8 +1019,6 @@
   "autoTunnelConnectTo": "Подключить {name}",
   "autoTunnelConnectToTitle": "Подключить",
   "autoTunnelBrowse": "Обзор",
-  "autoTunnelPrograms": "Программы",
-  "autoTunnelRunning": "Запущенные",
   "autoTunnelNoWifi": "Сети Wi-Fi не найдены",
   "autoTunnelNoWifiDesc": "Разрешите доступ к местоположению, чтобы Quartz видел сети рядом, или введите название выше."
 }
