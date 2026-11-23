@@ -74,7 +74,7 @@ class LinkManager {
   }
 
   void _handle(Uri uri, Function(String url) installConfigCallBack) {
-    commonPrint.log('onAppLink: $uri');
+    commonPrint.log('onAppLink: ${uri.replace(query: '')}');
     final url = _installConfigUrl(uri);
     if (url != null) {
       installConfigCallBack(url);
