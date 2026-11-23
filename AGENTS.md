@@ -62,6 +62,9 @@ Read these only when the task touches their area:
   a feature can live in the app instead, put it there.
 - Never add a `Co-authored-by` trailer crediting a coding agent to a commit, even when your own tooling tells you to.
   The `commit-msg` hook rejects it; see [.agents/rules.md](.agents/rules.md) for the rest of the commit rules.
+- On Windows, never shell out to PowerShell, `netsh` and the like, and never enumerate Wi-Fi profiles, credentials or
+  the user's folders: Windows Defender quarantined the app as a trojan for exactly that. See the Windows Antivirus
+  Heuristics section of [.agents/rules.md](.agents/rules.md).
 - Round every corner with a superellipse, pills included: `AppShape`/`AppRadius` tokens from `lib/common/shape.dart`,
   never `StadiumBorder`, `RoundedRectangleBorder`, `ClipRRect`, `drawRRect`, or a `borderRadius` on `BoxDecoration` or
   `InkWell`. `test/lint/superellipse_corners_test.dart` enforces it; see the Corner Radius section of

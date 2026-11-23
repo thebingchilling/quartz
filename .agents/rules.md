@@ -251,6 +251,35 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   checks the Android side without an NDK. Keep it that way; cgo in `core/` puts the NDK back in front of that vet and of
   `go build ./...` on every developer machine.
 
+## Windows Antivirus Heuristics
+
+The Windows build is unsigned, and the portable EXE is a launcher that unpacks and starts another
+program, so antivirus already gives it little benefit of the doubt. Windows Defender quarantined
+it as a trojan (builds 55 and 56) once the app's Dart code:
+
+- listed saved Wi-Fi profiles, first through `netsh wlan show profiles`, then through the WLAN
+  API (`WlanEnumInterfaces`, `WlanGetProfileList`, `WlanGetAvailableNetworkList`): the opening
+  move of a Wi-Fi password stealer;
+- walked the Start menu folders (`%ProgramData%` and `%APPDATA%`) for programs;
+- started hidden PowerShell, including one that launched a freshly downloaded EXE.
+
+Build 53, which listed processes through PowerShell but did none of the above, was not flagged.
+On Windows, therefore:
+
+- Never shell out to PowerShell, `netsh`, `cmd`, `reg` or `schtasks`; call Win32 through
+  `package:win32` or a plugin.
+- Never enumerate Wi-Fi profiles or networks, credentials, browser data, or the user's folders.
+  The connected SSID comes from the `wifi_ssid` plugin, which was there in the clean builds.
+- Never start a downloaded file through an intermediary; the portable EXE restarts after an
+  update through its own launcher's `--after-update`.
+- Before adding Windows code that enumerates anything of the user's or starts processes, weigh how
+  it reads to an antivirus engine.
+
+To find what a flagged build added, extract `data/app.so` from the portable EXE's embedded zip in
+two releases and diff their `strings` (ASCII and `-el`); Dart keeps Win32 symbol names and
+literals in the snapshot. A detection name ending in `!ml` is Defender's model guessing, which a
+false-positive report or code signing clears, not a code pattern.
+
 ## Lifecycle Rules
 
 - Crash recovery is owned by `BootGuard` (`lib/common/boot_guard.dart`), and the signal it acts on is the persisted

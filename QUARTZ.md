@@ -209,6 +209,22 @@ Every feature lands on both apps, and every release carries both: the workflow b
 in one run and publishes only when both succeed. Where a platform can't do something (SIM
 choice on Windows), the feature still ships there without that part.
 
+Where the two differ on purpose:
+
+| | Android | Windows |
+|---|---|---|
+| Auto-tunnel networks | Wi-Fi (named, wildcards, any), mobile data, a SIM | Wi-Fi only (no mobile data, by choice) |
+| Wi-Fi picker | networks nearby, or a typed name | the connected one, or a typed name (no listing: antivirus) |
+| Permissions asked (only while auto-tunnel is on) | location, phone | location when Windows 11 hides the Wi-Fi name |
+| Auto-tunnel with the UI closed | the service keeps switching | runs while Quartz is in the tray, where it starts at login |
+| Kill switch with Quartz closed | ends with the process (system "Block connections without VPN" covers it) | the Helper's firewall keeps blocking |
+| Access control | per-app VPN; User and System apps tabs | `PROCESS-NAME` rules; running programs plus Browse |
+| Platform-only settings | VPN options, Quick Settings tile, hide from recents | TUN and system proxy options, hotkeys, start at login |
+
+Everything else, including the auto-tunnel rules, categories, end actions and kill switch per
+rule, WARP, Windscribe, the converter, node summaries, the network card, delay tests and the
+updater, is the same code on both.
+
 ## Builds
 
 Changes are pushed straight to `main` (standing rule), not left on a side branch: a push
