@@ -144,7 +144,7 @@ class CommonAction extends _$CommonAction {
       return;
     }
     final file = await globalState.loadingRun(
-      () => downloadUpdate(request.dio, asset),
+      () => downloadUpdate(request.updateDio, release, asset),
       title: currentAppLocalizations.checkUpdate,
       tag: LoadingTag.checkUpdate,
     );

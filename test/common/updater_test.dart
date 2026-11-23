@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/common/updater.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -63,5 +64,41 @@ void main() {
         'quartz-windows-amd64-portable.exe',
       );
     });
+  });
+
+  test('reads sha256sum output, with or without the ./ prefix', () {
+    final a = 'A' * 64;
+    final b = 'b' * 64;
+    expect(
+      parseChecksums(
+        '$a  ./quartz-android-arm64-v8a.apk\n'
+        '$b *quartz-windows-amd64-setup.exe\n'
+        'not a checksum line\n',
+      ),
+      {
+        'quartz-android-arm64-v8a.apk': 'a' * 64,
+        'quartz-windows-amd64-setup.exe': b,
+      },
+    );
+  });
+
+  test('refuses an asset name that would leave the updates folder', () {
+    expect(
+      safeAssetFileName({'name': 'quartz-android-arm64-v8a.apk'}),
+      'quartz-android-arm64-v8a.apk',
+    );
+    for (final name in [
+      '../evil.apk',
+      r'..\evil.exe',
+      '/tmp/x.apk',
+      '..',
+      '',
+    ]) {
+      expect(
+        () => safeAssetFileName({'name': name}),
+        throwsA(isA<MessageException>()),
+        reason: name,
+      );
+    }
   });
 }

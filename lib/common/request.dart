@@ -12,6 +12,10 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 
 class Request {
   late final Dio dio;
+
+  /// Never accepts a bad certificate, whatever checkCertificate says: the
+  /// download may go through a third-party proxy node.
+  late final Dio updateDio;
   late final Dio _clashDio;
   String? userAgent;
 
@@ -23,6 +27,11 @@ class Request {
 
   Request() {
     dio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
+    updateDio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
+    updateDio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () =>
+          HttpClient()..badCertificateCallback = (_, _, _) => false,
+    );
     _clashDio = Dio();
     _clashDio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {

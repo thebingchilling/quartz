@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:isolate';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:fl_clash/common/exception.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -50,21 +53,80 @@ Map<String, dynamic>? updateAssetFor(
   return null;
 }
 
+const checksumsAssetName = 'SHA256SUMS';
+
+String safeAssetFileName(Map<String, dynamic> asset) {
+  final name = asset['name'] as String? ?? '';
+  final base = p.basename(name.replaceAll('\\', '/'));
+  if (base != name || base.isEmpty || base == '.' || base == '..') {
+    throw MessageException('Refusing update file name "$name"');
+  }
+  return base;
+}
+
+Map<String, String> parseChecksums(String text) {
+  final checksums = <String, String>{};
+  for (final line in text.split('\n')) {
+    final match = RegExp(
+      r'^([0-9a-fA-F]{64})\s+\*?(?:\./)?(.+?)\s*$',
+    ).firstMatch(line);
+    if (match != null) {
+      checksums[match.group(2)!] = match.group(1)!.toLowerCase();
+    }
+  }
+  return checksums;
+}
+
+Future<String> expectedChecksum(
+  Dio dio,
+  Map<String, dynamic> release,
+  String fileName,
+) async {
+  final assets = (release['assets'] as List?) ?? const [];
+  final sums = assets.whereType<Map<String, dynamic>>().where(
+    (asset) => asset['name'] == checksumsAssetName,
+  );
+  if (sums.isEmpty) {
+    throw const MessageException('The release has no SHA256SUMS');
+  }
+  final response = await dio.get<String>(
+    sums.first['browser_download_url'] as String,
+    options: Options(responseType: ResponseType.plain),
+  );
+  final checksum = parseChecksums(response.data ?? '')[fileName];
+  if (checksum == null) {
+    throw MessageException('SHA256SUMS has no entry for $fileName');
+  }
+  return checksum;
+}
+
+Future<String> fileSha256(String path) => Isolate.run(
+  () async => (await sha256.bind(File(path).openRead()).first).toString(),
+);
+
+/// A release without SHA256SUMS fails closed: an unverifiable file is never installed.
 Future<File> downloadUpdate(
   Dio dio,
+  Map<String, dynamic> release,
   Map<String, dynamic> asset, {
   ProgressCallback? onProgress,
 }) async {
+  final fileName = safeAssetFileName(asset);
+  final expected = await expectedChecksum(dio, release, fileName);
   final dir = Directory(
     p.join((await getTemporaryDirectory()).path, 'updates'),
   );
   if (await dir.exists()) await dir.delete(recursive: true);
   await dir.create(recursive: true);
-  final file = File(p.join(dir.path, asset['name'] as String));
+  final file = File(p.join(dir.path, fileName));
   await dio.download(
     asset['browser_download_url'] as String,
     file.path,
     onReceiveProgress: onProgress,
   );
+  if (await fileSha256(file.path) != expected) {
+    await file.delete();
+    throw MessageException('$fileName does not match its SHA256SUMS entry');
+  }
   return file;
 }
