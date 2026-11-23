@@ -5,7 +5,7 @@ use std::fs;
 use std::io::{self, Cursor};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 static BUNDLE: &[u8] = include_bytes!(env!("BUNDLE_ZIP_PATH"));
 const BUNDLE_HASH: &str = env!("BUNDLE_HASH");
@@ -13,6 +13,10 @@ const APP_EXE: &str = "Quartz.exe";
 /// Read by Quartz: the file the updater replaces.
 const PORTABLE_ENV: &str = "QUARTZ_PORTABLE_EXE";
 const KEEP_VERSIONS: usize = 2;
+/// Passed by Quartz's updater after it replaced this file: wait for the old instance to exit, so
+/// the new one isn't handed off to it.
+const AFTER_UPDATE: &str = "--after-update";
+const AFTER_UPDATE_WAIT: Duration = Duration::from_secs(3);
 
 fn main() {
     if let Err(error) = run() {
@@ -33,8 +37,13 @@ fn run() -> io::Result<()> {
     };
     let me = std::env::current_exe()?;
     forget_download_origin(&me);
+    let mut args: Vec<OsString> = std::env::args_os().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == AFTER_UPDATE) {
+        args.remove(0);
+        std::thread::sleep(AFTER_UPDATE_WAIT);
+    }
     Command::new(&app)
-        .args(std::env::args_os().skip(1).collect::<Vec<OsString>>())
+        .args(args)
         .env(PORTABLE_ENV, &me)
         .current_dir(app.parent().unwrap_or(&target))
         .spawn()?;

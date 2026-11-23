@@ -153,14 +153,10 @@ class CommonAction extends _$CommonAction {
       await app?.installApk(file.path);
     } else if (Platform.isWindows && portable != null) {
       // The launcher exited after unpacking, so its file is free to replace;
-      // the new one starts once this instance has let go of its lock.
+      // started with afterUpdateArgument, it waits for this instance to exit.
       await file.copy(portable);
-      await Process.start('powershell', [
-        '-NoProfile',
-        '-WindowStyle',
-        'Hidden',
-        '-Command',
-        "Start-Sleep -Seconds 2; Start-Process -FilePath '${portable.replaceAll("'", "''")}'",
+      await Process.start(portable, const [
+        afterUpdateArgument,
       ], mode: ProcessStartMode.detached);
       await ref.read(systemActionProvider.notifier).handleExit();
     } else if (Platform.isWindows) {

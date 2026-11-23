@@ -193,6 +193,12 @@ Dropped (VPN-only use doesn't need them):
   (`lib/features/app_bypass/app_bypass.dart`): `PROCESS-NAME,<exe>,DIRECT` per blacklisted
   program, or one `NOT,((OR,(...))),DIRECT` for a whitelist.
 
+- **No PowerShell or netsh (standing rule):** Windows code reads Win32 and files directly
+  (`windows_programs.dart`: `EnumProcesses`, Start menu `.lnk` files parsed in Dart;
+  `windows_wifi.dart`: the WLAN API) and the portable update restarts through the launcher's
+  `--after-update`, never a hidden PowerShell. Antivirus heuristics took the old
+  `netsh wlan show profiles` and PowerShell calls for a Wi-Fi password stealer and a dropper.
+
 ## Android and Windows ship together (standing rule)
 
 Every feature lands on both apps, and every release carries both: the workflow builds them
