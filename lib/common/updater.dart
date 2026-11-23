@@ -7,7 +7,7 @@ import 'package:fl_clash/common/exception.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-/// Quartz releases are tagged `quartz-flclash-<version>-<build>`, where the build
+/// Quartz releases are tagged `quartz-<version>-<build>`, where the build
 /// is the CI run that made them and also the app's build number.
 int? releaseBuildNumber(String tag) {
   final match = RegExp(r'-(\d+)$').firstMatch(tag);

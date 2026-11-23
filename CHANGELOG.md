@@ -1,5 +1,17 @@
 # Changelog
 
+## Quartz v1.0.0 (2026-11-23)
+
+The first full Quartz release: FlClash v0.9.0 on stock mihomo.
+
+**Security**
+
+- **updater** Updates install only after matching the release's SHA256SUMS, and their downloads always check certificates
+- **android** Other apps can no longer start, stop or toggle the VPN through the quick-action activity
+- **android** App data, which holds profiles and passwords, is left out of cloud backups and device transfers
+- **links** Logged install-config links no longer carry the subscription URL
+- **ci** The update-mihomo workflow only accepts a release tag
+
 ## v0.9.0 (2026-10-14)
 
 **Breaking Changes**

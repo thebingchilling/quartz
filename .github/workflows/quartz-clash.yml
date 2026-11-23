@@ -144,8 +144,8 @@ jobs:
           GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          tag="quartz-flclash-0.9.0-${{ github.run_number }}"
-          # Quartz-0.9.0-android-arm64-v8a.apk -> quartz-android-arm64-v8a.apk; the
+          tag="quartz-1.0.0-${{ github.run_number }}"
+          # Quartz-1.0.0-android-arm64-v8a.apk -> quartz-android-arm64-v8a.apk; the
           # endings stay, since installed builds' updaters look for them.
           cd dist
           for f in Quartz-*; do mv "$f" "quartz-${f#Quartz-*-}"; done
@@ -154,6 +154,6 @@ jobs:
           cd ..
           gh release create "$tag" dist/* \
             --target "${{ github.sha }}" \
-            --title "Quartz $tag" \
+            --title "Quartz 1.0.0 (build ${{ github.run_number }})" \
             --latest \
-            --notes "Quartz (FlClash v0.9.0 on stock mihomo), built from \`main\` at ${{ github.sha }}. Android APKs for arm64 and armeabi-v7a, the Windows installer and a standalone Windows EXE (\`-portable.exe\`), debug-signed."
+            --notes "Quartz 1.0.0 (FlClash v0.9.0 on stock mihomo), built from \`main\` at ${{ github.sha }}. Android APKs for arm64 and armeabi-v7a, the Windows installer and a standalone Windows EXE (\`-portable.exe\`), debug-signed. The in-app updater checks every file against \`SHA256SUMS\`."

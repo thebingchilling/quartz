@@ -49,9 +49,11 @@ Dropped (VPN-only use doesn't need them):
   be accepted at first launch are gone (`lib/views/disclaimer.dart` is no longer reachable).
 - **Updater** (`lib/common/updater.dart`): reads the latest release of
   `thebingchilling/quartz`, compares its build number (the `-<run>` of
-  `quartz-flclash-<version>-<run>`, which CI also writes as the app's build number) and
+  `quartz-<version>-<run>`, which CI also writes as the app's build number) and
   downloads the APK for the device's ABI (opened with the system installer, permission
-  `REQUEST_INSTALL_PACKAGES`) or the Windows installer (run with `/SILENT`).
+  `REQUEST_INSTALL_PACKAGES`) or the Windows installer (run with `/SILENT`), only after
+  the file matches its line in the release's `SHA256SUMS`; update downloads never accept a
+  bad certificate, whatever the certificate setting says.
 - **Defaults:** system theme, dynamic colour, tonal spot, docked navigation bar, Google Sans
   Flex (`assets/fonts`, OFL) as the app font; picking "Default" in the font list uses it.
 - **Network card** (`lib/views/dashboard/widgets/network_detection.dart`): flag, country,
@@ -233,7 +235,7 @@ to `main` is what builds and publishes the release.
 `.github/workflows/quartz-clash.yml` builds Android and Windows (x64) in one run on pushes
 to `main` and by hand, with FlClash's own `setup.dart` (`--env stable`, so no PRE label;
 arm and arm64 APKs only), and publishes both as the latest Quartz release
-`quartz-flclash-0.9.0-<run>`; the release needs both builds. Its files are
+`quartz-1.0.0-<run>` (`quartz-flclash-0.9.0-<run>` before 1.0); the release needs both builds. Its files are
 `quartz-android-arm64-v8a.apk`, `quartz-android-armeabi-v7a.apk`,
 `quartz-windows-amd64-setup.exe` and `quartz-windows-amd64-portable.exe`; the Windows zip is only the portable EXE's input. The
 endings are what the updater matches, including in builds already installed, so keep them.

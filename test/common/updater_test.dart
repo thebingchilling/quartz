@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('reads the build number from a Quartz release tag', () {
     expect(releaseBuildNumber('quartz-flclash-0.9.0-12'), 12);
+    expect(releaseBuildNumber('quartz-1.0.0-58'), 58);
     expect(releaseBuildNumber('v0.9.0'), isNull);
   });
 
