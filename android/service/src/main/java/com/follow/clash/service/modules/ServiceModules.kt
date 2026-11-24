@@ -1,6 +1,8 @@
 package com.follow.clash.service.modules
 
 import android.app.Service
+import android.net.Network
+import android.net.VpnService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,7 +25,13 @@ internal class ServiceModules(private val service: Service) {
         val nextScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val nextModules = listOf(
             NotificationModule(service, nextScope),
-            NetworkObserveModule(service),
+            NetworkObserveModule(
+                service,
+                onUnderlyingNetwork = (service as? VpnService)?.let { vpn ->
+                    { network: Network? -> vpn.setUnderlyingNetworks(network?.let { arrayOf(it) }) }
+                },
+            ),
+            SleepModule(service, nextScope),
         )
         val startedModules = mutableListOf<ServiceModule>()
 

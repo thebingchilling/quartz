@@ -348,11 +348,16 @@ false-positive report or code signing clears, not a code pattern.
   authorization, because CoreWLAN reaches `wifid` over XPC and a wedged daemon would freeze the window. Windows is the
   outstanding exception: `WlanQueryInterface` still runs inline, since replying off-thread there needs a window-message
   hop that the plugin API does not provide.
-- The delayed DNS re-check `NetworkObserveModule.onLosing` posts is deliberately left un-deduplicated. The runnable
-  re-reads `networkInfos` and does nothing when `onLost` already dropped the network, `updateDns` calls into the Core
-  only when the resolved list or the preferred network changed, and `stop()` clears the handler queue, so a network that
-  reports `onLosing` repeatedly costs two comparisons per event. Holding the pending `Runnable` to `removeCallbacks` it changes no behaviour and adds
-  state that has to stay in sync with the map.
+- `NetworkObserveModule` follows the network Android picks for protected sockets (`registerBestMatchingNetworkCallback`
+  on S+, `requestNetwork` with the default request's capabilities before that), never a ranking of its own: Android
+  keeps an unvalidated Wi-Fi connected while it routes over mobile data, and that Wi-Fi's DNS servers are then
+  unreachable. The VPN reports the same network through `setUnderlyingNetworks`, retried until the VPN is established.
+- Android's mihomo forces TCP keepalive off, so nothing on the phone notices a carrier dropping an idle mapping. Two
+  things stand in for it without sending packets: the Core's socket hook sets `TCP_USER_TIMEOUT` (60 s) on outbound TCP,
+  which bounds only unacknowledged data, and `SleepModule` closes, at a wake or Doze maintenance window after at least
+  five minutes asleep, the connections that received nothing since the phone went to sleep. One that received data
+  stays open, so a call or a download outlasts the screen going off. Do not swap either for keepalive or a periodic
+  probe: those wake the radio on every idle connection.
 
 ## UI Isolate Work
 

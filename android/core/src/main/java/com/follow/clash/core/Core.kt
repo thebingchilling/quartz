@@ -16,6 +16,10 @@ object Core {
 
     fun resetNetwork() = Mobile.resetNetwork()
 
+    fun markSleep() = Mobile.markSleep()
+
+    fun resetSleptConnections() = Mobile.resetSleptConnections()
+
     private fun parseInetSocketAddress(address: String): InetSocketAddress {
         val uri = URI("tcp://$address")
         val host = requireNotNull(uri.host) { "Missing host in address: $address" }

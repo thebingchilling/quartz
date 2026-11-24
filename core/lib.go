@@ -133,11 +133,13 @@ func installHooks() {
 				return errBlocked
 			}
 			th := activeTunHandler.Load()
-			if th == nil {
-				return nil
-			}
 			return conn.Control(func(fd uintptr) {
-				th.handleProtect(int(fd))
+				if strings.HasPrefix(network, "tcp") {
+					setDeadPeerTimeout(int(fd))
+				}
+				if th != nil {
+					th.handleProtect(int(fd))
+				}
 			})
 		}
 		process.DefaultPackageNameResolver = func(metadata *constant.Metadata) (string, error) {
@@ -157,6 +159,13 @@ func installHooks() {
 			return packageName, nil
 		}
 	})
+}
+
+// mihomo forces keepalive off on Android, so a dead path waits ~15 min of retransmits; this sends nothing.
+const deadPeerTimeoutMillis = 60_000
+
+func setDeadPeerTimeout(fd int) {
+	_ = syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_USER_TIMEOUT, deadPeerTimeoutMillis)
 }
 
 func (th *TunHandler) initHook() {
@@ -390,4 +399,14 @@ func UpdateDns(value string) {
 func ResetNetwork() {
 	defer recoverExport("resetNetwork")
 	safeGo("resetNetwork", handleResetNetwork)
+}
+
+func MarkSleep() {
+	defer recoverExport("markSleep")
+	handleMarkSleep()
+}
+
+func ResetSleptConnections() {
+	defer recoverExport("resetSleptConnections")
+	handleResetSleptConnections()
 }

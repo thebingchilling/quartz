@@ -92,6 +92,14 @@ func ResetNetwork() {
 	core.ResetNetwork()
 }
 
+func MarkSleep() {
+	core.MarkSleep()
+}
+
+func ResetSleptConnections() {
+	core.ResetSleptConnections()
+}
+
 func GetTraffic(onlyStatisticsProxy bool) string {
 	return core.GetTraffic(onlyStatisticsProxy)
 }

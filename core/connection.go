@@ -1,6 +1,8 @@
 package core
 
 import (
+	"sync"
+
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
@@ -52,6 +54,65 @@ func handleResetConnections() bool {
 func handleResetNetwork() {
 	handleCloseConnections()
 	resolver.ResetConnection()
+}
+
+type sleepTracker interface {
+	ID() string
+	Info() *statistic.TrackerInfo
+	Close() error
+}
+
+var (
+	sleepMu       sync.Mutex
+	sleepReceived map[string]int64
+)
+
+func rangeTrackers(f func(sleepTracker)) {
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		f(c)
+		return true
+	})
+}
+
+func markSleep(each func(func(sleepTracker))) {
+	received := map[string]int64{}
+	each(func(c sleepTracker) {
+		received[c.ID()] = c.Info().DownloadTotal.Load()
+	})
+	sleepMu.Lock()
+	sleepReceived = received
+	sleepMu.Unlock()
+}
+
+// Carriers drop idle mappings in sleep silently; a connection that received data is alive, so calls survive.
+func sleptConnections(each func(func(sleepTracker))) []sleepTracker {
+	sleepMu.Lock()
+	received := sleepReceived
+	sleepReceived = nil
+	sleepMu.Unlock()
+	var stale []sleepTracker
+	each(func(c sleepTracker) {
+		before, known := received[c.ID()]
+		if known && c.Info().DownloadTotal.Load() == before {
+			stale = append(stale, c)
+		}
+	})
+	return stale
+}
+
+func handleMarkSleep() {
+	markSleep(rangeTrackers)
+}
+
+// Read the baseline before a markSleep that may follow at once; only the closing goes async.
+func handleResetSleptConnections() {
+	stale := sleptConnections(rangeTrackers)
+	safeGo("resetSleptConnections", func() {
+		for _, c := range stale {
+			_ = c.Close()
+		}
+		resolver.ResetConnection()
+	})
 }
 
 func handleCloseConnection(connectionId string) bool {

@@ -5,8 +5,6 @@ import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkCapabilities.TRANSPORT_SATELLITE
-import android.net.NetworkCapabilities.TRANSPORT_USB
 import android.net.NetworkRequest
 import android.os.Build
 import android.os.Handler
@@ -16,29 +14,27 @@ import com.follow.clash.core.Core
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
-import java.util.concurrent.ConcurrentHashMap
 
-private data class NetworkInfo(
-    @Volatile var losingUntilMillis: Long = 0,
-    @Volatile var dnsList: List<InetAddress> = emptyList(),
-) {
-    val priorityPenalty: Int
-        get() = if (losingUntilMillis > System.currentTimeMillis()) 10 else 0
-}
-
-/** [ownsNetwork] is the VPN's copy, which also resets sockets when the network changes. */
+/** Follows Android's own pick: a Wi-Fi without internet stays connected while traffic uses mobile data. */
 internal class NetworkObserveModule(
     private val context: Context,
     private val ownsNetwork: Boolean = true,
+    private val onUnderlyingNetwork: ((Network?) -> Boolean)? = null,
 ) : ServiceModule {
 
-    private val networkInfos = ConcurrentHashMap<Network, NetworkInfo>()
     private val connectivity by lazy {
         context.getSystemService<ConnectivityManager>()
     }
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    @Volatile
+    private var bestNetwork: Network? = null
+
+    @Volatile
+    private var bestDns: List<InetAddress> = emptyList()
     private var currentDnsList = listOf<String>()
-    private var currentNetwork: Network? = null
+    private var lastNetwork: Network? = null
+    private var reportedNetwork: Network? = null
 
     private val request = NetworkRequest.Builder().apply {
         addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
@@ -51,74 +47,55 @@ internal class NetworkObserveModule(
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            networkInfos[network] = NetworkInfo()
-            scheduleUpdateDns()
-        }
-
-        override fun onLosing(network: Network, maxMsToLive: Int) {
-            val info = networkInfos[network] ?: return
-            info.losingUntilMillis = System.currentTimeMillis() + maxMsToLive
-            scheduleUpdateDns()
-            if (maxMsToLive > 0) {
-                mainHandler.postDelayed({
-                    if (networkInfos.containsKey(network)) {
-                        updateDns()
-                    }
-                }, maxMsToLive.toLong() + 50)
+            bestNetwork = network
+            bestDns = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                connectivity?.getLinkProperties(network)?.dnsServers.orEmpty()
+            } else {
+                emptyList()
             }
-        }
-
-        override fun onLost(network: Network) {
-            networkInfos.remove(network)
-            scheduleUpdateDns()
+            scheduleUpdate()
         }
 
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
-            networkInfos[network]?.dnsList = linkProperties.dnsServers
-            scheduleUpdateDns()
+            if (network != bestNetwork) return
+            bestDns = linkProperties.dnsServers
+            scheduleUpdate()
+        }
+
+        override fun onLost(network: Network) {
+            if (network != bestNetwork) return
+            bestNetwork = null
+            bestDns = emptyList()
+            scheduleUpdate()
         }
     }
 
-    private val updateDnsTask = Runnable(::updateDns)
+    private val updateTask = Runnable(::update)
 
     // A switch arrives as a burst, and a network that just came up has no DNS
     // until its link properties follow; the Core flushes its cache per list.
-    private fun scheduleUpdateDns() {
-        mainHandler.removeCallbacks(updateDnsTask)
-        mainHandler.postDelayed(updateDnsTask, DNS_UPDATE_DELAY_MILLIS)
+    private fun scheduleUpdate() {
+        mainHandler.removeCallbacks(updateTask)
+        mainHandler.postDelayed(updateTask, UPDATE_DELAY_MILLIS)
     }
 
     override fun start() {
-        updateDns()
-        connectivity?.registerNetworkCallback(request, callback)
-    }
+        val connectivity = connectivity ?: return
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+                connectivity.registerBestMatchingNetworkCallback(request, callback, mainHandler)
 
-    private fun networkPriority(entry: Map.Entry<Network, NetworkInfo>): Int {
-        val capabilities = connectivity?.getNetworkCapabilities(entry.key)
-        return when {
-            capabilities == null -> 100
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> 90
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> 0
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> 1
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                capabilities.hasTransport(TRANSPORT_USB) -> 2
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
+                connectivity.requestNetwork(request, callback, mainHandler)
 
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> 3
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> 4
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM &&
-                capabilities.hasTransport(TRANSPORT_SATELLITE) -> 5
-
-            else -> 20
-        } + entry.value.priorityPenalty
+            else -> connectivity.requestNetwork(request, callback)
+        }
     }
 
     @Synchronized
-    private fun updateDns() {
-        val preferred = networkInfos.entries.minByOrNull(::networkPriority)
-        val dnsList = preferred
-            ?.value
-            ?.dnsList
-            .orEmpty()
+    private fun update() {
+        val network = bestNetwork
+        val dnsList = bestDns
             .map { address -> address.asSocketAddressText(DNS_PORT) }
             .distinct()
         if (dnsList != currentDnsList) {
@@ -126,13 +103,20 @@ internal class NetworkObserveModule(
             Core.updateDNS(dnsList.joinToString(","))
         }
         if (!ownsNetwork) return
-        val network = preferred?.key ?: return
-        // Sockets protected onto the network we left stay bound to it; closing
-        // them makes apps reconnect now instead of after a TCP timeout.
-        if (currentNetwork != null && currentNetwork != network) {
+        val report = onUnderlyingNetwork
+        if (report != null && network != reportedNetwork) {
+            // Android refuses it until the VPN is established, which can come after the first update.
+            if (report(network)) {
+                reportedNetwork = network
+            } else {
+                mainHandler.postDelayed(updateTask, UNDERLYING_RETRY_MILLIS)
+            }
+        }
+        if (network == null) return
+        if (lastNetwork != null && lastNetwork != network) {
             Core.resetNetwork()
         }
-        currentNetwork = network
+        lastNetwork = network
     }
 
     override fun stop() {
@@ -141,14 +125,17 @@ internal class NetworkObserveModule(
             connectivity?.unregisterNetworkCallback(callback)
         } finally {
             // The DNS list stays: SystemDnsWatcher keeps it current with no VPN running.
-            networkInfos.clear()
-            currentNetwork = null
+            bestNetwork = null
+            bestDns = emptyList()
+            lastNetwork = null
+            reportedNetwork = null
         }
     }
 }
 
 private const val DNS_PORT = 53
-private const val DNS_UPDATE_DELAY_MILLIS = 200L
+private const val UPDATE_DELAY_MILLIS = 200L
+private const val UNDERLYING_RETRY_MILLIS = 1_000L
 
 private fun InetAddress.asSocketAddressText(port: Int): String = when (this) {
     is Inet6Address -> "[$hostAddress]:$port"
