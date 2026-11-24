@@ -163,6 +163,10 @@ class ApplicationState extends ConsumerState<Application> {
     final hasVpn = results.contains(ConnectivityResult.vpn);
     if (_preHasVpn == hasVpn) {
       ref.read(routeTrackerProvider.notifier).bumpHostEpoch();
+      // Android's service resets on its own network callback.
+      if (system.isDesktop) {
+        unawaited(ref.read(coreActionProvider.notifier).resetNetwork());
+      }
     }
     _preHasVpn = hasVpn;
   }

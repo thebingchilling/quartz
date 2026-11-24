@@ -18,6 +18,9 @@ WindowController::~WindowController() {
   if (hwnd_ != nullptr && ::IsWindow(hwnd_)) {
     ::KillTimer(hwnd_, kGeometryTimerId);
   }
+  if (power_notify_ != nullptr) {
+    ::UnregisterSuspendResumeNotification(power_notify_);
+  }
   if (taskbar_ != nullptr) {
     taskbar_->Release();
     taskbar_ = nullptr;
@@ -30,6 +33,12 @@ void WindowController::Initialize(HWND hwnd, HWND view) {
   }
   hwnd_ = hwnd;
   view_ = view;
+  // A top-level window hears of S3 sleep anyway; Modern Standby laptops only
+  // tell windows that register.
+  if (power_notify_ == nullptr) {
+    power_notify_ =
+        ::RegisterSuspendResumeNotification(hwnd_, DEVICE_NOTIFY_WINDOW_HANDLE);
+  }
   GetTaskbarList();
   ::ShowWindow(hwnd_, SW_HIDE);
 }
@@ -417,6 +426,8 @@ std::optional<LRESULT> WindowController::HandleWindowMessage(
     }
   } else if (message == WM_SHOWWINDOW) {
     emit_event_(wparam == TRUE ? "show" : "hide");
+  } else if (message == WM_POWERBROADCAST && wparam == PBT_APMRESUMEAUTOMATIC) {
+    emit_event_("resume");
   } else if (message != WM_NULL && message == GetActivateMessage()) {
     emit_event_("activate");
     return 0;

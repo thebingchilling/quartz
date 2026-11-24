@@ -19,6 +19,9 @@ class _RecordingListener with WindowListener {
 
   @override
   void onWindowActivate() => log.add('activate');
+
+  @override
+  void onSystemResume() => log.add('resume');
 }
 
 class _SelfRemovingListener with WindowListener {
@@ -85,6 +88,7 @@ void main() {
       await emit('geometry-changed');
       await emit('should-terminate');
       await emit('activate');
+      await emit('resume');
 
       expect(listener.log, [
         'event:close',
@@ -95,6 +99,8 @@ void main() {
         'shouldTerminate',
         'event:activate',
         'activate',
+        'event:resume',
+        'resume',
       ]);
     },
   );

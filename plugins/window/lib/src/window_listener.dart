@@ -29,5 +29,8 @@ abstract mixin class WindowListener {
 
   void onWindowActivate() {}
 
+  /// Windows woke from sleep; connections opened before it are likely dead.
+  void onSystemResume() {}
+
   void onWindowEvent(WindowEvent event) {}
 }

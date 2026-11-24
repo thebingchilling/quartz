@@ -90,6 +90,7 @@ class WindowController {
 
   HWND hwnd_ = nullptr;
   HWND view_ = nullptr;
+  HPOWERNOTIFY power_notify_ = nullptr;
   const WindowStyle* style_ = nullptr;
   EventEmitter emit_event_;
 

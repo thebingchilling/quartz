@@ -103,6 +103,12 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
+  void onSystemResume() {
+    super.onSystemResume();
+    unawaited(ref.read(coreActionProvider.notifier).resetNetwork());
+  }
+
+  @override
   Future<void> onWindowShouldTerminate() async {
     await ref.read(systemActionProvider.notifier).handleExit();
     super.onWindowShouldTerminate();
