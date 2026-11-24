@@ -284,6 +284,30 @@ void main() {
   });
 
   group('CoreAction', () {
+    test('restarts after a crash a few times per window, then stops', () async {
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(_TestSetupAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+
+      for (var i = 0; i < maxCrashRestarts; i++) {
+        expect(await coreAction.recoverFromCrash(), isTrue);
+        coreAction.now = coreAction.now.add(const Duration(minutes: 1));
+      }
+      expect(await coreAction.recoverFromCrash(), isFalse);
+      expect(coreAction.lifecycleRestartCount, maxCrashRestarts);
+      expect(coreAction.pauses, [1, 2, 3]);
+
+      coreAction.now = coreAction.now.add(crashRestartWindow);
+      expect(await coreAction.recoverFromCrash(), isTrue);
+      expect(coreAction.pauses.last, 1);
+    });
+
     test('applies the profile after restarting a stopped core', () async {
       final container = ProviderContainer(
         overrides: [
@@ -875,6 +899,8 @@ void main() {
 }
 
 class _TestCoreAction extends CoreAction {
+  DateTime now = DateTime(2026);
+  final List<int> pauses = [];
   int lifecycleRestartCount = 0;
   int initCoreCount = 0;
   Completer<CoreLifecycleResult>? restartCompleter;
@@ -889,6 +915,14 @@ class _TestCoreAction extends CoreAction {
   @override
   Future<CoreLifecycleResult> startLifecycle() {
     return startCompleter?.future ?? Future.value(startResult);
+  }
+
+  @override
+  DateTime clock() => now;
+
+  @override
+  Future<void> crashRestartPause(int attempt) async {
+    pauses.add(attempt);
   }
 
   @override

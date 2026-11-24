@@ -73,6 +73,16 @@ CoreEvent _geoUpdate({
   );
 }
 
+class _RecoveryRecordingCoreAction extends CoreAction {
+  int recoveries = 0;
+
+  @override
+  Future<bool> recoverFromCrash() async {
+    recoveries++;
+    return true;
+  }
+}
+
 class _ApplyRecordingSetupAction extends SetupAction {
   int updates = 0;
   int applies = 0;
@@ -105,6 +115,7 @@ Future<ProviderContainer> _pumpCoreManager(
       coreHandlerProvider.overrideWithValue(
         CoreController.scoped(coreInterface),
       ),
+      coreActionProvider.overrideWith(_RecoveryRecordingCoreAction.new),
       ...overrides,
     ],
   );
@@ -182,6 +193,7 @@ void main() {
         coreHandlerProvider.overrideWithValue(
           CoreController.scoped(coreInterface),
         ),
+        coreActionProvider.overrideWith(_RecoveryRecordingCoreAction.new),
       ],
     );
     addTearDown(container.dispose);
@@ -207,6 +219,10 @@ void main() {
     expect(container.read(coreStatusProvider), CoreStatus.disconnected);
     expect(transitions, [CoreStatus.disconnected]);
     verifyNever(() => coreInterface.stop());
+    final coreAction =
+        container.read(coreActionProvider.notifier)
+            as _RecoveryRecordingCoreAction;
+    expect(coreAction.recoveries, 1);
 
     await tester.pumpWidget(const SizedBox());
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -249,6 +265,10 @@ void main() {
     expect(container.read(coreStatusProvider), CoreStatus.connecting);
     expect(transitions, isEmpty);
     expect(find.text('boom'), findsNothing);
+    final coreAction =
+        container.read(coreActionProvider.notifier)
+            as _RecoveryRecordingCoreAction;
+    expect(coreAction.recoveries, 0);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

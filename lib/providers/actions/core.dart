@@ -1,11 +1,16 @@
 part of '../action.dart';
 
+const maxCrashRestarts = 3;
+const crashRestartWindow = Duration(minutes: 10);
+const crashRestartDelay = Duration(seconds: 2);
+
 @Riverpod(keepAlive: true)
 class CoreAction extends _$CoreAction {
   CoreController get _core => ref.read(coreHandlerProvider);
 
   int _requestedRestartRevision = 0;
   Future<bool>? _restartOperation;
+  final List<DateTime> _crashRestarts = [];
 
   @override
   void build() {}
@@ -71,6 +76,21 @@ class CoreAction extends _$CoreAction {
     await _core.closeConnections();
   }
 
+  Future<void> resetNetwork() async {
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
+    try {
+      await _core.closeConnections();
+      await _core.resetConnections();
+    } catch (error) {
+      commonPrint.log(
+        'Network reset failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+
   Future<void> requestGc() async {
     await _core.requestGc();
   }
@@ -78,6 +98,35 @@ class CoreAction extends _$CoreAction {
   Future<void> crash() async {
     await _core.crash();
   }
+
+  /// The budget keeps a Core that crashes on start from looping.
+  Future<bool> recoverFromCrash() async {
+    final now = clock();
+    _crashRestarts.removeWhere(
+      (time) => now.difference(time) > crashRestartWindow,
+    );
+    if (_crashRestarts.length >= maxCrashRestarts) {
+      return false;
+    }
+    _crashRestarts.add(now);
+    await crashRestartPause(_crashRestarts.length);
+    try {
+      return await restartCore();
+    } catch (error) {
+      commonPrint.log(
+        'Core restart after a crash failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      return false;
+    }
+  }
+
+  @protected
+  DateTime clock() => DateTime.now();
+
+  @protected
+  Future<void> crashRestartPause(int attempt) =>
+      Future.delayed(crashRestartDelay * attempt);
 
   Future<bool> restartCore() {
     _requestedRestartRevision++;

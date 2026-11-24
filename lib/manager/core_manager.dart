@@ -167,6 +167,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       context.showNotifier(message, level: MessageLevel.error);
     }
     super.onCrash(message);
+    if (system.isDesktop) {
+      unawaited(ref.read(coreActionProvider.notifier).recoverFromCrash());
+    }
   }
 
   @override
