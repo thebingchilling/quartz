@@ -47,8 +47,17 @@ void main() {
     ).getRealTun(bypassPrivateRoute: true);
 
     expect(tun.autoRoute, isTrue);
+    expect(tun.strictRoute, isFalse);
     expect(tun.routeAddress, ['1.0.0.0/8']);
     expect(tun.routeExcludeAddress, ['1.1.1.0/24', ...privateRouteAddress]);
+  });
+
+  test('Windows always applies strict route, whatever was saved', () {
+    final tun = const Tun().getRealTun(
+      bypassPrivateRoute: false,
+      forceStrictRoute: true,
+    );
+    expect(tun.strictRoute, isTrue);
   });
 
   test('a config update patches every Tun key on desktop', () {

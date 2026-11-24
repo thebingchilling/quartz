@@ -180,7 +180,8 @@ shows the mode picker and text field only on desktop.
 Every `Tun` field is written over the profile's `tun` section and hot-applied through `tunSchema`, and the other keys of
 that section keep the profile's value; `test/models/tun_test.dart` keeps the model, `RawTun` and `tunSchema` in step.
 Beyond what FlClash always managed, `Tun` carries only the keys worth tuning: `mtu`, the mips stack's
-`congestion-controller`, and `strict-route` where sing-tun enforces it (Linux and Windows).
+`congestion-controller`, and `strict-route` on Linux. Windows has no toggle: `Tun.getRealTun` always applies it there,
+since it is what stops Windows sending DNS out of every adapter and IPv6 leaving beside a tunnel that has no IPv6.
 
 Routing is the same on every platform: `route-address` (empty routes everything), `route-exclude-address`, and
 `NetworkProps.bypassPrivateRoute`, which adds `privateRouteAddress` to the exclusions in `Tun.getRealTun`. Desktop hands

@@ -1053,10 +1053,16 @@ extension TunExt on Tun {
     return subtractCidrsTask(routeAddress, excluded, wholeWhenEmpty: true);
   }
 
-  Tun getRealTun({required bool bypassPrivateRoute}) => copyWith(
-    autoRoute: true,
-    routeExcludeAddress: excludedRoutes(bypassPrivateRoute: bypassPrivateRoute),
-  );
+  /// Windows' strict route is mihomo's guard against the DNS that Windows sends out of
+  /// every adapter, and against IPv6 leaving beside a tunnel that has none.
+  Tun getRealTun({required bool bypassPrivateRoute, bool? forceStrictRoute}) =>
+      copyWith(
+        autoRoute: true,
+        strictRoute: strictRoute || (forceStrictRoute ?? system.isWindows),
+        routeExcludeAddress: excludedRoutes(
+          bypassPrivateRoute: bypassPrivateRoute,
+        ),
+      );
 }
 
 @freezed

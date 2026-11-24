@@ -373,7 +373,7 @@ List<Widget> tunItems({
           (state, value) => state.copyWith.tun(congestionController: value),
         ),
       ),
-    if (isLinux || isWindows)
+    if (isLinux)
       ConfigToggleItem(
         title: (l) => l.strictRoute,
         selector: patchClashConfigProvider.select(
@@ -418,8 +418,7 @@ class TunSection extends ConsumerWidget {
         isMipsStack: isMipsStack,
       ),
       footer: [
-        if (system.isLinux || system.isWindows)
-          appLocalizations.strictRouteDesc,
+        if (system.isLinux) appLocalizations.strictRouteDesc,
         appLocalizations.bypassPrivateRouteDesc,
       ].join('\n'),
     );

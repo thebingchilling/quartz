@@ -185,19 +185,19 @@ class VpnService : SystemVpnService(), ManagedService {
             routeAll = options.routeAddress.isEmpty(),
         )
 
-        if (options.ipv6) {
-            try {
-                val ipv6Address = IPV6_ADDRESS.toCIDR()
-                addAddress(ipv6Address.address, ipv6Address.prefixLength)
-            } catch (_: Exception) {
-                GlobalState.log("IPv6 VPN address is not supported")
-            }
-            addRoutes(
-                routes = options::getIpv6RouteAddress,
-                fallbackAddress = NET_ANY6,
-                routeAll = options.routeAddress.isEmpty(),
-            )
+        // Routed even with IPv6 off: the Core doesn't take that family, so it ends in the
+        // tunnel instead of leaving over the real network beside it.
+        try {
+            val ipv6Address = IPV6_ADDRESS.toCIDR()
+            addAddress(ipv6Address.address, ipv6Address.prefixLength)
+        } catch (_: Exception) {
+            GlobalState.log("IPv6 VPN address is not supported")
         }
+        addRoutes(
+            routes = options::getIpv6RouteAddress,
+            fallbackAddress = NET_ANY6,
+            routeAll = options.routeAddress.isEmpty(),
+        )
     }
 
     // Flutter lists every family it routes, so a family missing from a
