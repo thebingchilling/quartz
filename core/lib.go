@@ -20,6 +20,7 @@ import (
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"github.com/metacubex/mihomo/log"
+	"golang.org/x/sys/unix"
 )
 
 type TunCallbacks interface {
@@ -165,7 +166,7 @@ func installHooks() {
 const deadPeerTimeoutMillis = 60_000
 
 func setDeadPeerTimeout(fd int) {
-	_ = syscall.SetsockoptInt(fd, syscall.IPPROTO_TCP, syscall.TCP_USER_TIMEOUT, deadPeerTimeoutMillis)
+	_ = unix.SetsockoptInt(fd, unix.IPPROTO_TCP, unix.TCP_USER_TIMEOUT, deadPeerTimeoutMillis)
 }
 
 func (th *TunHandler) initHook() {
