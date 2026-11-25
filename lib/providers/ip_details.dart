@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,11 +31,23 @@ class IpDetailsNotifier extends AsyncNotifier<IpDetails> {
     Duration(milliseconds: 1200),
   ];
 
+  /// A start or stop that never moves the epoch, such as one Android's service
+  /// made by itself, would otherwise leave the card loading for good.
+  static const _settleTimeout = Duration(seconds: 6);
+
   @override
   Future<IpDetails> build() async {
     ref.watch(routeEpochProvider);
     ref.watch(routeTrackerProvider.select((state) => state.picks));
-    ref.listen(isStartProvider, (_, _) => state = const AsyncLoading());
+    Timer? settle;
+    ref.onDispose(() => settle?.cancel());
+    ref.listen(isStartProvider, (_, _) {
+      state = const AsyncLoading();
+      settle?.cancel();
+      settle = Timer(_settleTimeout, () {
+        if (ref.mounted && state.isLoading) ref.invalidateSelf();
+      });
+    });
     var attempt = 0;
     while (true) {
       final started = ref.read(isStartProvider);

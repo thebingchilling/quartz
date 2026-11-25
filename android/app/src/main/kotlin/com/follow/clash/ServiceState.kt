@@ -75,9 +75,10 @@ object ServiceState {
         return machine.requestStart()
     }
 
+    // Flutter answers a stop Android reported with its own; only one that ends a run is the user's.
     fun requestStop(): Deferred<Boolean> {
         AutoTunnelState.onUserStop()
-        markStopped(byUser = true)
+        if (isRunRequested) markStopped(byUser = true)
         return machine.requestStop()
     }
 

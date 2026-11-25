@@ -69,7 +69,12 @@ class KillSwitchService : VpnService() {
         close()
         tun = established
         apps = next
-        if (established == null) stopSelf()
+        // A tunnel that started meanwhile must stay the newest interface, or this one replaces it.
+        if (established == null || ServiceState.runState.value != RunState.STOPPED) {
+            close()
+            stopSelf()
+            return START_NOT_STICKY
+        }
         GlobalState.log("Kill switch: blocking ${next?.joinToString() ?: "every app"}")
         return START_NOT_STICKY
     }
