@@ -214,8 +214,12 @@ void main() {
       expect(items(isMipsStack: false), hasLength(4));
     });
 
-    test('strict route is a choice on Linux and always on in Windows', () {
-      expect(items(isWindows: true), hasLength(5));
+    test('Windows offers the kill switch; Linux offers strict route', () {
+      expect(items(isWindows: true), hasLength(6));
+      expect(
+        items(isWindows: true).map((item) => item.runtimeType),
+        contains(KillSwitchItem),
+      );
       expect(items(isLinux: true), hasLength(6));
     });
 

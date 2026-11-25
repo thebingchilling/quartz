@@ -1144,6 +1144,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "TCP keep-alive interval",
     ),
     "key": MessageLookupByLibrary.simpleMessage("Key"),
+    "killSwitch": MessageLookupByLibrary.simpleMessage("Kill switch"),
+    "killSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "If the connection drops on its own, block the internet while Quartz reconnects. Disconnecting yourself never blocks.",
+    ),
     "label": MessageLookupByLibrary.simpleMessage("Label"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
     "large": MessageLookupByLibrary.simpleMessage("Large"),

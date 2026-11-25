@@ -106,6 +106,7 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   String? _active;
   bool _manual = false;
   bool _switching = false;
+  bool _userStopped = false;
 
   @override
   void initState() {
@@ -125,12 +126,14 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
       _schedule();
     });
     ref.listenManual(isStartProvider, (previous, running) {
+      if (running) _userStopped = false;
       if (!_switching && previous != null && previous != running) {
         if (running) {
           _manual = true;
           _active = null;
         } else {
           _manual = false;
+          _userStopped = true;
           _lastKey = null;
           _schedule(_rejudge);
         }
@@ -141,6 +144,13 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
     ref.listenManual(currentProfileIdProvider, (_, _) {
       unawaited(_syncFirewall());
     });
+    ref.listenManual(coreStatusProvider, (_, _) {
+      unawaited(_syncFirewall());
+    });
+    ref.listenManual(
+      networkSettingProvider.select((state) => state.killSwitch),
+      (_, _) => unawaited(_syncFirewall()),
+    );
     ref.listenManual(
       vpnSettingProvider.select((state) => state.accessControlProps),
       (previous, next) {
@@ -209,20 +219,24 @@ class _DesktopAutoTunnelState extends ConsumerState<DesktopAutoTunnel> {
   /// The kill switch blocks every app but the Core and the TUN adapter.
   Future<void> _syncFirewall() async {
     if (!mounted || !system.isWindows) return;
-    final blockAll = blocksAll(
+    final tun = ref.read(patchClashConfigProvider).tun;
+    final state = killSwitchState(
       ref.read(autoTunnelProvider),
       active: _active,
-      running: ref.read(isStartProvider),
+      enabled: tun.enable && ref.read(networkSettingProvider).killSwitch,
+      wanted: ref.read(isStartProvider),
+      up: ref.read(coreStatusProvider) == CoreStatus.connected,
+      userStopped: _userStopped,
     );
-    final tunAlias = ref.read(patchClashConfigProvider).tun.device;
-    final key = '$blockAll|$tunAlias';
+    final key = '${state.blockAll}|${state.blockOnCoreExit}|${tun.device}';
     if (key == _lastFirewall) return;
     _lastFirewall = key;
     try {
       await helperClient.applyFirewall(
-        blockAll: blockAll,
+        blockAll: state.blockAll,
         apps: const [],
-        tunAlias: tunAlias,
+        tunAlias: tun.device,
+        blockOnCoreExit: state.blockOnCoreExit,
       );
     } on HelperException catch (error) {
       _lastFirewall = null;

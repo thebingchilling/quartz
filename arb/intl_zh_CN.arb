@@ -1018,5 +1018,7 @@
   "autoTunnelConnectToTitle": "连接到",
   "autoTunnelBrowse": "浏览",
   "autoTunnelNoWifi": "未找到 Wi-Fi 网络",
-  "autoTunnelNoWifiDesc": "允许位置权限以便 Quartz 查看附近的网络，或在上方输入名称。"
+  "autoTunnelNoWifiDesc": "允许位置权限以便 Quartz 查看附近的网络，或在上方输入名称。",
+  "killSwitch": "断网保护",
+  "killSwitchDesc": "连接意外断开时，在 Quartz 重新连接期间阻止上网。手动断开不会阻止。"
 }

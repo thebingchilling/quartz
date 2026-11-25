@@ -424,6 +424,26 @@ bool blocksAll(
   return rule != null && settings.killSwitchOf(rule);
 }
 
+typedef KillSwitchState = ({bool blockAll, bool blockOnCoreExit});
+
+/// While up, only the Core exiting on its own blocks, so the bypassing LAN works.
+KillSwitchState killSwitchState(
+  AutoTunnelSettings settings, {
+  required String? active,
+  required bool enabled,
+  required bool wanted,
+  required bool up,
+  required bool userStopped,
+}) {
+  final running = wanted && up;
+  final ruleBlocks =
+      !userStopped && blocksAll(settings, active: active, running: running);
+  return (
+    blockAll: ruleBlocks || (enabled && wanted && !up),
+    blockOnCoreExit: enabled && running,
+  );
+}
+
 class SimCard {
   const SimCard({required this.id, required this.name, required this.slot});
 

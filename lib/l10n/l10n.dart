@@ -8523,6 +8523,21 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Kill switch`
+  String get killSwitch {
+    return Intl.message('Kill switch', name: 'killSwitch', desc: '', args: []);
+  }
+
+  /// `If the connection drops on its own, block the internet while Quartz reconnects. Disconnecting yourself never blocks.`
+  String get killSwitchDesc {
+    return Intl.message(
+      'If the connection drops on its own, block the internet while Quartz reconnects. Disconnecting yourself never blocks.',
+      name: 'killSwitchDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

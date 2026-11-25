@@ -523,7 +523,7 @@ final class VpnOptionsProvider
   }
 }
 
-String _$vpnOptionsHash() => r'dcb81bb434eb2894410fcefc0c9764139714e5a0';
+String _$vpnOptionsHash() => r'584aee7f5affc05f2a98076322b824280a65d8e0';
 
 @ProviderFor(AccessControlState)
 final accessControlStateProvider = AccessControlStateProvider._();
@@ -2918,7 +2918,7 @@ final class ProxyDescProvider
   }
 }
 
-String _$proxyDescHash() => r'3cbff2de7b7a86c74197315b1f5c74c2bda245a3';
+String _$proxyDescHash() => r'4f5318686f28b6617af89059349060db4b5417c0';
 
 final class ProxyDescFamily extends $Family
     with $FunctionalFamilyOverride<String, Proxy> {

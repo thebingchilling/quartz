@@ -308,11 +308,17 @@ final class HelperClient {
     required bool blockAll,
     required List<String> apps,
     String? tunAlias,
+    bool blockOnCoreExit = false,
   }) async {
     try {
       await _dio.post<Object?>(
         '$baseUrl/firewall',
-        data: {'blockAll': blockAll, 'apps': apps, 'tunAlias': tunAlias},
+        data: {
+          'blockAll': blockAll,
+          'apps': apps,
+          'tunAlias': tunAlias,
+          'blockOnCoreExit': blockOnCoreExit,
+        },
         options: _options(
           ResponseType.json,
           receiveTimeout: const Duration(seconds: 5),

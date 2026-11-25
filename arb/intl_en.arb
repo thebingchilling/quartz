@@ -1056,5 +1056,7 @@
   },
   "autoTunnelBrowse": "Browse",
   "autoTunnelNoWifi": "No Wi-Fi networks found",
-  "autoTunnelNoWifiDesc": "Allow location so Quartz can see nearby networks, or type a name above."
+  "autoTunnelNoWifiDesc": "Allow location so Quartz can see nearby networks, or type a name above.",
+  "killSwitch": "Kill switch",
+  "killSwitchDesc": "If the connection drops on its own, block the internet while Quartz reconnects. Disconnecting yourself never blocks."
 }

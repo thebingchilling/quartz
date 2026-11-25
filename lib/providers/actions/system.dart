@@ -52,7 +52,22 @@ class SystemAction extends _$SystemAction {
       bootGuard.markClosed(),
       if (systemDnsCoordinator != null) systemDnsCoordinator!.shutdown(),
       if (proxy != null) proxy!.stopProxy(),
+      if (system.isWindows) _disarmKillSwitch(),
     ]);
+  }
+
+  /// Quitting is the user's stop, so the Core exiting after it must not block.
+  Future<void> _disarmKillSwitch() async {
+    try {
+      await helperClient
+          .applyFirewall(blockAll: false, apps: const [])
+          .timeout(const Duration(seconds: 2));
+    } catch (error) {
+      commonPrint.log(
+        'Kill switch disarm failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+    }
   }
 
   Future<void> _savePreferencesSafely() async {

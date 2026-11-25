@@ -59,6 +59,7 @@ abstract class VpnOptions with _$VpnOptions {
     @Default([]) List<String> routeAddress,
     @Default(0) int mtu,
     @Default('') String congestionController,
+    @Default(true) bool killSwitch,
   }) = _VpnOptions;
 
   factory VpnOptions.fromJson(Map<String, Object?> json) =>
@@ -79,6 +80,7 @@ extension VpnOptionsExt on VpnOptions {
         systemProxy: false,
         bypassDomain: [],
         stack: '',
+        killSwitch: false,
       );
     }
     final accessControl = accessControlProps;

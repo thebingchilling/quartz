@@ -125,6 +125,19 @@ class SystemProxyItem extends ConsumerWidget {
   }
 }
 
+class KillSwitchItem extends ConsumerWidget {
+  const KillSwitchItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return _networkToggle(
+      title: (l) => l.killSwitch,
+      select: (state) => state.killSwitch,
+      update: (state, value) => state.copyWith(killSwitch: value),
+    );
+  }
+}
+
 class Ipv6Item extends ConsumerWidget {
   const Ipv6Item({super.key});
 
@@ -373,6 +386,7 @@ List<Widget> tunItems({
           (state, value) => state.copyWith.tun(congestionController: value),
         ),
       ),
+    if (isWindows) const KillSwitchItem(),
     if (isLinux)
       ConfigToggleItem(
         title: (l) => l.strictRoute,
@@ -418,6 +432,7 @@ class TunSection extends ConsumerWidget {
         isMipsStack: isMipsStack,
       ),
       footer: [
+        if (system.isWindows) appLocalizations.killSwitchDesc,
         if (system.isLinux) appLocalizations.strictRouteDesc,
         appLocalizations.bypassPrivateRouteDesc,
       ].join('\n'),
@@ -489,8 +504,11 @@ class VpnSections extends ConsumerWidget {
       children: [
         generateSectionV3(
           title: 'VPN',
-          items: const [Ipv6Item(), DNSHijackingItem()],
-          footer: appLocalizations.ipv6InboundDesc,
+          items: const [KillSwitchItem(), Ipv6Item(), DNSHijackingItem()],
+          footer: [
+            appLocalizations.killSwitchDesc,
+            appLocalizations.ipv6InboundDesc,
+          ].join('\n'),
         ),
       ],
     );

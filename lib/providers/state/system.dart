@@ -241,6 +241,7 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
       (state) => (
         bypassDomain: state.bypassDomain,
         authenticated: state.authentication.credentials.isNotEmpty,
+        killSwitch: state.killSwitch,
       ),
     ),
   );
@@ -266,6 +267,7 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
     routeAddress: await routeAddress,
     mtu: tun.mtu,
     congestionController: tun.congestionController,
+    killSwitch: networkSetting.killSwitch,
   );
 }
 

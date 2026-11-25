@@ -892,6 +892,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "keepAliveIdle": MessageLookupByLibrary.simpleMessage("TCP 保持活动空闲时间"),
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage("TCP保持活动间隔"),
     "key": MessageLookupByLibrary.simpleMessage("键"),
+    "killSwitch": MessageLookupByLibrary.simpleMessage("断网保护"),
+    "killSwitchDesc": MessageLookupByLibrary.simpleMessage(
+      "连接意外断开时，在 Quartz 重新连接期间阻止上网。手动断开不会阻止。",
+    ),
     "label": MessageLookupByLibrary.simpleMessage("标签"),
     "language": MessageLookupByLibrary.simpleMessage("语言"),
     "large": MessageLookupByLibrary.simpleMessage("大"),

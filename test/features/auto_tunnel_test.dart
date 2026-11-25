@@ -145,6 +145,50 @@ void main() {
     expect(blocksAll(_settings, active: 'data', running: false), isFalse);
   });
 
+  test('the kill switch holds through a drop but never after a user stop', () {
+    KillSwitchState state({
+      bool enabled = true,
+      bool wanted = true,
+      bool up = true,
+      bool userStopped = false,
+      String? active,
+      AutoTunnelSettings? settings,
+    }) => killSwitchState(
+      settings ?? _settings,
+      active: active,
+      enabled: enabled,
+      wanted: wanted,
+      up: up,
+      userStopped: userStopped,
+    );
+
+    expect(state(), (blockAll: false, blockOnCoreExit: true));
+    expect(state(up: false), (blockAll: true, blockOnCoreExit: false));
+    expect(state(wanted: false, up: false), (
+      blockAll: false,
+      blockOnCoreExit: false,
+    ));
+    expect(state(enabled: false, up: false), (
+      blockAll: false,
+      blockOnCoreExit: false,
+    ));
+    final guarded = _settings.putRule(_data.copyWith(killSwitch: true));
+    expect(state(settings: guarded, active: 'data', wanted: false, up: false), (
+      blockAll: true,
+      blockOnCoreExit: false,
+    ));
+    expect(
+      state(
+        settings: guarded,
+        active: 'data',
+        wanted: false,
+        up: false,
+        userStopped: true,
+      ),
+      (blockAll: false, blockOnCoreExit: false),
+    );
+  });
+
   test('a category kill switch covers its connecting rules', () {
     final abroad = _settings.putCategory(
       _china.copyWith(enabled: true, killSwitch: true),
