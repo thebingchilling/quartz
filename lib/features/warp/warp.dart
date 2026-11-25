@@ -44,6 +44,10 @@ class WarpJunk {
 }
 
 /// The generator's options, as in the original Quartz generator.
+/// WARP traffic through mihomo stopped about 25 s in with a 25 s keepalive and
+/// held with 60 s, on a network where Cloudflare's own app works.
+const defaultWarpKeepalive = 60;
+
 class WarpOptions {
   const WarpOptions({
     this.variant = WarpVariant.wg,
@@ -51,7 +55,7 @@ class WarpOptions {
     this.endpoint = '',
     this.mtu = 1280,
     this.dns = '1.1.1.1, 1.0.0.1',
-    this.keepalive = 25,
+    this.keepalive = defaultWarpKeepalive,
     this.junk = const WarpJunk(),
   });
 
@@ -101,7 +105,7 @@ class WarpOptions {
     endpoint: json['endpoint'] as String? ?? '',
     mtu: json['mtu'] as int? ?? 1280,
     dns: json['dns'] as String? ?? '1.1.1.1, 1.0.0.1',
-    keepalive: json['keepalive'] as int? ?? 25,
+    keepalive: json['keepalive'] as int? ?? defaultWarpKeepalive,
     junk: WarpJunk.fromJson(
       (json['junk'] as Map?)?.cast<String, dynamic>() ?? const {},
     ),
