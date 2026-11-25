@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.core.content.getSystemService
+import com.follow.clash.common.GlobalState
 import com.follow.clash.core.Core
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -37,11 +38,9 @@ internal class NetworkObserveModule(
     private var reportedNetwork: Network? = null
 
     private val request = NetworkRequest.Builder().apply {
+        // FOREGROUND is a capability Android sets itself, and a request naming it is refused.
         addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
         addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            addCapability(NetworkCapabilities.NET_CAPABILITY_FOREGROUND)
-        }
         addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
     }.build()
 
@@ -79,16 +78,23 @@ internal class NetworkObserveModule(
         mainHandler.postDelayed(updateTask, UPDATE_DELAY_MILLIS)
     }
 
+    // This runs from Application.onCreate, where a refused registration would end the app.
     override fun start() {
         val connectivity = connectivity ?: return
-        when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-                connectivity.registerBestMatchingNetworkCallback(request, callback, mainHandler)
+        try {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+                    connectivity.registerBestMatchingNetworkCallback(request, callback, mainHandler)
 
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
-                connectivity.requestNetwork(request, callback, mainHandler)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
+                    connectivity.requestNetwork(request, callback, mainHandler)
 
-            else -> connectivity.requestNetwork(request, callback)
+                else -> connectivity.requestNetwork(request, callback)
+            }
+        } catch (error: RuntimeException) {
+            GlobalState.log("Network request refused, listening instead: $error")
+            runCatching { connectivity.registerNetworkCallback(request, callback) }
+                .onFailure { GlobalState.log("Network listener refused: $it") }
         }
     }
 
