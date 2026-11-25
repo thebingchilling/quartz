@@ -11,11 +11,23 @@ pub(super) struct FirewallParams {
     pub apps: Vec<String>,
     #[serde(default)]
     pub tun_alias: Option<String>,
+    #[serde(default)]
+    pub block_on_core_exit: bool,
 }
 
 impl FirewallParams {
     pub fn is_off(&self) -> bool {
         !self.block_all && self.apps.is_empty()
+    }
+
+    /// The Helper sees the Core die first, so blocking here leaves no gap.
+    pub fn on_core_exit(&self) -> Option<FirewallParams> {
+        self.block_on_core_exit.then(|| FirewallParams {
+            block_all: true,
+            apps: Vec::new(),
+            tun_alias: self.tun_alias.clone(),
+            block_on_core_exit: false,
+        })
     }
 }
 
@@ -303,6 +315,21 @@ mod tests {
         assert!(params.block_all);
         assert_eq!(params.apps, vec![r"C:\a.exe".to_string()]);
         assert_eq!(params.tun_alias.as_deref(), Some("Quartz"));
+        assert!(!params.block_on_core_exit);
         assert!(FirewallParams::default().is_off());
+    }
+
+    #[test]
+    fn an_armed_core_exit_blocks_everything_through_the_same_tunnel() {
+        let armed: FirewallParams = serde_json::from_str(
+            r#"{"blockAll":false,"tunAlias":"Quartz","blockOnCoreExit":true}"#,
+        )
+        .unwrap();
+        assert!(armed.is_off());
+        let block = armed.on_core_exit().unwrap();
+        assert!(block.block_all);
+        assert_eq!(block.tun_alias.as_deref(), Some("Quartz"));
+        assert!(block.on_core_exit().is_none());
+        assert!(FirewallParams::default().on_core_exit().is_none());
     }
 }

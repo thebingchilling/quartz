@@ -355,6 +355,7 @@ fn stop_decision(current: Option<&str>, requested: &str) -> StopDecision {
 static LOGS: Lazy<Mutex<VecDeque<String>>> =
     Lazy::new(|| Mutex::new(VecDeque::with_capacity(LOG_CAPACITY)));
 static MANAGED_CORE: Lazy<Mutex<Option<ManagedCore>>> = Lazy::new(|| Mutex::new(None));
+static EXIT_BLOCK: Lazy<Mutex<Option<FirewallParams>>> = Lazy::new(|| Mutex::new(None));
 
 fn lock_surviving_poison<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex
@@ -379,6 +380,8 @@ fn reap_exited_core(session_id: &str) {
                 Ok(Some(status)) => {
                     log_message(format!("Core exited on its own: {status}"));
                     *managed = None;
+                    drop(managed);
+                    block_after_core_exit();
                     return;
                 }
                 Ok(None) => {}
@@ -389,6 +392,19 @@ fn reap_exited_core(session_id: &str) {
             return;
         }
         thread::sleep(CORE_EXIT_POLL_INTERVAL);
+    }
+}
+
+fn block_after_core_exit() {
+    let Some(params) = lock_surviving_poison(&EXIT_BLOCK).take() else {
+        return;
+    };
+    let result = core_path()
+        .map_err(|error| error.to_string())
+        .and_then(|core| firewall::apply(&params, &core));
+    match result {
+        Ok(()) => log_message("Kill switch: blocking until Quartz reconnects".to_string()),
+        Err(message) => log_message(format!("Kill switch: could not block: {message}")),
     }
 }
 
@@ -557,7 +573,10 @@ fn stop_core(stop_params: StopParams) -> warp::reply::Response {
             },
             StatusCode::CONFLICT,
         ),
-        StopDecision::Stop => match release_managed_core(&mut managed) {
+        StopDecision::Stop => match {
+            *lock_surviving_poison(&EXIT_BLOCK) = None;
+            release_managed_core(&mut managed)
+        } {
             Ok(()) => json_response(
                 &StopResponse {
                     session_id: stop_params.session_id,
@@ -671,6 +690,7 @@ async fn stop_request(stop_params: StopParams) -> Result<warp::reply::Response, 
 }
 
 fn firewall(params: FirewallParams) -> warp::reply::Response {
+    *lock_surviving_poison(&EXIT_BLOCK) = params.on_core_exit();
     let result = core_path()
         .map_err(|error| error.to_string())
         .and_then(|core| firewall::apply(&params, &core));
