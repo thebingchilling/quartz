@@ -18,6 +18,9 @@ import com.follow.clash.RunState
 import com.follow.clash.ServiceState
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
+import com.follow.clash.common.QuickAction
+import com.follow.clash.common.quickIntent
+import com.follow.clash.common.toPendingIntent
 
 /**
  * A VPN interface nothing reads, so whatever it captures goes nowhere. Starting the real tunnel
@@ -110,6 +113,7 @@ class KillSwitchService : VpnService() {
             .setContentTitle(getString(R.string.kill_switch_title))
             .setContentText(getString(R.string.kill_switch_text))
             .setContentIntent(open)
+            .addAction(0, getString(R.string.kill_switch_disconnect), QuickAction.STOP.quickIntent.toPendingIntent)
             .setOngoing(true)
             .build()
         ServiceCompat.startForeground(

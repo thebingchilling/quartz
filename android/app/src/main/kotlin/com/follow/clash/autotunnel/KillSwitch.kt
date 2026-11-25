@@ -1,13 +1,15 @@
 package com.follow.clash.autotunnel
 
+import com.follow.clash.AutoReconnect
 import com.follow.clash.RunState
 import com.follow.clash.ServiceState
 import com.follow.clash.common.GlobalState
 import kotlinx.coroutines.launch
 
 /**
- * Blocks every app while the rule in effect has a kill switch and its tunnel isn't up: while it
- * connects, drops, or after the user stops it, until a tunnel is back or another rule takes over.
+ * Blocks every app while a tunnel someone asked for isn't up: with the kill switch setting on, any
+ * that dropped on its own, and the tunnel of a rule with a kill switch. A tunnel the user stopped
+ * never blocks.
  */
 object KillSwitch {
     private var released = true
@@ -21,11 +23,13 @@ object KillSwitch {
             var seenStopped = false
             ServiceState.runState.collect { state ->
                 if (state == RunState.STARTED) {
+                    ServiceState.onStarted()
                     if (seenStopped) AutoTunnelState.onStarted()
                 } else if (state == RunState.STOPPED) {
                     seenStopped = true
                 }
                 evaluate()
+                AutoReconnect.evaluate()
             }
         }
     }
@@ -34,11 +38,12 @@ object KillSwitch {
     fun evaluate() {
         val context = GlobalState.application
         val state = ServiceState.runState.value
-        val block = AutoTunnelRules.blocksAll(
-            AutoTunnel.settings(context),
-            AutoTunnelState.active,
-            running = state == RunState.STARTED || state == RunState.STARTING,
-        )
+        val running = state == RunState.STARTED || state == RunState.STARTING
+        val dropped = ServiceState.wantsTunnel && ServiceState.killSwitchEnabled && !running
+        val block = dropped || (
+            !ServiceState.userStopped &&
+                AutoTunnelRules.blocksAll(AutoTunnel.settings(context), AutoTunnelState.active, running)
+            )
         if (!block) {
             if (!released) KillSwitchService.release(context)
             released = true

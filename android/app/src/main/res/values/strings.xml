@@ -4,5 +4,6 @@
     <string name="auto_tunnel_title">Auto-tunnel</string>
     <string name="auto_tunnel_text">Switches tunnels as you change networks</string>
     <string name="kill_switch_title">Kill switch</string>
-    <string name="kill_switch_text">Blocking traffic until the tunnel is back</string>
+    <string name="kill_switch_text">Reconnecting. The internet is blocked until the tunnel is back.</string>
+    <string name="kill_switch_disconnect">Disconnect</string>
 </resources>

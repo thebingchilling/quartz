@@ -358,6 +358,15 @@ false-positive report or code signing clears, not a code pattern.
   five minutes asleep, the connections that received nothing since the phone went to sleep. One that received data
   stays open, so a call or a download outlasts the screen going off. Do not swap either for keepalive or a periodic
   probe: those wake the radio on every idle connection.
+- The kill switch (`NetworkProps.killSwitch`, on by default) blocks only a tunnel that dropped on its own: one that came
+  up and that neither the user nor auto-tunnel stopped since. A user's stop, including quitting on Windows and the
+  Disconnect action on Android's kill switch notification, never blocks, whatever a rule's kill switch says. On
+  Windows the Helper's firewall blocks while the tunnel is wanted but the Core is down, and while it is up the Helper
+  only arms `blockOnCoreExit`, which it applies itself the moment its Core exits without `/stop`: blocking all the
+  time would cut off the LAN that bypasses the tunnel. On Android `ServiceState` persists `wantsTunnel` (set once a
+  tunnel reaches STARTED, so a declined permission never blocks) and `userStopped`; `AutoReconnect` retries while a
+  wanted tunnel is down, the VpnService is also started so Android restarts it after killing the process, and an
+  always-on or sticky restart is ignored after the user's stop.
 
 ## UI Isolate Work
 

@@ -110,11 +110,13 @@ class VpnService : SystemVpnService(), ManagedService {
             binder
         }
 
+    // Always-on and Android's restart after it killed the process both arrive here, and the app
+    // decides whether the user still wants the tunnel; the service's own keep-alive start doesn't.
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Android starts always-on VPN through this callback instead of FlClash's bound-service
-        // path. Notify the app layer so it can restore Core and fully initialize the VPN service.
-        notifyVpnStartRequested()
-        return super.onStartCommand(intent, flags, startId)
+        if (intent?.action != ACTION_KEEP_ALIVE) {
+            notifyVpnStartRequested()
+        }
+        return START_STICKY
     }
 
     override fun onRevoke() {
@@ -259,6 +261,11 @@ class VpnService : SystemVpnService(), ManagedService {
         try {
             modules.start()
             handleStart(requireNotNull(ServiceConfig.vpnOptions) { "VPN options are missing" })
+            // Started as well as bound, so Android brings it back if it kills the process; stop()
+            // ends that with stopSelf.
+            runCatching {
+                startService(Intent(this, VpnService::class.java).setAction(ACTION_KEEP_ALIVE))
+            }
         } catch (error: Exception) {
             stop()
             throw error
@@ -293,6 +300,8 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     companion object {
+        private const val ACTION_KEEP_ALIVE = "com.follow.clash.service.KEEP_ALIVE"
+
         // mihomo's own TUN default: 198.18.0.0/15 is benchmarking space no LAN
         // uses, and its fake-ip pool starts at .4, past this /30.
         private const val IPV4_ADDRESS = "198.18.0.1/30"

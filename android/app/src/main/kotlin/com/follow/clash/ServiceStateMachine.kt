@@ -62,6 +62,9 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
     val isRunRequested: Boolean
         get() = arbiter.isRunningRequested
 
+    val killSwitchEnabled: Boolean
+        get() = sharedState.vpnOptions?.killSwitch ?: true
+
     suspend fun handleToggleAction() {
         if (isRunRequested) {
             handleStopAction()

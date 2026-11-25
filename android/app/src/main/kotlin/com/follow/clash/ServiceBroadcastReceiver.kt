@@ -34,7 +34,12 @@ class ServiceBroadcastReceiver : BroadcastReceiver() {
 
     private suspend fun handleAction(action: String) {
         when (action) {
-            BroadcastAction.VPN_START_REQUESTED.action -> ServiceState.handleStartAction()
+            BroadcastAction.VPN_START_REQUESTED.action ->
+                if (ServiceState.userStopped) {
+                    GlobalState.log("Ignoring a VPN restart: the user disconnected")
+                } else {
+                    ServiceState.handleStartAction()
+                }
 
             BroadcastAction.VPN_REVOKED.action -> ServiceState.handleVpnRevokeAction()
         }
