@@ -367,6 +367,11 @@ false-positive report or code signing clears, not a code pattern.
   tunnel reaches STARTED, so a declined permission never blocks) and `userStopped`; `AutoReconnect` retries while a
   wanted tunnel is down, the VpnService is also started so Android restarts it after killing the process, and an
   always-on or sticky restart is ignored after the user's stop.
+- A config apply makes mihomo build every proxy anew and leave the old ones to a GC finalizer, which can take half a
+  minute. For WireGuard that overlap is fatal: the server keeps one session per key and follows whichever device spoke
+  last, so the old device's keepalive takes the new one's replies. `applyMihomoConfig` therefore closes each WireGuard
+  proxy the apply replaced (`closeReplacedWireGuard`) as soon as it returns. Don't paper over a WireGuard drop with a
+  longer keepalive: that only delays the old device's first packet past its finalizer.
 
 ## UI Isolate Work
 

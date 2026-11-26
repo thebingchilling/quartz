@@ -113,7 +113,9 @@ func applyMihomoConfig(cfg *config.Config) {
 	if !isRunning.Load() {
 		masked.Listeners = map[string]constant.InboundListener{}
 	}
+	before := currentProxies()
 	hubApplyConfig(&masked)
+	closeReplacedWireGuard(before, currentProxies())
 	for name, p := range tunnel.Providers() {
 		if p.VehicleType() != cp.Compatible {
 			onProviderLoaded(name)
@@ -126,7 +128,23 @@ func applyMihomoConfig(cfg *config.Config) {
 	}
 }
 
+// mihomo leaves a replaced proxy for its finalizer, which can take half a
+// minute. A WireGuard server keeps one session per key and answers wherever the
+// key last spoke from, so the old device's keepalive takes the replacement's
+// replies until then: with WARP's 25 s keepalive the tunnel went silent.
+func closeReplacedWireGuard(before, after map[string]constant.Proxy) {
+	for name, old := range before {
+		if old.Type() != constant.WireGuard || after[name] == old {
+			continue
+		}
+		if err := old.Close(); err != nil {
+			log.Warnln("closing replaced WireGuard %s: %v", name, err)
+		}
+	}
+}
+
 var (
+	currentProxies = allProxies
 	hubApplyConfig = hub.ApplyConfig
 	statFile       = os.Stat
 )
